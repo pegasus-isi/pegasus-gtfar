@@ -2,7 +2,7 @@
 
 
 import sys
-from gtfar_modules.sam.SamFile import *
+from modules.sam.SamFile import *
 				
 def process_file(sam_mapping,keyFile,prefix):
     sam = SamFile(sam_mapping)

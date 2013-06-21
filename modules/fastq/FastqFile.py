@@ -5,6 +5,7 @@ import os
 import sys
 import difflib
 from collections import defaultdict as dd
+sys.path.append('/home/rcf-47/souaiaia/analysis/tade/gtfar_source/modules')
 
 
 ##########################################################################################################################################

@@ -2,8 +2,8 @@
 
 import sys
 #sys.path.append('/home/rcf-47/souaiaia/analysis/tade/PIPELINE_v2/gtFar/python_src/gtfar_modules')
-from gtfar_modules.gtf.GtfFile  import *
-from gtfar_modules.mutations.MutationRecord  import *
+from modules.gtf.GtfFile  import *
+from modules.mutations.MutationRecord  import *
 
 '''
 This program requires a gencode annotation file (gtf) and a path to the chr fasta files referenced in the gtf file

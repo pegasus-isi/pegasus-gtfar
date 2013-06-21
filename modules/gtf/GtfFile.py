@@ -5,7 +5,9 @@ import sys
 import difflib
 import cPickle as pickle
 
-from gtTools import seqComplement
+sys.path.append('/home/rcf-47/souaiaia/analysis/tade/gtfar_source/modules')
+
+from tools.gtTools import seqComplement
 from GtfLine import *
 from GtfGene import *
 

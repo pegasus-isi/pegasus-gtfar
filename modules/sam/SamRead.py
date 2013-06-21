@@ -5,7 +5,7 @@ import os
 import sys
 import difflib
 from collections import defaultdict as dd
-from gtTools import seqComplement
+from tools.gtTools import seqComplement
 
 
 ##########################################################################################################################################

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import sys
-from gtfar_modules.gtf.GtfGene  import *
-from gtfar_modules.gtf.GtfFile  import *
+from modules.gtf.GtfGene  import *
+from modules.gtf.GtfFile  import *
 
 '''
 This program requires a gencode annotation file (gtf) and a path to the chr fasta files referenced in the gtf file

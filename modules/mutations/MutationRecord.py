@@ -2,8 +2,7 @@
 
 
 import sys
-sys.path.append('/home/rcf-47/souaiaia/analysis/tade/PIPELINE_v2/gtFar/python_src/gtfar_modules')
-
+sys.path.append('/home/rcf-47/souaiaia/analysis/tade/gtfar_source/modules')
 import cPickle as pickle
 from tools.gtTools import *
 from collections import defaultdict as dd
