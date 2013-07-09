@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import os
 from modules.gtf.GtfGene  import *
 from modules.gtf.GtfFile  import *
 
@@ -14,13 +15,14 @@ example: HG19=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/hu
 def runthrough(fName,genomePath,prefix,readlen=100):
    
     
-    gtf = GtfFile(fName,prefix)
+    gtf = GtfFile(fName,prefix,readlen,printKEY=True)
     while gtf.open:
-        gtf.loadChromosomeGenes()
-        gtf.addFasta(genomePath+'/'+gtf.chr+'.fa')
-        gtf.printSeqs()
-        gtf.startNewChromosome()
-    gtf.pickleOut
+        gtf.loadGenesOnChromosome()
+        gtf.addFasta(genomePath+'/'+gtf.chr+'.fa') 
+        gtf.uniquifySeqs()
+        gtf.printAnnotation(TYPE='ALL')
+        gtf.startNextChromosome()
+    
 
     
 
@@ -31,11 +33,15 @@ if __name__ == '__main__':
     parser = OptionParser(usage=usage)
 
     parser.add_option("-r", "--readlen", default = 100, type='int', help="Expected Read Length")
-    parser.add_option("-p", "--prefix", default = 'foo', type='string', help="Output Filename Prefix")
+    parser.add_option("-p", "--prefix", default = 'mygtf', type='string', help="Output Filename Prefix")
     parser.add_option("-g", "--genomePath", default = None, type='string', help="Path to genome chr fasta files")
 
     (options, args) = parser.parse_args()
 
-    runthrough(args[0],options.genomePath,options.prefix,options.readlen)
+if len(args)==1 and options.genomePath!=None:
 
+    runthrough(args[0],options.genomePath,options.prefix,options.readlen)
+else:
+    print "ANNOTATE AND CREATE SEQS/KEY"
+    print "USAGE: ./make_ref_from_gtf.py file.gtf -g GENOMEPATH -p PREFIXNAME -r READLENGTH" 
 

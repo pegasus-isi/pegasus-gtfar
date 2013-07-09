@@ -5,7 +5,9 @@ import sys
 import difflib
 import cPickle as pickle
 
-from gtTools import seqComplement
+
+
+#from gtTools import seqComplement
 
 
 ##########################################################################################################################################

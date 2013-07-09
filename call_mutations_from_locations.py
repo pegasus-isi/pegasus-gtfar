@@ -12,32 +12,26 @@ example: HG19=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/hu
 
 
 
-def runthrough(lName,fName,genomePath,prefix,readlen=100):
+def mutationCall(sortedLocations,fName,genomePath,prefix,TYPE,readlen,coverage,diffRate):
    
     
-    gtf = GtfFile(fName,prefix)
-    mutations = MutationRecord(lName)
+    
+    gtf = GtfFile(fName,prefix,readlen,printKEY=False)
+    mutations = MutationRecord(sortedLocations,prefix,TYPE,coverage,diffRate)
     while gtf.open:
-        gtf.loadChromosomeGenes()
-        
-        gtf.addFasta(genomePath+'/'+gtf.chr+'.fa')
-        ## gtf.seq is now loaded ## 
+        gtf.loadGenesOnChromosome();  gtf.addFasta(genomePath+'/'+gtf.chr+'.fa');   gtf.uniquifySeqs(SILENT=True)
+        print "OK STARTING MUTATIONS" 
         while mutations.chr == gtf.chr:
-            #gtfGene = gtf.geneKeys[mutations.gene]
-            
-            mutations.call(gtf)
-            mutations.rateAndWrite()
-             
-            #chrSeq  = gtf.seq
-            #if mutations.gene in gtf.geneKeys.keys():
-            #    print "HI"
-            #    print mutations.gene
-            #    print gtfGene.exons
-            
+            print "CANDING"
+            mutations.findCands(gtf);
+            print "EVALIN"
+            mutations.evalAndPrint();
+            print "NEXT-GENE"
             mutations.nextGene()
-        
-        gtf.startNewChromosome()
-    gtf.pickleOut
+            print "ANNOTATING"
+        gtf.printAnnotation(TYPE)
+        gtf.startNextChromosome()
+    
 
     
 
@@ -48,11 +42,28 @@ if __name__ == '__main__':
     parser = OptionParser(usage=usage)
 
     parser.add_option("-r", "--readlen", default = 100, type='int', help="Expected Read Length")
-    parser.add_option("-p", "--prefix", default = 'foo', type='string', help="Output Filename Prefix")
+    parser.add_option("-p", "--prefix", default = 'mutations', type='string', help="Output Filename Prefix")
     parser.add_option("-g", "--genomePath", default = None, type='string', help="Path to genome chr fasta files")
-
+    parser.add_option("-c", "--coverage", default = 1, type=int, help="Minimum Coverage for Mutation")
+    parser.add_option("-d", "--diffRate", default = 0.1, type=float, help="Minimum difference rate for mutation")
+    
+    
+    
+    parser.add_option("-e", "--exonic", action = 'store_true', default = False, help="Exonic only  input")
+    parser.add_option("-i", "--intronic", action = 'store_true', default = False, help="Intronic only  input")
     (options, args) = parser.parse_args()
 
-    runthrough(args[0],args[1],options.genomePath,options.prefix,options.readlen)
+
+    if len(args)!=2:
+        print "TWO ARGS REQUIRED"
+        print "Usage: ./call_mutations_from_locations.py sorted_mapfile.sam gencode_file.gtf -g PATH_TO_GENOME -p OUTPUT_PREFIX"
+    else:
+        if options.exonic:
+            mutationCall(args[0],args[1],options.genomePath,options.prefix,'EXONIC',options.readlen,options.coverage,options.diffRate)
+        elif options.intronic:
+            mutationCall(args[0],args[1],options.genomePath,options.prefix,'INTRONIC',options.readlen,options.coverage,options.diffRate)
+        else:
+            print "NEED ONE"
+
 
 

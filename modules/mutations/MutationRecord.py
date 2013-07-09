@@ -2,110 +2,84 @@
 
 
 import sys
-sys.path.append('/home/rcf-47/souaiaia/analysis/tade/gtfar_source/modules')
 import cPickle as pickle
-from tools.gtTools import *
+from MutationSite import *
+from ..tools.gtTools import *
+
+from math import fabs
+
+
 from collections import defaultdict as dd
 ##########################################################################################################################################
 ##########################################################################################################################################
 
 class MutationRecord:
-    def __init__(self,fileHandle): #,rlen,lowQ,avgQ,minTrim):
+    def __init__(self,fileHandle,prefix,TYPE,coverage,diffRate): 
         self.fname = open(fileHandle)
         self.line = self.fname.readline().split()
         self.open = True
-        self.chr = self.line[3]
-        self.gene= self.line[5]
-        self.index = 0
-        self.cands=[]
-        self.gtfGene=''
-
+        self.chr = self.line[3]; self.gene= self.line[5]; self.index = 0
+        
+        self.fType = TYPE; self.prefix = prefix
+        self.mutFile = None; self.geneCandidates=[]
+        self.coverage_parameter = coverage;   self.rate_parameter = diffRate;     self.endLength=-1
     def nextGene(self):
-        while self.line[5]== self.gene:
-            self.line = self.fname.readline().split()
-        self.chr = self.line[3]
-        self.gene= self.line[5]
-        self.index +=1 
-
-    def call(self,gtfRecord):
-        
-        
-        self.gtfGene = gtfRecord.geneKeys[self.gene]
-        self.gtfGene.getSeqFromChr(gtfRecord.seq,1)
-        gtfCnts = [[self.gtfGene.seq[n],0,0,0,0,0] for n in range(len(self.gtfGene.seq))]
-        while self.line[5] == self.gene:
-            mapLocs=[int(s) for s in self.line[6].split("-")]
-            k=0; n=0
-            for base in self.line[8]:
-                if n>=0 and mapLocs[k]+n-1 <= mapLocs[k+1]:
-                    gtfCnts[mapLocs[k]+n][baseSwap(base)+1]+=1
-                n+=1
-                if mapLocs[k]+n-1 == mapLocs[k+1]:
-                    k+=2; n=0
-            self.line = self.fname.readline().split()
-        
-        
-        for i in range(len(gtfCnts)):
-            if sum(gtfCnts[i][1::]) != gtfCnts[i][baseSwap(gtfCnts[i][0])+1]:
-                self.cands.append([i,gtfCnts[i]])
-           
-    def rateAndWrite(self):
-        spliceSites=set([])
-        for t in self.gtfGene.transcripts:
-            for i in range(len(t[1][1])):
-                spliceSites.add((tuple(t[1][1][i]),tuple(t[1][2][i])))
-        spliceSites=sorted(list(spliceSites))
-        print spliceSites[0:5]
-        for c in self.cands:
-            pos = c[0]
-            refBase = c[1][0]
-            refSwap = baseSwap(refBase)
-            cnts = c[1][1::]
-            cov  = float(sum(c[1][1::]))
-            mutRate = 0
-            for x in range(len(cnts)):
-                if x==refSwap:
-                    refRate = cnts[x]/cov
-                else:
-                    if cnts[x]/cov > mutRate:
-                        mutRate = cnts[x]/cov
-                        mutBase = baseSwap(x)
-            print c,"cov",cov
-            print "ref",refBase,refRate
-            print "mut",mutBase,mutRate
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-    def addKey(self,keyFile):
-        if fileExtension(keyFile)=="pickle":
-            self.key=pickle.load(open(keyFile,'rb'))
+        if self.line == []:
+            self.gene = "NULL"; self.chr = "NULL"
         else:
-            self.key={}
-            for line in open(keyFile):
-                line=line.split()
-                for i in range(1,len(line)):
-                    line[i]=[[int(x.split("-")[0]),int(x.split("-")[1])] for x in line[i].split(",")]
-                self.key[line[0]]=[line[1],line[2],line[3]]
+            while self.line[5]== self.gene:
+                self.line = self.fname.readline().split()
+            self.chr = self.line[3]
+            self.gene= self.line[5]
+            self.geneCandidates = []; self.flankCandidates=[]
+            self.index +=1 
 
+    def findCands(self,gtfRecord):
+        self.gtfGene = gtfRecord.geneKey[self.gene];    self.gtfGene.getSeqFromChr(gtfRecord.seq,0);    gtfCnts = [[self.gtfGene.seq[n],0,0,0,0,0] for n in range(len(self.gtfGene.seq))]
+        while self.line[5] == self.gene:
+            mapLocs=[int(s) for s in self.line[6].split(",")]
+            k=0; n=0; x=0; seqLen=len(self.line[8])
+           
+            if self.fType == 'EXONIC' or (self.fType=='INTRONIC' and mapLocs[0]>=0 and mapLocs[-1]+seqLen< self.gtfGene.length):
+                
+                for base in self.line[8]:
+                    x+=1
+
+                    ### NOTICE WHAT THE CONDITIONS REQUIRE (NOT IN FIRST 3 OR LAST THREE BASES OF READ, ALSO NOT AT THE SPLICE SITE )
+
+                    if x>=self.endLength and x<=(seqLen-self.endLength):   #and n > 0 and mapLocs[k]+n < mapLocs[k+1] +100:
+                        gtfCnts[mapLocs[k]+n][baseSwap(base)+1]+=1
+                    if mapLocs[k]+n == mapLocs[k+1]:
+                        k+=2; n=-1
+                    n+=1
+            self.line = self.fname.readline().split()
+            if self.line == []:
+                break 
             
-################ NOTE HERE IS THE IDEA FOR GENE EXPRESSION -- ADD THE MULTI GUYS AND THEN GO PRINT THE ZEROS FROM THE KEY, AVOIDING (OR NOTING) ANY THAT HAVE BEEN ADDED AS MULTIS ####
+        for i in range(len(gtfCnts)):
+            if sum(gtfCnts[i][1::]) > gtfCnts[i][baseSwap(gtfCnts[i][0])+1] + 0:
+                self.geneCandidates.append(MutationSite(i,self.gene,self.gtfGene.strand,gtfCnts[i],self.fType))
+           
+    def evalAndPrint(self):
+        snpOut = sys.stdout
+        self.gtfGene.findSplicingInfo()
+
+        if self.mutFile == None:
+            self.mutFile=open(self.prefix+'.mutations','w')
+
+        for site in self.geneCandidates:
+            
+            site.findGenomicLocation(self.gtfGene.spliceInfo)
+
+            if site.valid and site.cov > self.coverage_parameter and site.mutRate > self.rate_parameter:
+                self.mutFile.write('%s:%s %s %s %s %s %s %s cov: %s rate: %s' % (self.chr,site.hgPos,site.geneStrand,site.type,site.geneName ,site.genePos+1,site.refBase,site.mutBase,site.cov,site.mutRate))
+                self.mutFile.write(' | Splice: %s %s %s:%s %s:%s\n' % (site.spliceDist,site.spliceType,site.geneName,site.spliceSite[0],self.chr,site.spliceSite[1]))
+                self.gtfGene.seq[site.genePos]=site.mutBase
+
+
+
+
+        
 
 
     

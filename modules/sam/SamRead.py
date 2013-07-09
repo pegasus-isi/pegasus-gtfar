@@ -5,191 +5,291 @@ import os
 import sys
 import difflib
 from collections import defaultdict as dd
-from tools.gtTools import seqComplement
+from math import fabs
+from ..tools.gtTools import *
 
 
 ##########################################################################################################################################
-#####################################################  FASTQ-FILE CLASS START ############################################################
+#####################################################  SAM READ  CLASS START ############################################################
 ##########################################################################################################################################
 
 class SamRead:
-    def __init__(self,readList,keys,idx):
+    def __init__(self,readList,keys,SENSE):
         
-        self.ID         = readList[0][0]
-        self.seq        = readList[0][9]
-        self.qual       = readList[0][10]
-        self.subs       = readList[0][11]
-        self.strands    = [readList[i][1] for i in range(len(readList))]
-        self.locations  = [readList[i][2] for i in range(len(readList))]
-        self.geneIDs    = ["|".join([s for s in readList[i][2].split("|")[0:8]]) for i in range(len(readList))]
-        self.positions  = [int(readList[i][3]) for i in range(len(readList))]
-        self.mapTypes   = [readList[i][5] for i in range(len(readList))]
+        self.ID         = readList[0][0];  self.seq        = readList[0][9]
+        self.qual       = readList[0][10]; self.subs       = readList[0][11]
+        
+        self.complement = None
+
+        self.data    = [[s for s in readList[i][2].split("|")] for i in range(len(readList))]
+        
+        self.genomeStrand = [self.data[i][2] for i in range(len(self.data))]
+        self.mapStrand    = [readList[i][1] for i in range(len(readList))]
+
+        self.featurePos= [int(readList[i][3])-1 for i in range(len(readList))]
+
+        self.sense = SENSE
         self.locKeys    = keys
-        self.index      = idx
-        self.relocated  = False
+        
+        if keys != None:
+            self.featureKeys=[keys[i][0]  for i in range(len(keys))]
+            self.geneKeys=[keys[i][1]  for i in range(len(keys))]
+            self.hgKeys=[keys[i][2]  for i in range(len(keys))]
+
+        self.samStrings =[]; self.locStrings = []
+
+##################################################################################################################################################################################
+##################################################################################################################################################################################
+#########################################################################  READ PROCESSES ########################################################################################
+##################################################################################################################################################################################
+##################################################################################################################################################################################
+
+
+
+# 1)  seqComplement - Returns and creates the reverse complement of the read sequence 
+
+
+    def seqComplement(self):
+        if not self.complement:
+            self.complement=""
+            baseComplement={'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N'}
+            for s in self.seq[-1::-1]:
+                self.complement+= baseComplement[s.capitalize()]
+        return self.complement
+
+
+##################################################################################################################################################################################
+
+
+# 2) Relocates the read - The mapping is initially in terms of the 'feature' (eg. Transcript, Intron, etc).  This method converts the feature position in gene and genome coordinates 
+
 
     def relocate(self):
-        self.geneLocs=[]; self.hgLocs=[]
-        for i in range(len(self.locations)):
-            DIST=len(self.seq)-1; POST=False
-            for k in range(len(self.locKeys[i][0])):
-                if self.positions[i]>=self.locKeys[i][0][k][0] and self.positions[i]<=self.locKeys[i][0][k][1]:
-                    ### HERE ## 
-                    tran_tuples, gene_tuples, hg_tuples = self.locKeys[i][0][k], self.locKeys[i][1][k], self.locKeys[i][2][k]
 
-                    # DISCREPANCY COMES FROM A ZERO INDEXED GENOME/1 INDEXED GENES #
-                    if tran_tuples[1] >= self.positions[i]+DIST:
-                        posOffset=self.positions[i]-tran_tuples[0]
-                        self.geneLocs.append([gene_tuples[0]+posOffset, gene_tuples[0]+posOffset+DIST])
-                        if hg_tuples[0] < hg_tuples[1]:
-                            self.hgLocs.append([hg_tuples[0]+posOffset-1, hg_tuples[0]+posOffset+DIST-1])
-                        if hg_tuples[0] > hg_tuples[1]:
-                            self.hgLocs.append([hg_tuples[0]-posOffset+1,hg_tuples[0]-posOffset-DIST+1])
+        relocations=[]
+        for i in range(len(self.featureKeys)):
+            POST=False; DIST=len(self.seq)-1
+            genePos=[]; hgPos =[]
+            for j in range(len(self.featureKeys[i])):
+                if POST or (self.featurePos[i] >= self.featureKeys[i][j][0] and self.featurePos[i] <= self.featureKeys[i][j][1]):
+                    if not POST:
+                        myOffset = self.featurePos[i] - self.featureKeys[i][j][0]
+
+                    genePos.extend([self.geneKeys[i][j][0]+ myOffset, self.geneKeys[i][j][0] + myOffset + DIST  ])
+
+
+                    if self.genomeStrand[i]=="+": hgPos.extend([ self.hgKeys[i][j][0] + myOffset, self.hgKeys[i][j][0] + myOffset + DIST ])
+                    else:  hgPos.extend ( [ self.hgKeys[i][j][0] - myOffset, self.hgKeys[i][j][0] - myOffset - DIST ] )
+                
+                    if self.featureKeys[i][j][1] >= self.featurePos[i]+DIST and self.featureKeys[i][j][1] >= self.featureKeys[i][j][0]+DIST:
                         break
                     else:
-                        posOffset=self.positions[i]-tran_tuples[0]
-                        self.geneLocs.append([gene_tuples[0]+posOffset,gene_tuples[1]+1])
-                        if hg_tuples[0] < hg_tuples[1]:
-                            self.hgLocs.append([hg_tuples[0]+posOffset-1,hg_tuples[1]])
-                        else:
-                            self.hgLocs.append([hg_tuples[0]-posOffset+1,hg_tuples[1]])
-                        POST=True
-                        DIST-=tran_tuples[1]-(tran_tuples[0]+posOffset-1)
-
-                else:
-                    if POST:
-                        tran_tuples, gene_tuples, hg_tuples = self.locKeys[i][0][k], self.locKeys[i][1][k], self.locKeys[i][2][k]
-                        if tran_tuples[1]>=tran_tuples[0]+DIST:
-                            self.geneLocs[-1].extend((gene_tuples[0]+1,gene_tuples[0]+DIST))
-                            if hg_tuples[0] < hg_tuples[1]:
-                                self.hgLocs[-1].extend((hg_tuples[0],hg_tuples[0]+DIST-1))
-                            else:
-                                self.hgLocs[-1].extend((hg_tuples[0],hg_tuples[0]-DIST+1))
-                            break
-                        else:
-                            self.geneLocs[-1].extend((gene_tuples[0]+1,gene_tuples[1]+1))
-                            self.hgLocs[-1].extend((hg_tuples[0],hg_tuples[1]))
-                            DIST-=(tran_tuples[1]-tran_tuples[0]+1)
-
-        ## NOW TEST IF THE POSITIONS ARE UNIQ OR NOT ##
-
-        self.hgUniq=True; self.multiAnnos=True; geneUniq=True; GLuniq=True
-        hg1=self.hgLocs[0]; myChr=self.locations[0].split("|")[3]; g1=self.geneIDs[0]; myStrand=self.locations[0].split("|")[2]; samStrand=self.strands[0]; gL1=self.geneLocs[0];
+                        genePos[-1]= self.geneKeys[i][j][1]; hgPos[-1]=self.hgKeys[i][j][1]
+                        DIST -= (1 + self.featureKeys[i][j][1] - ( self.featureKeys[i][j][0] + myOffset ) )
+                        POST=True; myOffset = 0
+            relocations.append([(self.data[i][3],self.genomeStrand[i],hgPos),(self.data[i][0],self.mapStrand[i],genePos)])
+        relocations.sort()
+        self.locations = [relocations[0]]
+        for r in relocations[1::]:
                 
+            if r[0]!=self.locations[-1][0]:        self.locations.append(r)
+            elif r[1] not in self.locations[-1]:  self.locations[-1].append(r[1])
 
 
-        for i in range(len(self.locations)):
-            if self.hgLocs[i]!=hg1 or self.locations[i].split("|")[3]!=myChr or self.locations[i].split("|")[2]!=myStrand or self.strands[i]!=samStrand:
-                self.hgUniq=False
-            if self.geneLocs[i]!=gL1:
-                GLuniq=False
-            if self.geneIDs[i]!=g1:
-                geneUniq=False
 
-        
-        if self.hgUniq and geneUniq and GLuniq:
-            
-            self.geneFeatures=[]
-            self.multiAnnos=False
+##################################################################################################################################################################################
 
-            ## TOTALLY UNIQ ## 
 
-            self.hgLoc = (samStrand,myChr,myStrand,tuple(hg1))
-            self.geneLoc = (samStrand,g1,tuple(gL1))
-            for i in range(len(self.locations)):
-                self.geneFeatures.append(self.locations[i])
 
-        elif not self.hgUniq:
+# 3) Gathers the set of junctions which the alignemnt spans 
 
-            ## NON UNIQ ##
 
-            self.multiLocs=[]; self.hgKey=dd(list); self.geneFeatureKey=dd(list)
-            for i in range(len(self.locations)):
-                tmpHgLoc = (self.strands[i],self.locations[i].split("|")[3],self.locations[i].split("|")[2],tuple(self.hgLocs[i]))
-                if tmpHgLoc not in self.multiLocs:
-                    self.multiLocs.append(tmpHgLoc)
-                tmpGeneLoc=(self.strands[i],self.geneIDs[i],tuple(self.geneLocs[i]))
-                if tmpGeneLoc not in self.hgKey[tmpHgLoc]:
-                    self.hgKey[tmpHgLoc].append((self.strands[i],self.geneIDs[i],tuple(self.geneLocs[i])))
-                self.geneFeatureKey[self.geneIDs[i]].append(self.locations[i])
+
+    def gatherJxns(self,minOverLap):
+
+        self.junctionSpan = None
+        if len(self.locations)>1 or len(self.locations[0][0][2])<3: return 
         else:
-            ## UNIQ BUT MULTIPLE ANNOTATIONS/ OR STRANDS IF NOT STRAND SPECIFIC ##
-            self.geneFeatureKey=dd(list); self.annos = []
-            self.hgLoc = (samStrand,myChr,myStrand,tuple(hg1))
+            genomeJumps=self.locations[0][0][2]; hJxns=[]; rJxns=[[self.locations[0][i][0]] for i in range(1,len(self.locations[0]))]
             
-            for i in range(len(self.locations)):
-                tmpGeneLoc = (self.strands[i],self.geneIDs[i],tuple(self.geneLocs[i]))
-                if tmpGeneLoc not in self.annos:
-                    self.annos.append(tmpGeneLoc)
-                self.geneFeatureKey[self.geneIDs[i]].append(self.locations[i])
-        self.relocated=True
+            for i in range(0,len(genomeJumps)-2,2):
+                if fabs(genomeJumps[i+1]-genomeJumps[i]) > minOverLap and fabs(genomeJumps[i+3]-genomeJumps[i+2]) > minOverLap:
+                        hJxns.append(str(genomeJumps[i+1])+'>'+str(genomeJumps[i+2]))
+                        for j in range(len(rJxns)):
+                            rJxns[j].append((str(self.locations[0][j+1][2][i+1])+'>'+str(self.locations[0][j+1][2][i+2])))
 
-    def makeCigar(self,hgLocation):
-        
-        if self.hgUniq:
-            scr='255'
-        else:
-            scr='1'
-
-        if hgLocation[2]=="+":
-            spots=hgLocation[3]
-            samSeq=self.seq
-            samStrand='0'
-        else:
-            spots=hgLocation[3][-1::-1]
-            samSeq=seqComplement(self.seq)
-            samStrand='16'
-
-        startLoc=spots[0]; cigarStr=''
-        
-        for i in range(0,len(spots),2):
-            cigarStr+=str(spots[i+1]-spots[i]+1)+"M"
-            if i+2<len(spots):
-                cigarStr+=str(spots[i+2]-spots[i+1]-1)+"D"
-        
-        return self.ID+'\t'+samStrand+'\t'+hgLocation[1]+'\t'+str(startLoc)+'\t'+scr+'\t'+cigarStr+'\t*\t0\t0\t'+samSeq+'\t'+'\t'+self.qual+'\t'+self.subs
-        
-
-
-    def visualizeBAM(self,samOut,SHOWAMBIG=False):
-        if not self.relocated:
-            print "Relocated Method Must be Called before Print Method"
-            sys.exit()
-
-        if self.index==1:
-            self.writeSamHeader(samOut)
-
-        if self.hgUniq:
-            samOut.write('%s\n' % self.makeCigar(self.hgLoc))
-        elif SHOWAMBIG:
-            for m in self.multiLocs:
-                samOut.write('%s\n' % self.makeCigar(m))
-
-
-    def visualizeGeneLocation(self,readOut):
-        
-        if self.hgUniq:
-            
-            if not self.multiAnnos:
-                ensgName=self.geneLoc[1].split("|")[0]
-                spotStr="-".join([str(s) for s in self.geneLoc[2]])
-                readOut.write("%s UNIQ SINGLE %s %s %s %s SEQ/QUAL: %s %s\n" % (self.ID,self.hgLoc[1],self.geneLoc[0],ensgName,spotStr,self.seq,self.qual))
-            else:
-
-                tmpAnnos=sorted([(anno[1].split("|")[0],anno[0],"-".join([str(s) for s in anno[2]])) for anno in self.annos])
-                for t in tmpAnnos:
-                    readOut.write("%s UNIQ MULTI %s %s %s %s SEQ/QUAL: %s %s\n" % (self.ID,self.hgLoc[1],t[1],t[0],t[2],self.seq,self.qual))
-            
-            
-        else:
-            for k in self.hgKey.keys():
-                tmpAnnos=sorted([(anno[1].split("|")[0],anno[0],"-".join([str(s) for s in anno[2]])) for anno in self.hgKey[k]])
-                for t in tmpAnnos:
-                    if len(tmpAnnos)==1:
-                        readOut.write("%s AMBIG SINGLE %s %s %s %s SEQ/QUAL: %s %s\n" % (self.ID,k[1],t[1],t[0],t[2],self.seq,self.qual))
+            if hJxns!=[]:
+                mapType=set([]); k=0
+                for d in self.data:
+                    mapType.add(d[6][0:4])
+                mapType=sorted(list(mapType))
+                if   'TRAN' in mapType:     strStart='KNOWN_EXON_EXON_JXN|'
+                elif 'ITRN' in mapType:     strStart='INRON_EXON_JXN|'
+                elif mapType == ['GENE']:   strStart='NOVEL_EXON_EXON_JXN|'
+                elif mapType == ['FLNK']:
+                    if rJxns[0][1][0]<0:    strStart='5P_PREGENE_JUNCTION|'
+                    else:                   strStart='3P_POSTGENE_JUNCTION|'
+                
+                strStart+=self.locations[0][0][0]+"|"+self.locations[0][0][1]+"|"+','.join(hJxns)+'|GENES|'
+                for r in sorted(rJxns):
+                    if k==0:
+                        strStart+=r[0]+'|'+",".join([x for x in r[1::]])
+                    elif k>2:
+                        strStart+="&CONT..."
+                        break
                     else:
-                        readOut.write("%s AMBIG MULTI %s %s %s %s SEQ/QUAL: %s %s\n" % (self.ID,k[1],t[1],t[0],t[2],self.seq,self.qual))
+                        strStart+='-&-'+r[0]+'|'+",".join([x for x in r[1::]])
+                    k+=1;
+                self.junctionSpan = strStart
+        return
+                        
+
+##################################################################################################################################################################################
+
+
+
+# 4) Converts location information into a str for the creation of a sam file (genome) and location file (genes)  
+
+
+    def visualizeStrings(self):
+
+        chrDict ={'chr1': 1, 'chr2': 2, 'chr3': 3,'chr4': 4, 'chr5': 5, 'chr6': 6,'chr7': 7, 'chr8': 8, 'chr9': 9, 'chr10': 10, 'chr11': 11, 'chr12': 12, 'chr10': 10, 'chr11': 11, 'chr12': 12, 
+                'chr13': 13, 'chr14': 14, 'chr15': 15, 'chr16': 16, 'chr17': 17, 'chr18': 18,'chr19': 19, 'chr20': 20, 'chr21': 21,'chr22': 22, 'chrX': 23, 'chrY': 24, 'chrMT': 25}
+
+
+    
+        if len(self.locations)>1:
+            samScr='1';   hgType="AMBIG"
+        else:
+            samScr='255'; hgType="UNIQ"
+
+        for location in self.locations:
+            genomeLoc = location[0];   gType="SINGLE";              geneLoc   = location[1::];    cigarStr=''
+    
+            if genomeLoc[1]=="+":
+                samSeq=self.seq;       spots=genomeLoc[2];          samStrand='0'
+            else:
+                samSeq=self.seqComplement();  spots=genomeLoc[2][-1::-1];  samStrand='16'
                 
+            for i in range(0,len(spots),2):
+                cigarStr+=str(spots[i+1]-spots[i]+1)+"M"
+                if i+2< len(spots):
+                    cigarStr+= str(spots[i+2] - spots[i+1] -1)+"D"
+
+            self.samStrings.append(self.ID+'\t'+samStrand+'\t'+genomeLoc[0]+'\t'+str(spots[0])+'\t'+samScr+'\t'+cigarStr+'\t*\t0\t0\t'+samSeq+'\t'+'\t'+self.qual+'\t'+self.subs)
+
+            for gene in geneLoc:
+                spotStr=','.join([str(s) for s in gene[2]])
+
+                if len(geneLoc)>1:
+                    gType="MULTI"
+
+                geneString=" ".join([self.ID,hgType,gType,genomeLoc[0],gene[1],gene[0],spotStr,"SEQ/QUAL",self.seq,self.qual,str(chrDict[genomeLoc[0]])])
+                if geneString not in self.locStrings:
+                    self.locStrings.append(geneString)
+                
+                 
+#########################################################################################################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
                     
 
 
@@ -298,4 +398,13 @@ class SamRead:
 
 
     
+
+
+
+##############################################################################################################
+
+
+
+
+
 
