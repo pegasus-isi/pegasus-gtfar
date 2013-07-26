@@ -2,10 +2,6 @@
 
 
 import sys
-#sys.path.append('/home/rcf-47/souaiaia/analysis/tade/PIPELINE_v2/gtFar/python_src/gtfar_modules')
-#from tools.gtTools import *
-
-
 
 ##########################################################################################################################################
 #####################################################  GENE CLASS START   ################################################################
@@ -29,16 +25,16 @@ class GtfGene:
             if self.end - self.start <= self.extend:
                 self.extend = (self.end - self.start)-1
 
-
+            self.extendLen = self.extend
             self.transcripts, self.exons, self.introns, self.flanks = [],[],[],[]
             self.seq = []
             self.seqIndex=0
             self.flankSeqs = None
-            
+            self.jPos    = 0 
             
 ##########################################################################################################################################
 
-#1)  ADDING ANOTHER LINE FROM A GTF FILE 
+#1)  ADDING ANOTHER LINE FROM A GTF FILE [ NOTICE YOU MUST START WITH GENE, THEN TRANSCRIPT OR EXON OK  
 
 
     def addGtfLine(self, line):
@@ -179,11 +175,6 @@ class GtfGene:
                     
         
 
-
-
-
-
-
     def validOffsets(self):
 
         if self.name==None:
@@ -198,7 +189,7 @@ class GtfGene:
 
 
     def findSplicingInfo(self):
-        self.spliceInfo=[]
+        self.spliceInfo=[]; self.jPos =0; self.codonOffset = 0
         for i in range(len(self.exons[1])):
             self.spliceInfo.append([self.exons[1][i],self.exons[2][i],set([(self.exons[1][i][0],self.exons[2][i][0])]),set([(self.exons[1][i][1],self.exons[2][i][1])])])
 
@@ -216,17 +207,43 @@ class GtfGene:
             while y<len(tmpEnds) and tmpEnds[y][0] <= s[0][1]:
                 s[3].add(tmpEnds[y]); y+=1
                 if y==len(tmpEnds): break
-            
+
+
+
+    def findJxns(self,gPos):
+       
+        if gPos < 0:
+            if self.strand == "+": return "5P-FLNK","NA",['+',self.length,self.start]
+            else:                  return "5P-FLNK","NA",['-',self.length,self.end]
+        elif gPos > self.length:
+            if self.strand == "+": return "3P-FLNK","NA",['+',self.length,self.end]
+            else:                  return "3P-FLNK","NA",['-',self.length,self.start]
+
+        
+        while self.jPos < len(self.spliceInfo):
+              
+            if self.spliceInfo[self.jPos][0][0] <= gPos and gPos <= self.spliceInfo[self.jPos][0][1]:
+
+                return "EXONIC", (self.codonOffset + (gPos - self.spliceInfo[self.jPos][0][0])) %3,  self.spliceInfo[self.jPos]
+
+            elif self.spliceInfo[self.jPos-1][0][1] < gPos and gPos < self.spliceInfo[self.jPos][0][0]:
+
+                jPrev = self.spliceInfo[self.jPos-1]; jNext = self.spliceInfo[self.jPos]
+                
+                return "INTRONIC", 'NA',[[jPrev[0][1],jNext[0][0]],[jPrev[1][1],jNext[1][0]],"NULL"]
+            else:
+                self.jPos+=1
+                self.codonOffset += ( self.spliceInfo[self.jPos][0][1] - self.spliceInfo[self.jPos][0][0] + 1 ) % 3 
 
 
 
 
 
-    def getSeqFromChr(self,chrSeq,index):
+
+    def getSeqFromChr(self,chrSeq):
 
         baseComplement={'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N'}
         self.seq = chrSeq[self.start-1:self.end]
-        self.seqIndex = index
 
         if self.strand == '-':
             self.seq.reverse()
@@ -235,8 +252,6 @@ class GtfGene:
         else:
             for i in range(len(self.seq)):
                 self.seq[i] = self.seq[i].capitalize()
-        if index == 1:
-            self.seq = ['N']+self.seq
 
         ##########################################################################
         self.flankSeqs = [chrSeq[self.start-self.flankLen-1:self.start+self.extend],  chrSeq[self.end - self.extend-1:self.end+self.flankLen] ]
@@ -254,14 +269,6 @@ class GtfGene:
 
         
 
-    def forceIndex(self,idx):
-        if self.seqIndex != idx:
-            if self.seqIndex == 1 and idx == 0:
-                self.seq = self.seq[1::]
-                self.seqIndex = 0
-            elif self.seqIndex == 0 and idx == 1:
-                self.seq = ['N']+self.seq
-                self.seqIndex = 1
 
 
 

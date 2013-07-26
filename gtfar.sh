@@ -40,6 +40,7 @@ READ_EXT=$(echo $READS | awk -F\. '{print $NF}')
 
 if [ $READ_EXT != "fq" ] && [ $READ_EXT != "fastq" ]; then
     echo "A valid read file in fq format is required" 
+    exit
 fi
 
 if [ -d $OUTPUT ]; then echo "WARNING: output directory ("$OUTPUT") already exists; Files may be overwritten"; 
