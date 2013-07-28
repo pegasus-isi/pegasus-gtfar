@@ -149,7 +149,7 @@ class GtfFile:
                         if cand.seqType ==  "5P-FLNK":
                                 cand.addRef(gene.flankSeqs[0][gene.flankLen - cand.spliceDist])
                         elif cand.seqType == "3P-FLNK":
-                                cand.addRef(gene.flankSeqs[1][gene.extendLen + cand.spliceDist])
+                                cand.addRef(gene.flankSeqs[1][gene.extendLen + cand.spliceDist  ])
 
                     cand.evalStats()
 

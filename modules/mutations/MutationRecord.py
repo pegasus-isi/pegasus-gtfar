@@ -48,7 +48,6 @@ class MutationRecord:
             self.chr  = self.mapChr
             self.gene = self.mapGene
 
-
 ###########################################################################################################################################################
             
 
@@ -68,7 +67,9 @@ class MutationRecord:
                             end = start + (self.mapPos[i+1] - self.mapPos[i] +1)
                             readSeq = self.mapRead[start:end];    refSeq  = self.mapRef[start:end]
                             diffs.extend([self.mapPos[i]+j for j in range(spliceBuffer,len(readSeq)-spliceBuffer) if readSeq[j]!=refSeq[j]])
-                        
+                     #       if 1358 in diffs:
+                     #           print self.line
+                     #           print "YEAH"
                         start = start + (self.mapPos[i+1] - self.mapPos[i] + 1)
                     for d in diffs:
                         geneCands[d]+=1
@@ -87,7 +88,6 @@ class MutationRecord:
                 return 
             else:
                 self.gene = self.mapGene
-
 
 ###########################################################################################################################################################
             
@@ -117,7 +117,13 @@ class MutationRecord:
             while len(myCands) > 0:
 
                 if self.mapPos[0] > myCands[-1] or self.mapGene != self.gene:
-                    if ( sum(mySites[-1].cnts) - max(mySites[-1].cnts) ) / float(sum(mySites[-1].cnts)) > 0.05:
+
+                    ALTS = sum(mySites[-1].cnts) - max(mySites[-1].cnts)
+                    TOT  = float(sum(mySites[-1].cnts))
+                    
+
+
+                    if TOT !=0 and (ALTS / TOT > 0.05 or mySites[-1].diffs / TOT > 0.05):
                         self.chrSites[self.gene].append(mySites[-1])
                     mySites.pop();  myCands.pop()
 
@@ -126,19 +132,20 @@ class MutationRecord:
 
                         rType = self.line[1]; aType = self.line[2]
                         for i in range(len(myCands)-1,-1,-1):
-                            SPAN=False; start = 0
+                            start = 0
                             for j in range(0,len(self.mapPos),2):
                                 if myCands[i] >= self.mapPos[j] and myCands[i] <= self.mapPos[j+1]:
-                                    end = start+self.mapPos[j+1]-self.mapPos[j]+1;    candPos = myCands[i]-self.mapPos[j];  readIdx = start+candPos
-                                    
-                                    #print self.line
 
-                                    readBase = self.mapRead[start:end][candPos];      qualScr = self.mapQual[start:end][candPos]
-                                    mySites[i].record(self.line[1],self.line[2],readIdx,readBase,qualScr)
-                                    SPAN=True
+                                    end = start+self.mapPos[j+1]-self.mapPos[j]+1;    candPos = myCands[i]-self.mapPos[j];  readIdx = start+candPos
+                                    readBase = self.mapRead[start:end][candPos];  refBase = self.mapRef[start:end][candPos]; qualScr = self.mapQual[start:end][candPos]
+                                    mySites[i].record(self.line[1],self.line[2],readIdx,readBase,refBase,qualScr)
+
                                 start = start + (self.mapPos[j+1] - self.mapPos[j] + 1)
-                            
-                            if not SPAN:  break
+
+                            if self.mapPos[-1] < myCands[i]: break
+
+
+                            #if not SPAN and self.mapPos[j+1] < 
                 
                     self.nextLine()
             while self.mapGene == self.gene:

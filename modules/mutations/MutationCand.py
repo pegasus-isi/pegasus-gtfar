@@ -15,6 +15,8 @@ from collections import defaultdict as dd
 
 class MutationCand:
     def __init__(self,pos):
+
+       
         self.pos = pos
         self.cnts = [0,0,0,0]
         self.diffs = 0
@@ -25,10 +27,9 @@ class MutationCand:
         self.mapType  = [0,0]
         self.annoType = [0,0]
         self.codonOffset = None
-        
 
-    def record(self,rType,aType,readIdx,readBase,qualScr):
- 
+    def record(self,rType,aType,readIdx,readBase,refBase,qualScr):
+        if readBase != refBase: self.diffs+=1
         bNum = baseSwap(readBase)
         self.cnts[bNum]+=1; self.quals[bNum].append(ord(qualScr)-37); self.idxs[bNum].append(readIdx)
 
@@ -77,7 +78,6 @@ class MutationCand:
 
 
 
-        
     def evalJxns(self,jData):
         self.spliceClass = "MAJ"
         if self.seqType == "EXONIC":
@@ -108,11 +108,11 @@ class MutationCand:
                 self.spliceType = "BEG";    self.spliceDist = jData[0][1] - self.pos;   self.start_tuple = (jData[0][1],jData[1][1])
 
         elif self.seqType == '3P-FLNK':
-            self.spliceDist = self.pos - jData[1]
+            self.spliceDist = self.pos - jData[1] + 1
             if jData[0] == "+": self.hgPos = jData[2] + self.spliceDist
             else:               self.hgPos = jData[2] - self.spliceDist
             self.spliceType = "END"
-            self.end_tuple = (jData[1],jData[2])
+            self.end_tuple = (jData[1]-1,jData[2])
 
         elif self.seqType == '5P-FLNK':
             self.spliceDist = int(fabs(self.pos))

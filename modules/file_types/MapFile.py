@@ -240,6 +240,11 @@ class MapFile:
                     geneTmp,hgTmp = self.relocate(int(mapLines[i][3]),tmpKey,len(mapLines[i][1])-1)
                     hgStrand,hgLoc = trueStrand(mapLines[i][5],s[2], hgTmp )
 
+
+             #       print "OK",geneTmp,hgTmp
+             #       print "FUCK",hgStrand,hgLoc
+
+
                     myLine = [ ( s[3] , hgStrand, hgLoc  ) , ( s[0],mapLines[i][5],geneTmp ) , ( mapLines[i][1],mapLines[i][4] ) ]
 
                     if s[len(s)-1]=="CATSEQ":
@@ -252,9 +257,11 @@ class MapFile:
                     else:
                         tMaps.append(mapLines[i][2])
                         if newLines == []:
+                     #       print "PASS",mapLines[i][2],geneTmp,hgTmp
                             ID = mapLines[i][0]; qual = mapLines[i][8]; subs= int(mapLines[i][6]); newLines.append(myLine)
                         else:
                             if myLine not in newLines:
+                      #          print "PASS",mapLines[i][2],geneTmp,hgTmp
                                 newLines.append(myLine)
 
             if len(newLines) > 0: self.read = MapRead(self.format,sense,ID,qual,subs,tMaps,newLines)
@@ -273,6 +280,7 @@ class MapFile:
 
                     s = mapLines[i][2].split("|");  tmpKey = self.key["|".join(s[0:len(s)-1])+"|"]
                     geneTmp,hgTmp = self.relocate(int(mapLines[i][3]),tmpKey,len(mapLines[i][1])-1)
+                    
 
 
                     hgStrand,hgLoc = trueStrand(mapLines[i][5],s[2], hgTmp )

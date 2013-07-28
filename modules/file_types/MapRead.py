@@ -23,7 +23,7 @@ class MapRead:
        
 
         if type == 'MAPPING' or type == 'SAM':
-            
+        
             if len(self.readLines) > 1:  self.disambiguate()
             
             self.hgLocs = [self.readLines[0][0]]; self.geneLocs = [[self.readLines[0][1]]]; self.seqs = [self.readLines[0][2]]
@@ -70,7 +70,87 @@ class MapRead:
                         n+=1
             else:
                 return
+
+
+    def startTrim(self,n,minLen,maxLen):
+        seqLen = 0; myStrand = self.readLines[0][n][1]; newSpots = []; readLen = len(self.readLines[0][2][0])
+        for i in range(0,minLen,2):
+            x1 = set([]); x2=set([])
+            for j in range(len(self.readLines)):
+                x1.add(self.readLines[j][n][2][i]);  x2.add(self.readLines[j][n][2][i+1])
+            if len(x1) == 1:
+                x1 = x1.pop()
+                if len(x2) == 1:    x2=x2.pop()
+                else:
+                    if x1 < min(x2): x2 = min(x2)
+                    else:            x2 = max(x2)
+                newSpots.extend([x1,x2])
+                seqLen += fabs(x2-x1)+1
+        if myStrand == "+":
+            return newSpots,(0,seqLen)
+        else:
+            return newSpots,(readLen-seqLen,readLen)
+                
+                
+    def tailTrim(self,n,minLen,maxLen):
+        seqLen = 0; myStrand = self.readLines[0][n][1]; newSpots = []; readLen = len(self.readLines[0][2][0])
+        for i in range(0,minLen,2):
+            x1 = set([]); x2=set([])
+            for j in range(len(self.readLines)):
+                sData=self.readLines[j][n][2]
+                x1.add(sData[len(sData)-(i+2)]); x2.add(sData[len(sData)-(i+1)])
+
+            if len(x2) == 1:
+                x2 = x2.pop()
+                if len(x1) == 1:    x1=x1.pop()
+                else:
+                    if x2 > max(x1):     x1=max(x1)
+                    else:           x1=min(x1)
+                newSpots.extend([x1,x2])
+                seqLen += fabs(x2-x1)+1
+
+        if myStrand == "+":
+            return newSpots,(readLen-seqLen,readLen)
+        else:
+            return newSpots,(0,seqLen)
+
         
+
+
+
+    def trim(self):
+
+        hgEnds   = set([h[0][2][-1] for h in self.readLines]);
+        hgStarts = set([h[0][2][0]  for h in self.readLines]);
+        minLen   = min([len(h[0][2]) for h in self.readLines])
+        maxLen   = max([len(h[0][2]) for h in self.readLines])
+       
+        geEnds   = set([h[1][2][-1] for h in self.readLines]);
+        geStarts = set([h[1][2][0]  for h in self.readLines]);
+       
+
+        if len(hgStarts) > 1 and len(hgEnds) > 1:
+            return 
+        else:
+            if len(hgStarts) == 1:   hgResult = self.startTrim(0,minLen,maxLen)
+            elif len(hgEnds) == 1:   hgResult = self.tailTrim(0,minLen,maxLen)
+            else:                    return 
+            if len(geStarts) == 1:   geResult = self.startTrim(1,minLen,maxLen)
+            elif len(geEnds) == 1:   geResult = self.tailTrim(1,minLen,maxLen)
+            else:                    return
+        
+        if len(hgResult[0]) == len(geResult[0]) and hgResult[1] == geResult[1]:
+            self.TRIMMED=True
+            fd = self.readLines[0]; A=int(hgResult[1][0]); B=int(hgResult[1][1])
+            self.readLines = [[(fd[0][0],fd[0][1],hgResult[0]), (fd[1][0],fd[1][1],geResult[0]), (fd[2][0][A:B],fd[2][1][A:B])]]
+
+
+
+
+
+
+
+
 
 
     def trimLeft(self,hgLens,maxMap,minMap):
@@ -79,13 +159,19 @@ class MapRead:
             newChr = []; newGene = []; self.TRIMMED=True
             for i in range(len(self.readLines[0][0][2])):
                 tmpHg=set([]); tmpGene=set([])
+
                 for j in range(len(self.readLines)):
+
                     tmpHg.add(self.readLines[j][0][2][i])
                     tmpGene.add(self.readLines[j][1][2][i])
                     
                 if len(tmpHg) == 1:
                     newChr.append(tmpHg.pop())
                     newGene.append(tmpGene.pop())
+                for j in range(len(self.readLines)):
+
+                    tmpGene.add(self.readLines[j][1][2][i])
+                if len(tmpGene) == 1: newGene.append(tmpGene.pop())
 
             if len(newGene) == 1:
                 addedCands = sorted([ (self.readLines[j][1][2][1],self.readLines[j][0][2][1]) for j in range(len(self.readLines)) ])
@@ -185,28 +271,33 @@ class MapRead:
         self.readLines.sort()
 
 
-        chrSet=set([]); geneSet=set([])
+        chrSet=set([]); geneSet=set([]); refSet=set([]); cStrand=set([])
         for i in range(len(self.readLines)):
-            chrSet.add(self.readLines[i][0][0]); geneSet.add(self.readLines[i][1][0])
+            chrSet.add(self.readLines[i][0][0]); geneSet.add(self.readLines[i][1][0]); refSet.add(self.readLines[i][2][1]); cStrand.add(self.readLines[i][0][1]) #;  gStrand=self.readLines[i][1][1]; 
 
         if len(chrSet) == 1:
-        
+
+
             if self.readLines[0][0][2][-1::-1] == self.readLines[-1][0][2]:
                 self.palindromic()
 
-            elif len(geneSet) == 1:
-                
+
+            elif len(geneSet) == 1 and len(refSet)==1 and len(cStrand) == 1:
+
+                #READ=self.readLines[0][2][0]; REF=refSet.pop()
+                #cStrand = self.readLines[0][0][1]; rStrand=self.readLines[0][1][1]
+                self.trim()
                 hgEnds   = set([h[0][2][-1] for h in self.readLines]);
                 hgStarts = set([h[0][2][0]  for h in self.readLines]);
                 hgLens   = [(len(h[0][2]),h[0][2],h[1][2]) for h in self.readLines];
                 maxMap   = max(hgLens);
                 minMap   = min(hgLens);
 
-                if len(hgStarts) == 1:
-                    self.trimLeft(hgLens,maxMap,minMap)
+            #    if len(hgStarts) == 1:
+             #       self.trimLeft(hgLens,maxMap,minMap)
 
-                elif len(hgEnds) == 1:
-                    self.trimRight(hgLens,maxMap,minMap)
+              #  elif len(hgEnds) == 1:
+               #     self.trimRight(hgLens,maxMap,minMap)
             
             self.removeDuplicates()
 

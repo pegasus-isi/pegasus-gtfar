@@ -20,7 +20,7 @@ def process_file(mapFile,keyFile,prefix,FTYPE,strandSpecific):
     if FTYPE != "HG19":
         mapping.writeExpression()
         #print mapping.index,'read maps analyzed'
-        mapping.close()    
+        mapping.close()
         systemCall="sort -k14n,14 -k6,6 -k8n,8 < "+prefix+"_gene.loc > "+prefix+"_gene.srt"
         os.system(systemCall)
         sys.exit()
