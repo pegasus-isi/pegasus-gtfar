@@ -5,13 +5,13 @@ import sys
 import os 
 import difflib
 
-from ..util.seq import *
+from Sequence import *
+from Utilities import *
+from GtfLine import *
+from GtfGene import *
 from random import randrange
 from random import random 
 from random import choice
-#from ..tools.gtTools import *
-from GtfLine import *
-from GtfGene import *
 
 ##########################################################################################################################################
 ##################################################  GTF FILE - CLASS START  ##############################################################

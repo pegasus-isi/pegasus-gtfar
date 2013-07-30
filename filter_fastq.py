@@ -3,7 +3,8 @@
 
 import os
 import sys
-from modules.fastq.FastqFile import *
+#from modules.fastq.FastqFile import *
+from modules.FastqFile import *
 				
 def process_file(INFO,readlen,lowQual,avgQual,minTrim,outname):
     

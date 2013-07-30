@@ -2,7 +2,8 @@
 
 
 import sys
-from modules.file_types.MapFile import *
+#from modules.file_types.MapFile import *
+from modules.MapFile import *
 import os
 				
 def process_file(mapFile,keyFile,prefix,FTYPE,strandSpecific):

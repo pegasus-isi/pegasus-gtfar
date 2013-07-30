@@ -2,9 +2,11 @@
 
 import sys
 #sys.path.append('/home/rcf-47/souaiaia/analysis/tade/PIPELINE_v2/gtFar/python_src/gtfar_modules')
-from modules.gtf.GtfFile  import *
-from modules.mutations.MutationRecord  import *
+#from modules.gtf.GtfFile  import *
+#from modules.mutations.MutationRecord  import *
 
+from modules.GtfFile  import *
+from modules.MutationRecord  import *
 '''
 This program requires a gencode annotation file (gtf) and a path to the chr fasta files referenced in the gtf file
 example: HG19=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/hg19

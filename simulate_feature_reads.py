@@ -5,8 +5,9 @@ import os
 #from modules.gtf.GtfGene  import *
 #from modules.gtf.GtfFile  import *
 
-from modules.GtfGene  import *
-from modules.GtfFile  import *
+from modules.GtfFile import *
+from modules.GtfGene import *
+
 '''
 This program requires a gencode annotation file (gtf) and a path to the chr fasta files referenced in the gtf file
 example: HG19=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/hg19
@@ -17,12 +18,12 @@ example: HG19=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/hu
 def runthrough(fName,genomePath,prefix,readlen=100):
    
     
-    gtf = GtfFile(fName,prefix,readlen,printKEY=True)
+    gtf = GtfFile(fName,prefix,readlen,printKEY=False)
     while gtf.open:
         gtf.loadGenesOnChromosome()
         gtf.addFasta(genomePath+'/'+gtf.chr+'.fa') 
-        gtf.uniquifySeqs()
-        gtf.printAnnotation(TYPE='ALL')
+        gtf.uniquifySeqs(SILENT=True)
+        gtf.simulateReads() 
         gtf.startNextChromosome()
     
 
