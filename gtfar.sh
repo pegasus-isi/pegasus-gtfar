@@ -5,18 +5,52 @@
 source /export/uec-gs1/knowles/analysis/tade/gtfar_source/optparse
 export PATH=$PATH:/export/uec-gs1/knowles/analysis/tade/gtfar_source
 
+#source /export/uec-gs1/knowles/analysis/jen_mapping/gtfar/gtfar_source/optparse
+#export PATH=$PATH:/export/uec-gs1/knowles/analysis/jen_mapping/gtfar/gtfar_source
+
+
 HG19=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/hg19
 
-HGREF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/hg19/chr20.fa 
+#HGREF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/hg19/chr20.fa 
+HGREF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/hg19/hg19.txt
 
-DATA=/export/uec-gs1/knowles/analysis/tade/gtfar_runs/data
+#DATA=/export/uec-gs1/knowles/analysis/tade/gtfar_runs/data
 
-KEY=$DATA/test.key
-CATS=$DATA/test_catsOnly.key
-EXONS=$DATA/test_exonSeqs.fa
-GENES=$DATA/test_geneSeqs.fa
-INTRONS=$DATA/test_intronSeqs.fa
-GTF=$DATA/TEST19_20.gtf 
+GTF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/gencode16/gencode.v16.annotation.gtf
+DATA=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/gencode16/annotation_data
+
+INDEXES=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/indexes
+GC16_IDXS=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/indexes/gc16
+HG19_IDXS=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/indexes/gc16
+
+#  INDEXES #
+
+EXON_100_F1=$GC16_IDXS/50_F1_gc16_exonSeqs.index
+EXON_100_F2=$GC16_IDXS/50_F2_gc16_exonSeqs.index
+EXON_100_F3=$GC16_IDXS/50_F3_gc16_exonSeqs.index
+EXON_100_F4=$GC16_IDXS/50_F4_gc16_exonSeqs.index
+
+INTRON_100_F1=$GC16_IDXS/50_F1_gc16_intronSeqs.index
+INTRON_100_F2=$GC16_IDXS/50_F2_gc16_intronSeqs.index
+INTRON_100_F3=$GC16_IDXS/50_F3_gc16_intronSeqs.index
+INTRON_100_F4=$GC16_IDXS/50_F4_gc16_intronSeqs.index
+
+CATCLIP_40_F1=$GC16_IDXS/40_F1_gc16_catsOnly.index
+GENECLIP_40_F1=$GC16_IDXS/40_F1_gc16_geneSeqs.index
+
+HG19_100_F1=$HG19_IDXS/50_F1_hg19.index
+HG19_100_F2=$HG19_IDXS/50_F2_hg19.index
+HG19_100_F3=$HG19_IDXS/50_F3_hg19.index
+HG19_100_F4=$HG19_IDXS/50_F4_hg19.index
+
+HG19CLIP_40_F1=$HG19_IDXS/40_F1_hg19.index
+
+KEY=$DATA/gc16.key
+CATS=$DATA/gc16_catsOnly.fa
+EXONS=$DATA/gc16_exonSeqs.fa
+GENES=$DATA/gc16_geneSeqs.fa
+INTRONS=$DATA/gc16_intronSeqs.fa
+#GTF=$DATA/TEST19_20.gtf 
 
 
 ###  PROGRAMS:  annotate_references.py  call_mutations_from_locations.py  filter_fastq.py  modules  old  optparse  parse_sam_mapping.py
@@ -40,7 +74,6 @@ READ_EXT=$(echo $READS | awk -F\. '{print $NF}')
 
 if [ $READ_EXT != "fq" ] && [ $READ_EXT != "fastq" ]; then
     echo "A valid read file in fq format is required" 
-    exit
 fi
 
 if [ -d $OUTPUT ]; then echo "WARNING: output directory ("$OUTPUT") already exists; Files may be overwritten"; 
@@ -99,8 +132,8 @@ function iterative_feature_analysis {
 
     SEED1=$1; SUB1=$2; SEED2=$3; SUB2=$4; MAPLOG=$5; SAY=$6
     # ROUND 1 # 
-    first_feature_map $SEED1 $SUB1 $EXONS $READS --exonic $OUTPUT/exonic1 $MAPLOG 'exonic seqs'
-    first_feature_map $SEED1 $SUB1 $INTRONS $OUTPUT/exonic1_miss.fastq --intronic $OUTPUT/intronic1 $MYLOG "intronic seqs"
+    first_feature_map $SEED1 $SUB1 $EXON_100_F1 $READS --exonic $OUTPUT/exonic1 $MAPLOG 'exonic seqs'
+    first_feature_map $SEED1 $SUB1 $INTRON_100_F1 $OUTPUT/exonic1_miss.fastq --intronic $OUTPUT/intronic1 $MYLOG "intronic seqs"
     # ROUND 2 # 
     second_feature_map $SEED2 $SUB2 $OUTPUT/exonic1_iter_exonSeqs.fa $OUTPUT/intronic1_miss.fastq --exonic $OUTPUT/exonic2 $MYLOG 'exonic seqs' 
     second_feature_map $SEED2 $SUB2 $OUTPUT/intronic1_iter_intronSeqs.fa $OUTPUT/exonic2_miss.fastq --intronic $OUTPUT/intronic2 $MYLOG 'intron seqs' 
@@ -123,8 +156,8 @@ function iterative_feature_analysis {
 function double_genome_map { 
     SEED=$1; SUBS=$2; MYREADS=$3; MYPREFIX=$4; MAPLOG=$5; SAY=$6; 
     if ! [ -z "$SAY" ]; then echo "Mapping reads to human genome..."; fi 
-    perm $HGREF $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq >> $MAPLOG  
-    perm $HGREF $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.sam > "$MYPREFIX"_sam.log
+    perm $HG19_100_F2 $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq >> $MAPLOG  
+    perm $HG19_100_F2 $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.sam > "$MYPREFIX"_sam.log
     }
 
 
@@ -158,13 +191,16 @@ if [ $PROGRAM == "iter-map" ] || [ $PROGRAM == "ITER-MAP" ]; then
 
         # ITERATIVE FEATURE ALIGNMENT # 
 
-        #iterative_feature_analysis F1 1 F2 3 $MYLOG GO
+        echo "Pipeline Begins Sample: " $READS
+
+
+        iterative_feature_analysis F1 2 F3 5 $MYLOG GO
 
         # GENOMIC ALIGNMENT (TWO FILETYPES) #
-        double_genome_map F1 2 $OUTPUT/intronic2_miss.fastq $OUTPUT/hg19 $MYLOG GO 
+        double_genome_map F2 4 $OUTPUT/intronic2_miss.fastq $OUTPUT/hg19 $MYLOG GO 
         # GAPPED ALIGNMENT - MULTIPLE WAYS #
 
-        multi_gapped_alignment $OUTPUT/exonic_iterative_catsOnly.fa $OUTPUT/exonic_iterative_geneSeqs.fa $HGREF $OUTPUT/hg19_miss.fastq $OUTPUT/GAPS $MYLOG GO 
+        multi_gapped_alignment $OUTPUT/exonic_iterative_catsOnly.fa $OUTPUT/exonic_iterative_geneSeqs.fa $HG19CLIP_40_F1 $OUTPUT/hg19_miss.fastq $OUTPUT/GAPS $MYLOG GO 
         cp $OUTPUT/GAPS_hg19_miss.fastq $OUTPUT/"$PREFIX_"remainingReads.fq
         echo "MAPPING COMPLETE"
         echo ""
@@ -177,11 +213,11 @@ if [ $PROGRAM == "iter-map" ] || [ $PROGRAM == "ITER-MAP" ]; then
         ## CLEANUP ROUND ##
 
         cd $OUTPUT 
-        #smart_move .mapping tmp
-        #smart_move .fa      tmp
-        #smart_move .log     tmp
-        #smart_move .loc     tmp
-        #smart_move .fastq  tmp
+        smart_move .mapping tmp
+        smart_move .fa      tmp
+        smart_move .log     tmp
+        smart_move .loc     tmp
+        smart_move .fastq  tmp
         cd ..
         # MERGE EXPRESSION, ETC, ETC, ETC # --- ALSO YOU COULD PARSE THE GENOME BETTER  
         

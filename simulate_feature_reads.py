@@ -46,5 +46,5 @@ if len(args)==1 and options.genomePath!=None:
     runthrough(args[0],options.genomePath,options.prefix,options.readlen)
 else:
     print "ANNOTATE AND CREATE SEQS/KEY"
-    print "USAGE: ./make_ref_from_gtf.py file.gtf -g GENOMEPATH -p PREFIXNAME -r READLENGTH" 
+    print "USAGE: ./simulate_feature_reads.py file.gtf -g GENOMEPATH -p PREFIXNAME -r READLENGTH" 
 

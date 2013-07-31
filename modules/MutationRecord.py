@@ -116,7 +116,9 @@ class MutationRecord:
             ## INITIALIZE GENE CANDIDATES FOR THE GENE ##
                 myCands = self.cands[self.gene]
                 mySites = [MutationCand(x) for x in myCands]
-            
+            else:
+                break
+
             ## AS LONG AS GENE CANDIDATES REMAIN - IF THE READ POSITION IS PAST THE CANDIDATE EVALUATE; OTHERWISE RECORD OR ITERATE THROUGH READS ##
             while len(myCands) > 0:
 

@@ -273,9 +273,6 @@ class GtfFile:
         
         self.cntKey.write("%s EXONIC %s INTRONIC %s\n" % (gene.name,exonic,intronic))
 
-
-
-
         tCnt = len(gene.transcripts)
         readsPerTran  = int(exonic / tCnt )
 
@@ -284,10 +281,13 @@ class GtfFile:
         qualStr= "".join(["B" for x in range(self.readlen)])
 
         for t in gene.transcripts:
-            break
 
             tranBases = makeFeatureSeq(gene.seq,t[1][1])
+
+            if len(tranBases) <=self.readlen: continue
             offset = len(tranBases) - self.readlen
+
+
 
             for i in range(readsPerTran):
                 
