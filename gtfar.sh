@@ -21,7 +21,7 @@ DATA=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/genco
 
 INDEXES=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/indexes
 GC16_IDXS=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/indexes/gc16
-HG19_IDXS=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/indexes/gc16
+HG19_IDXS=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/indexes/hg19
 
 #  INDEXES #
 
@@ -73,7 +73,9 @@ parseargs $@
 READ_EXT=$(echo $READS | awk -F\. '{print $NF}')
 
 if [ $READ_EXT != "fq" ] && [ $READ_EXT != "fastq" ]; then
-    echo "A valid read file in fq format is required" 
+    echo "A valid read file in fq format is required"
+    echo "EXAMPLE: ./gtfar.sh iter-map -r myreads.fastq -o myoutputdir -r myprefix"
+    exit 
 fi
 
 if [ -d $OUTPUT ]; then echo "WARNING: output directory ("$OUTPUT") already exists; Files may be overwritten"; 
@@ -113,10 +115,13 @@ function first_feature_map {
         
     if ! [ -z "$SAY1" ]; then echo  "Mapping reads to "$SAY1" (Iteration 1 )..."; fi 
     perm $MYREF $MYREADS --seed $MYSEED -v $MYSUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq -s "$MYPREFIX".index >> $MAPLOG
+    if [ $? != 0 ]; then echo "perm-fail"; exit; fi  
     if ! [ -z "$SAY1" ]; then echo "Parsing alignment..."; fi 
     parse_alignment.py $TYPE $MYPREFIX.mapping -k $KEY -p "$MYPREFIX"_parse 
+    if [ $? != 0 ]; then echo "parse-fail"; exit; fi 
     if ! [ -z "$SAY1" ]; then echo "Determining mutations"...; fi 
     call_mutations.py "$MYPREFIX"_parse_gene.srt $GTF $TYPE -g $HG19 -p "$MYPREFIX"_iter 
+    if [ $? != 0 ]; then echo "call-fail"; exit; fi 
     if ! [ -z "$SAY1" ]; then echo "Complete"; echo ""; fi 
     }
 
@@ -155,9 +160,13 @@ function iterative_feature_analysis {
 
 function double_genome_map { 
     SEED=$1; SUBS=$2; MYREADS=$3; MYPREFIX=$4; MAPLOG=$5; SAY=$6; 
-    if ! [ -z "$SAY" ]; then echo "Mapping reads to human genome..."; fi 
+    if ! [ -z "$SAY" ]; then echo -n "Mapping reads to human genome......"; fi 
+    #echo perm $HG19_100_F2 $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq >> $MAPLOG  
     perm $HG19_100_F2 $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq >> $MAPLOG  
     perm $HG19_100_F2 $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.sam > "$MYPREFIX"_sam.log
+    if [ $? != 0 ]; then echo "perm-fail"; exit; fi  
+    if ! [ -z "$SAY" ]; then echo "Complete"; fi 
+    
     }
 
 
@@ -166,22 +175,35 @@ function multi_gapped_alignment {
 
     REF1=$1; REF2=$2; REF3=$3; MYREADS=$4; MYPREFIX=$5; MAPLOG=$6; SAY=$7
     
-    if ! [ -z "$SAY" ]; then echo "Gapped mapping to concatenated exons"; fi 
+    if ! [ -z "$SAY" ]; then echo -n "Gapped mapping to concatenated exons....."; fi 
     clipR $REF1 $MYREADS --anchorL 40 --seed F1 -v 1 --ignoreRepeatR 10 --ignoreDummyR 40 -u "$MYPREFIX"_cat_miss.fastq -o "$MYPREFIX"_cat.sam --noSamHeader >> $MAPLOG  
-    if ! [ -z "$SAY" ]; then echo "Parsing gapped exonic alignment"; fi 
+    if [ $? != 0 ]; then echo "clipR-fail"; exit; fi  
+    if ! [ -z "$SAY" ]; then echo "Complete"; echo -n "Parsing gapped exonic alignment....."; fi 
+    #if ! [ -z "$SAY" ]; then echo -n "Parsing gapped exonic alignment....."; fi 
     parse_alignment.py "$MYPREFIX"_cat.sam --gapped -k $KEY -p "$MYPREFIX"_cat_parse    
-    if ! [ -z "$SAY" ]; then echo "Gapped mapping to gene sequences"; fi 
+    if [ $? != 0 ]; then echo "Parse-fail"; exit; fi  
+    
+    if ! [ -z "$SAY" ]; then echo "Complete"; echo -n "Gapped mapping to gene sequences..."; fi 
+    #if ! [ -z "$SAY" ]; then echo "Gapped mapping to gene sequences"; fi 
     clipR $REF2 "$MYPREFIX"_cat_miss.fastq --anchorL 40 --seed F1 -v 1 --ignoreRepeatR 10 --ignoreDummyR 40 -u "$MYPREFIX"_gene_miss.fastq -o "$MYPREFIX"_gene.sam --noSamHeader >> $MAPLOG 
-    if ! [ -z "$SAY" ]; then echo "Parsing gapped gene alignment"; fi 
+    if [ $? != 0 ]; then echo "clipR-fail"; exit; fi  
+    if ! [ -z "$SAY" ]; then echo "Complete"; echo -n "Parsing gapped gene alignment....."; fi 
+    #if ! [ -z "$SAY" ]; then echo "Parsing gapped gene alignment"; fi 
     parse_alignment.py "$MYPREFIX"_gene.sam --gapped -k $KEY -p "$MYPREFIX"_gene_parse    
-    if ! [ -z "$SAY" ]; then echo "Gapped mapping to human genome"; fi 
+    if [ $? != 0 ]; then echo "Parse-fail"; exit; fi  
+    
+    #if ! [ -z "$SAY" ]; then echo "Gapped mapping to human genome....."; fi 
+    if ! [ -z "$SAY" ]; then echo "Complete"; echo -n "Gapped mapping to human genome..."; fi 
     clipR $REF3 "$MYPREFIX"_gene_miss.fastq --anchorL 40 --seed F1 -v 1 --ignoreRepeatR 10 --ignoreDummyR 40 -u "$MYPREFIX"_hg19_miss.fastq -o "$MYPREFIX"_hg19.sam --noSamHeader >> $MAPLOG  
-    if ! [ -z "$SAY" ]; then echo "Parsing gapped genomic alignment"; fi 
+    if [ $? != 0 ]; then echo "clipR-fail"; exit; fi  
+    if ! [ -z "$SAY" ]; then echo "Complete"; echo -n "Parsing gapped genomic alignment....."; fi 
+    #if ! [ -z "$SAY" ]; then echo "Parsing gapped genomic alignment"; fi 
     parse_alignment.py "$MYPREFIX"_hg19.sam --hg19 -k $KEY -p "$MYPREFIX"_hg19_parse    
+    if ! [ -z "$SAY" ]; then echo "Complete"; fi 
     }
 
 
-
+    
 
 if [ $PROGRAM == "iter-map" ] || [ $PROGRAM == "ITER-MAP" ]; then 
 
@@ -223,7 +245,6 @@ if [ $PROGRAM == "iter-map" ] || [ $PROGRAM == "ITER-MAP" ]; then
         
         cat $OUTPUT/*gene.cnts | sort -k1,1 -k5,5 | awk '{if ($5!=L) {if (NR!=1) print A,B,C,"|",L,X,Y,Z; A=$1;B=$2;C=$3;L=$5;X=$6;Y=$7;Z=$8} else {X+=$6;Y+=$7;Z+=$8}}' > $OUTPUT/results/$PREFIX.gene.cnts
     fi
-
 
 
 exit

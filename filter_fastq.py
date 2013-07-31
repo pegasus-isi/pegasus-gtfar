@@ -9,9 +9,9 @@ from modules.FastqFile import *
 def process_file(INFO,readlen,lowQual,avgQual,minTrim,outname):
     
     fastq = FastqFile(INFO,readlen,lowQual,avgQual,minTrim)
-    fastq.loadAdaptor('three prime head',"START",'AGATCGGAAGAGCACACGT')
-    fastq.loadAdaptor('five prime tail',"END","CACGACGCTCTTCCGATCT")
-    fastq.loadAdaptor('three prime tail',"END",'GTATGCCGTCTTCTGCTTG')
+    fastq.loadAdaptor('three_prime_head',"START",'AGATCGGAAGAGCACACGT')
+    fastq.loadAdaptor('five_prime_tail',"END","CACGACGCTCTTCCGATCT")
+    fastq.loadAdaptor('three_prime_tail',"END",'GTATGCCGTCTTCTGCTTG')
     
     while fastq.nextRead():
         fastq.adaptorSearch()

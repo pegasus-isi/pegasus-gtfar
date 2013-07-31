@@ -20,4 +20,4 @@ def fileExtension(fname):
 
 def errorQuit(outString):
     sys.stderr.write(outString+'\n')
-    sys.exit()
+    sys.exit(2)

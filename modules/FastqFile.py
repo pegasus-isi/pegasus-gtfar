@@ -23,7 +23,8 @@ class FastqFile:
         self.adaptMatchRate=0.85
         self.outDict={}
         self.stats=False
-
+        self.rejectFile = None
+        self.rejectLabel = None
         ########## PAD THEM WITH X OR Y BUT NOT SAME DUH #############
 
 
@@ -141,6 +142,13 @@ class FastqFile:
             if newlen not in self.outDict.keys():
                 self.outDict[newlen]=open(prefix+'_trim_'+str(newlen)+'.fastq','w') 
             self.outDict[newlen].write("%s\n%s\n%s\n%s\n" % (self.readID,self.readSeq[0:newlen],self.readSign,self.readQual[0:newlen]))
+        else:
+            if self.rejectFile == None:
+                self.rejectFile = open(prefix+'_reject.fastq','w')
+            self.rejectFile.write('%s %s\n' % (self.readID," ".join([x[1] for x in self.redFlags])))
+            self.rejectFile.write("%s\n%s\n%s\n" % (self.readSeq,self.readSign,self.readQual))
+            
+                
             
 
     def writeFastq(self,prefix):
