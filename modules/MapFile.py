@@ -23,7 +23,8 @@ class MapFile:
     def __init__(self,fileHandle,prefix,FTYPE,strandSpecific=None):
 
         ## FIGURE OUT THE FILE FORMAT ##
-        self.fname = open(fileHandle); self.prefix = prefix; self.fType = FTYPE; self.sense = True; self.showAMBIG = True; self.index =0; self.open = True; self.antiSense = None; self.key = {}; self.FULLSEQ=False
+        self.fileHandle = fileHandle
+        self.fname = open(fileHandle); self.prefix = prefix; self.fType = FTYPE; self.sense = True; self.showAMBIG = False; self.index =0; self.open = True; self.antiSense = None; self.key = {}; self.FULLSEQ=False
 
         if fileHandle.split(".")[-1] == "mapping":      self.format = "MAPPING"
         elif fileHandle.split(".")[-1] == "sam":        self.format = "SAM"
@@ -228,29 +229,21 @@ class MapFile:
 
 
 
+##############################################################################################################################################
+########################################  PARSING READ (MAPPING FILE) ########################################################################
+##############################################################################################################################################
 
-##############################################################################################################
-############################################   PARSING READ   ################################################
-##############################################################################################################
 
+#######################################  EXONIC UNGAPPED  ##########################################################
 
     def parseExonicLines(self,mapLines,strandCnt,sense):
-
-            tMaps =[]; tCats = [];  catLines = []; newLines = []; sense = True
-
+            tMaps =[]; tCats = [];  catLines = []; newLines = []; sense = sense
             for i in range(len(mapLines)):
 
                 if strandCnt == 1 or mapLines[i][5] != self.antiSense:
-
                     s = mapLines[i][2].split("|");  tmpKey = self.key["|".join(s[0:len(s)-1])+"|"]
                     geneTmp,hgTmp = self.relocate(int(mapLines[i][3]),tmpKey,len(mapLines[i][1])-1)
                     hgStrand,hgLoc = trueStrand(mapLines[i][5],s[2], hgTmp )
-
-
-             #       print "OK",geneTmp,hgTmp
-             #       print "FUCK",hgStrand,hgLoc
-
-
                     myLine = [ ( s[3] , hgStrand, hgLoc  ) , ( s[0],mapLines[i][5],geneTmp ) , ( mapLines[i][1],mapLines[i][4] ) ]
 
                     if s[len(s)-1]=="CATSEQ":
@@ -259,26 +252,27 @@ class MapFile:
                             ID = mapLines[i][0]; qual = mapLines[i][8]; subs= int(mapLines[i][6]); catLines.append(myLine)
                         else:
                             if myLine not in catLines:      catLines.append(myLine)
-                    
                     else:
                         tMaps.append(mapLines[i][2])
                         if newLines == []:
-                     #       print "PASS",mapLines[i][2],geneTmp,hgTmp
                             ID = mapLines[i][0]; qual = mapLines[i][8]; subs= int(mapLines[i][6]); newLines.append(myLine)
                         else:
                             if myLine not in newLines:
-                      #          print "PASS",mapLines[i][2],geneTmp,hgTmp
                                 newLines.append(myLine)
 
             if len(newLines) > 0: self.read = MapRead(self.format,sense,ID,qual,subs,tMaps,newLines)
             else:                 self.read = MapRead(self.format,sense,ID,qual,subs,tCats,catLines)
             
 
-##############################################################################################################
+#########################################################################################################################################
+
+
+#######################################  INTRONIC UNGAPPED  ##########################################################
+
 
     def parseIntronicLines(self,mapLines,strandCnt,sense):
 
-            tMaps =[]; tCats = [];  catLines = []; newLines = []; sense = True
+            tMaps =[]; tCats = [];  catLines = []; newLines = []
 
             for i in range(len(mapLines)):
 
@@ -286,9 +280,6 @@ class MapFile:
 
                     s = mapLines[i][2].split("|");  tmpKey = self.key["|".join(s[0:len(s)-1])+"|"]
                     geneTmp,hgTmp = self.relocate(int(mapLines[i][3]),tmpKey,len(mapLines[i][1])-1)
-                    
-
-
                     hgStrand,hgLoc = trueStrand(mapLines[i][5],s[2], hgTmp )
 
                     myLine = [ ( s[3] , hgStrand, hgLoc  ) , ( s[0],mapLines[i][5],geneTmp ) , ( mapLines[i][1],mapLines[i][4] ) ]
@@ -299,7 +290,6 @@ class MapFile:
                             ID = mapLines[i][0]; qual = mapLines[i][8]; subs= int(mapLines[i][6]); catLines.append(myLine)
                         else:
                             if myLine not in catLines:      catLines.append(myLine)
-                    
                     else:
                         tMaps.append(mapLines[i][2])
                         if newLines == []:
@@ -310,9 +300,42 @@ class MapFile:
              
             if len(newLines) > 0: self.read = MapRead(self.format,sense,ID,qual,subs,tMaps,newLines)
             else:                 self.read = MapRead(self.format,sense,ID,qual,subs,tCats,catLines)
-            
+    
 
-##############################################################################################################
+
+#########################################################################################################################################
+
+
+#######################################  INTRONIC UNGAPPED  #############################################################################
+
+
+
+    def parseUngappedGenomicLines(self,mapLines,strandCnt,sense):
+       
+        if self.index == 1:
+            self.novelAreas = {}
+        if len(mapLines) == 1:
+
+            mapChr = mapLines[0][2]
+            mapPos = int(mapLines[0][3])
+            mapRound = mapPos-mapPos%1000
+            if mapChr not in self.novelAreas:
+                self.novelAreas[mapChr]=dd(int)
+                
+            self.novelAreas[mapChr][mapRound]+=1
+           
+                
+             
+
+
+
+##############################################################################################################################################
+########################################   SAM PARSERS BELOW   ###############################################################################
+##############################################################################################################################################
+
+
+
+
 
     def parseGappedLines(self,mapLines,strandCnt,sense):
 
@@ -320,7 +343,7 @@ class MapFile:
             ### NOTICE WE ARE TACILITY ASSUMING SAM FORMAT ###
 
 
-            tMaps =[]; tCats = [];  catLines = []; newLines = []; sense = True
+            tMaps =[]; tCats = [];  catLines = []; newLines = []
 
             for i in range(len(mapLines)):
 
@@ -362,7 +385,7 @@ class MapFile:
 ##############################################################################################################
 
 
-    def parseGenomicLines(self,mapLines,strandCnt,sense):
+    def parseGappedGenomicLines(self,mapLines,strandCnt,sense):
         
         if self.index == 1:
             self.spliceExp = dd(int)
@@ -376,7 +399,7 @@ class MapFile:
             self.spliceExp[spliceStr]+=1
 
 
-        
+     
 
 ##############################################################################################################
 
@@ -424,7 +447,7 @@ class MapFile:
                     break
 
             strandCnt = len(strandSet); sense = True
-            
+                        
             if strandCnt == 1:
                 if strandSet.pop() == self.antiSense: sense = False
 
@@ -433,6 +456,9 @@ class MapFile:
             
             elif self.fType == "INTRONIC":
                 self.parseIntronicLines(mapLines,strandCnt,sense)
+
+            elif self.fType == "HG19":
+                self.parseUngappedGenomicLines(mapLines,strandCnt,sense)
 
         else:
             while self.firstLine[0] == firstID:
@@ -445,13 +471,15 @@ class MapFile:
            
             if strandCnt == 1:
                 if strandSet.pop() == self.antiSense: sense = False
-            
-            if self.fType == "GAPPED":
+             
+            if self.fType == "HG19":
+                self.parseGappedGenomicLines(mapLines,strandCnt,sense)
+
+            elif self.fType == "GAPPED":
                 self.parseGappedLines(mapLines,strandCnt,sense)
-            elif self.fType == "HG19":
-                self.parseGenomicLines(mapLines,strandCnt,sense)
 
-
+            else:
+                errorQuit("SAM FORMAT FOR REQUIRES GAPPED ALIGNMENT")
 
 
 
@@ -571,18 +599,60 @@ class MapFile:
 ##############################################################################################################
 ####################################   PRINTING DATA #########################################################
 ##############################################################################################################
-                
+
+    
+
+
+
+
     def writeNovelGenes(self):
 
-        self.spliceOut = open(self.prefix+'_splice.cnts','w')
-        for s in self.spliceExp.keys():
-            self.spliceOut.write("%s NOVEL %s\n" % (s,self.spliceExp[s]))
+        if self.format == "SAM":
+            self.spliceOut = open(self.prefix+'_splice.cnts','w')
+            for s in self.spliceExp.keys():
+                self.spliceOut.write("%s NOVEL %s\n" % (s,self.spliceExp[s]))
+        else:
+            self.minNovelCnt = 20 
+            self.novelOut = open(self.prefix+'_novelAreas.cnts','w')
+            self.passAreas = {}
+            for chr in self.novelAreas:
+                self.passAreas[chr]=dd(list)
+                for area in self.novelAreas[chr]:
+                    if self.novelAreas[chr][area] > self.minNovelCnt:
+                        self.passAreas[chr][area] = []
+
+            self.novelAreas.clear()
+
+            self.fname = open(self.fileHandle)
+            for line in self.fname:
+                line=line.split()
+                myChr= line[2]; myPos = int(line[3]); myRound=myPos - myPos%1000; myStrand = line[5]
+                
+                if myRound in self.passAreas[myChr]:
+                    self.passAreas[myChr][myRound].append((myPos,myStrand))
+            
+            for chr in self.passAreas:
+                for area in self.passAreas[chr]:
+                    locs = sorted([x[0] for x in self.passAreas[chr][area]])
+                    strands = [x[1] for x in self.passAreas[chr][area]]
+                    pos=0;neg=0
+                    for s in strands: 
+                        if s == "+":
+                            pos+=1
+                        else:
+                            neg+=1
+                    self.novelOut.write('%s %s %s +/- %s %s SPOTS: %s\n' % (chr,area,len(locs),pos,neg," ".join([str(l) for l in locs])))
+                
+
+
 
     def writeExpression(self):
 
         self.geneOut = open(self.prefix+'_gene.cnts','w')
         self.spliceOut = open(self.prefix+'_splice.cnts','w')
-        self.featOut = open(self.prefix+'_feat.cnts','w')
+
+
+
 
         if self.fType == "GAPPED":
             if self.FULLSEQ: self.fType = "GENE-GAP"
@@ -601,8 +671,11 @@ class MapFile:
         for s in self.spliceExp.keys():
             self.spliceOut.write("%s %s %s\n" % (s,self.fType,self.spliceExp[s]))
 
-        for f in self.featExp.keys():
-            self.featOut.write("%s %s %s\n" % (f,self.fType,self.featExp[f]))
+        if self.fType != "GAPPED":
+            self.featOut = open(self.prefix+'_feat.cnts','w')
+
+            for f in self.featExp.keys():
+                self.featOut.write("%s %s %s\n" % (f,self.fType,self.featExp[f]))
 
 
 

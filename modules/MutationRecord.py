@@ -71,9 +71,6 @@ class MutationRecord:
                             end = start + (self.mapPos[i+1] - self.mapPos[i] +1)
                             readSeq = self.mapRead[start:end];    refSeq  = self.mapRef[start:end]
                             diffs.extend([self.mapPos[i]+j for j in range(spliceBuffer,len(readSeq)-spliceBuffer) if readSeq[j]!=refSeq[j]])
-                     #       if 1358 in diffs:
-                     #           print self.line
-                     #           print "YEAH"
                         start = start + (self.mapPos[i+1] - self.mapPos[i] + 1)
                     for d in diffs:
                         geneCands[d]+=1

@@ -9,8 +9,9 @@ import os
 def process_file(mapFile,keyFile,prefix,FTYPE,strandSpecific):
    
     mapping = MapFile(mapFile,prefix,FTYPE,strandSpecific)
-
-    mapping.loadKey(keyFile)
+    
+    if FTYPE != "HG19":
+        mapping.loadKey(keyFile)
     
     while mapping.open:
         mapping.getReads()
@@ -20,7 +21,6 @@ def process_file(mapFile,keyFile,prefix,FTYPE,strandSpecific):
     
     if FTYPE != "HG19":
         mapping.writeExpression()
-        #print mapping.index,'read maps analyzed'
         mapping.close()
         systemCall="sort -k14n,14 -k6,6 -k8n,8 < "+prefix+"_gene.loc > "+prefix+"_gene.srt"
         os.system(systemCall)
@@ -52,16 +52,20 @@ if __name__ == '__main__':
     elif len(args)==1:
         mapFile=args[0]
 
+        if options.hg19 == True and options.gapped == True:
+            # TYPE GAPPED HG19 SAM MAPPING #
+            process_file(args[0],None,options.prefix,"HG19",None)
+
         if options.gapped == True and options.hg19 == False:
-            process_file(args[0],options.key,options.prefix,"GAPPED",'+')
+            process_file(args[0],options.key,options.prefix,"GAPPED",'0')
         elif options.exonic == True and options.intronic == False:
-            process_file(args[0],options.key,options.prefix,"EXONIC",'+')
+            process_file(args[0],options.key,options.prefix,"EXONIC",'-')
         elif options.exonic == False and options.intronic == True:
-            process_file(args[0],options.key,options.prefix,"INTRONIC",'+')
+            process_file(args[0],options.key,options.prefix,"INTRONIC",'-')
         elif options.exonic == False and options.intronic == False and options.hg19 == True:
-            process_file(args[0],options.key,options.prefix,"HG19",'+')
+            process_file(args[0],options.key,options.prefix,"HG19",'-')
         else:
-            print "Intronic/Gapped/Exonic Specification Required"
+            print "Intronic/Gapped/Exonic/hg19 Specification Required"
             sys.exit()
     else:
         print "TOO MANY ARGS"

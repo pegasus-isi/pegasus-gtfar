@@ -370,7 +370,7 @@ class MapRead:
  #           print self.hgLocs, self.ID,self.PALINDROMIC, self.TRIMMED 
 
 
-            self.samStrings.append(self.ID+'\t'+samStrand+'\t'+hg[0]+'\t'+str(spots[0])+'\t'+samScr+'\t'+cigarStr+'\t*\t0\t0\t'+samSeq+'\t'+'\t'+self.qual+'\tNM:i:'+str(self.subs))
+            self.samStrings.append(self.ID+'\t'+samStrand+'\t'+hg[0]+'\t'+str(spots[0])+'\t'+samScr+'\t'+cigarStr+'\t*\t0\t0\t'+samSeq+'\t'+self.qual+'\tNM:i:'+str(self.subs))
         
             for j in range(len(self.geneLocs[i])):
                 if len(self.geneLocs[i]) > 1: gType = "MULTI"
