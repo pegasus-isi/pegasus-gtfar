@@ -6,12 +6,7 @@ from MapRead import *
 from Sequence import *
 from Utilities import *
 
-
-
 from collections import defaultdict as dd
-
-#from ..gtTools.seq import *
-#from ..gtTools.util import *
 from math import fabs
 
 ##########################################################################################################################################
@@ -24,7 +19,13 @@ class MapFile:
 
         ## FIGURE OUT THE FILE FORMAT ##
         self.fileHandle = fileHandle
-        self.fname = open(fileHandle); self.prefix = prefix; self.fType = FTYPE; self.sense = True; self.showAMBIG = False; self.index =0; self.open = True; self.antiSense = None; self.key = {}; self.FULLSEQ=False
+        self.fname = open(fileHandle); self.prefix = prefix; self.fType = FTYPE; self.index = 0; self.key = {}
+
+        self.samOut, self.mapOut,self.AntiOut, self.geneOut,self.spliceOut,self.featOut,self.antiSense = None, None , None, None, None, None, None
+
+        self.sense, self.open = True, True
+
+        self.showAMBIG , self.FULLSEQ, self.FLANKSEQ = False,False, False
 
         if fileHandle.split(".")[-1] == "mapping":      self.format = "MAPPING"
         elif fileHandle.split(".")[-1] == "sam":        self.format = "SAM"
@@ -42,7 +43,6 @@ class MapFile:
                 if strandSpecific == '0' or strandSpecific == "+":      self.antiSense = '16'
                 else:                                                   self.antiSense = '0'
         
-        self.samOut, self.mapOut,self.AntiOut, self.geneOut,self.spliceOut,self.featOut = None, None , None, None, None, None
 
 ##############################################################################################################
 ############################################   ADD KEY   #####################################################
@@ -284,7 +284,7 @@ class MapFile:
 
                     myLine = [ ( s[3] , hgStrand, hgLoc  ) , ( s[0],mapLines[i][5],geneTmp ) , ( mapLines[i][1],mapLines[i][4] ) ]
 
-                    if s[len(s)-1][0:4]=="FLNK":
+                    if s[len(s)-2][0:4]=="FLNK":
                         tCats.append(mapLines[i][2])
                         if catLines == []:
                             ID = mapLines[i][0]; qual = mapLines[i][8]; subs= int(mapLines[i][6]); catLines.append(myLine)
@@ -299,7 +299,9 @@ class MapFile:
                                 newLines.append(myLine)
              
             if len(newLines) > 0: self.read = MapRead(self.format,sense,ID,qual,subs,tMaps,newLines)
-            else:                 self.read = MapRead(self.format,sense,ID,qual,subs,tCats,catLines)
+            else:
+                self.FLANKSEQ = True
+                self.read = MapRead(self.format,sense,ID,qual,subs,tCats,catLines,seqType="FLANKSEQ")
     
 
 

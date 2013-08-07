@@ -18,11 +18,12 @@ from Sequence import *
 
 
 class MapRead:
-    def __init__(self,type,sense,ID,qual,subs,tMaps,readLines):
+    def __init__(self,type,sense,ID,qual,subs,tMaps,readLines,seqType=None):
+
 
         self.ID = ID; self.sense = sense; self.qual = qual; self.subs = subs; self.features = tMaps; self.readLines = readLines; self.PALINDROMIC = False; self.TRIMMED = False;
 
-        self.samStrings = []; self.locStrings = []
+        self.samStrings = []; self.locStrings = []; self.seqType = seqType
        
 
         if type == 'MAPPING' or type == 'SAM':
@@ -356,10 +357,19 @@ class MapRead:
 
         for i in range(len(self.hgLocs)):
             hg = self.hgLocs[i]; mySeq = self.seqs[i][0]
-            if hg[1]=='+':
-                samSeq = mySeq;  spots = hg[2]; samStrand = '0'
+
+            if self.seqType == "FLANKSEQ":
+                if hg[1]=='+':
+                    samSeq = mySeq;  spots = hg[2]; samStrand = '0'
+                else:
+                    samSeq = revComp(mySeq); spots = hg[2]; samStrand='16'; self.qual = self.qual[-1::-1]
+
             else:
-                samSeq = revComp(mySeq); spots = hg[2][-1::-1]; samStrand='16'; self.qual = self.qual[-1::-1]
+                if hg[1]=='+':
+                    samSeq = mySeq;  spots = hg[2]; samStrand = '0'
+                else:
+                    samSeq = revComp(mySeq); spots = hg[2][-1::-1]; samStrand='16'; self.qual = self.qual[-1::-1]
+
 
 
             for k in range(0,len(spots),2):
