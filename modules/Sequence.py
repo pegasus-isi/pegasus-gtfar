@@ -71,6 +71,10 @@ def trueStrand(s1,s2,spots):
         strand = '-'
         if spots[0] < spots[1]:
             spots = spots[-1::-1]
+    if spots[0] > spots[-1]:
+        spots = spots[-1::-1]
+
+
 
     return strand,spots
 

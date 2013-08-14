@@ -277,10 +277,16 @@ class MapFile:
             for i in range(len(mapLines)):
 
                 if strandCnt == 1 or mapLines[i][5] != self.antiSense:
+                    
 
                     s = mapLines[i][2].split("|");  tmpKey = self.key["|".join(s[0:len(s)-1])+"|"]
+                    
+                    
                     geneTmp,hgTmp = self.relocate(int(mapLines[i][3]),tmpKey,len(mapLines[i][1])-1)
                     hgStrand,hgLoc = trueStrand(mapLines[i][5],s[2], hgTmp )
+
+                    #print hgStrand, hgLoc
+
 
                     myLine = [ ( s[3] , hgStrand, hgLoc  ) , ( s[0],mapLines[i][5],geneTmp ) , ( mapLines[i][1],mapLines[i][4] ) ]
 

@@ -114,13 +114,13 @@ function first_feature_map {
     MYSEED=$1; MYSUBS=$2; MYREF=$3; MYREADS=$4; TYPE=$5; MYPREFIX=$6; MAPLOG=$7; SAY1=$8;
         
     if ! [ -z "$SAY1" ]; then echo  "Mapping reads to "$SAY1" (Iteration 1 )..."; fi 
-    perm $MYREF $MYREADS --seed $MYSEED -v $MYSUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq -s "$MYPREFIX".index >> $MAPLOG
+    perm $MYREF $MYREADS --seed $MYSEED -v $MYSUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq >> $MAPLOG
     if [ $? != 0 ]; then echo "perm-fail"; exit; fi  
     if ! [ -z "$SAY1" ]; then echo "Parsing alignment..."; fi 
     parse_alignment.py $TYPE $MYPREFIX.mapping -k $KEY -p "$MYPREFIX"_parse 
     if [ $? != 0 ]; then echo "parse-fail"; exit; fi 
     if ! [ -z "$SAY1" ]; then echo "Determining mutations"...; fi 
-    call_mutations.py "$MYPREFIX"_parse_gene.srt $GTF $TYPE -g $HG19 -p "$MYPREFIX"_iter 
+    call_mutations.py "$MYPREFIX"_parse_gene.srt $GTF $TYPE -g $HG19 -p "$MYPREFIX"_iter1 
     if [ $? != 0 ]; then echo "call-fail"; exit; fi 
     if ! [ -z "$SAY1" ]; then echo "Complete"; echo ""; fi 
     }
@@ -128,7 +128,7 @@ function first_feature_map {
 function second_feature_map {   
     MYSEED=$1; MYSUBS=$2; MYREF=$3; MYREADS=$4; TYPE=$5; MYPREFIX=$6; MAPLOG=$7; SAY1=$8
     if ! [ -z "$SAY1" ]; then echo "Mapping reads to "$SAY1" (Iteration 2 )..."; fi 
-    perm $MYREF $MYREADS --seed $MYSEED -v $MYSUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq -s "$MYPREFIX".index >> $MAPLOG
+    perm $MYREF $MYREADS --seed $MYSEED -v $MYSUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq >> $MAPLOG
     if ! [ -z "$SAY1" ]; then echo "Parsing alignment..."; fi 
     parse_alignment.py $TYPE $MYPREFIX.mapping -k $KEY -p "$MYPREFIX"_parse 
     }
@@ -142,7 +142,13 @@ function iterative_feature_analysis {
     # ROUND 2 # 
     second_feature_map $SEED2 $SUB2 $OUTPUT/exonic1_iter_exonSeqs.fa $OUTPUT/intronic1_miss.fastq --exonic $OUTPUT/exonic2 $MYLOG 'exonic seqs' 
     second_feature_map $SEED2 $SUB2 $OUTPUT/intronic1_iter_intronSeqs.fa $OUTPUT/exonic2_miss.fastq --intronic $OUTPUT/intronic2 $MYLOG 'intron seqs' 
+    # NOW DO THE TRIMED READS # 
+    
+    
     # COMBINE ANALYSIS # 
+
+    # 
+
 
     if ! [ -z "$SAY" ]; then echo "Combining/mergeing iterative results..."; fi 
     sort -m -k14n,14 -k6,6 -k8n,8 $OUTPUT/exonic*.srt >   $OUTPUT/exonic_iter_gene.srt 
@@ -162,7 +168,8 @@ function double_genome_map {
     SEED=$1; SUBS=$2; MYREADS=$3; MYPREFIX=$4; MAPLOG=$5; SAY=$6; 
     if ! [ -z "$SAY" ]; then echo -n "Mapping reads to human genome......"; fi 
     #echo perm $HG19_100_F2 $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq >> $MAPLOG  
-    perm $HG19_100_F2 $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq >> $MAPLOG  
+    perm $HG19_100_F2 $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.mapping --printNM -u "$MYPREFIX"_miss.fastq >> $MAPLOG 
+    parse_alignment.py $MYPREFIX.mapping --hg19 -p "$MYPREFIX"_parse 
     perm $HG19_100_F2 $MYREADS --seed $SEED -v $SUBS -B -o $MYPREFIX.sam > "$MYPREFIX"_sam.log
     if [ $? != 0 ]; then echo "perm-fail"; exit; fi  
     if ! [ -z "$SAY" ]; then echo "Complete"; fi 
@@ -220,6 +227,8 @@ if [ $PROGRAM == "iter-map" ] || [ $PROGRAM == "ITER-MAP" ]; then
 
         # GENOMIC ALIGNMENT (TWO FILETYPES) #
         double_genome_map F2 4 $OUTPUT/intronic2_miss.fastq $OUTPUT/hg19 $MYLOG GO 
+        
+        
         # GAPPED ALIGNMENT - MULTIPLE WAYS #
 
         multi_gapped_alignment $OUTPUT/exonic_iterative_catsOnly.fa $OUTPUT/exonic_iterative_geneSeqs.fa $HG19CLIP_40_F1 $OUTPUT/hg19_miss.fastq $OUTPUT/GAPS $MYLOG GO 
@@ -232,6 +241,9 @@ if [ $PROGRAM == "iter-map" ] || [ $PROGRAM == "ITER-MAP" ]; then
         if  [ ! -d $OUTPUT/results ]; then mkdir $OUTPUT/results;  fi
         if  [ ! -d $OUTPUT/tmp     ]; then mkdir $OUTPUT/tmp;  fi
 
+        RESULTS=$OUTPUT/results
+        TEMP=$OUTPUT/tmp
+
         ## CLEANUP ROUND ##
 
         cd $OUTPUT 
@@ -243,13 +255,40 @@ if [ $PROGRAM == "iter-map" ] || [ $PROGRAM == "ITER-MAP" ]; then
         cd ..
         # MERGE EXPRESSION, ETC, ETC, ETC # --- ALSO YOU COULD PARSE THE GENOME BETTER  
         
-        cat $OUTPUT/*gene.cnts | sort -k1,1 -k5,5 | awk '{if ($5!=L) {if (NR!=1) print A,B,C,"|",L,X,Y,Z; A=$1;B=$2;C=$3;L=$5;X=$6;Y=$7;Z=$8} else {X+=$6;Y+=$7;Z+=$8}}' > $OUTPUT/results/$PREFIX.gene.cnts
-        cat $OUTPUT/hg*sam $OUTPUT/intronic*sam $OUTPUT/exonic*sam $OUTPUT/GAPS*sam > $OUTPUT/"$PREFIX"_full.sam
+        cat $OUTPUT/*gene.cnts | sort -k1,1 -k5,5 | awk '{if ($5!=L) {if (NR!=1) print A,B,C,"|",L,X,Y,Z; A=$1;B=$2;C=$3;L=$5;X=$6;Y=$7;Z=$8} else {X+=$6;Y+=$7;Z+=$8}} END{print A,B,C,"|",L,X,Y,Z}' > $RESULTS/$PREFIX.gene.cnts
+        mv $OUTPUT/*gene.cnts $OUTPUT/tmp/
+
+        # MERGE TRANSCRIPT & INTRON COUNTS #
+        
+        cat $OUTPUT/exonic*_feat.cnts | sort -k1,1 | awk '{if ($1==L) C+=$3; else {if (NR>1) print L,T,C; L=$1;T=$2;C=$3}} END{print L,T,C}' > $RESULTS/$PREFIX.exonicFeature.cnts &
+        cat $OUTPUT/intronic*feat.cnts | sort -k1,1 | awk '{if ($1==L) C+=$3; else {if (NR>1) print L,T,C; L=$1;T=$2;C=$3}} END{print L,T,C}' > $RESULTS/$PREFIX.intronicFeature.cnts &
+        mv *feat.cnts tmp/
+
+        # CLEANUP MUTATIONS #
+
+        cat $OUTPUT/*iterative.mutations > $RESULTS/$PREFIX.mutations
+        mv $OUTPUT/*.mutations $TEMP/
+
+        # CLEANUP SPLICES # 
+
+        cat $OUTPUT/intronic*splice.cnts | sort -k1,1 | awk '{if ($1==L) C+=$3; else {if (NR>1) print L,T,C; L=$1;T=$2;C=$3}} END{print L,T,C}' > $RESULTS/$PREFIX.intEx.jxns &
+        cat $OUTPUT/exonic*splice.cnts | sort -k1,1 | awk '{if ($1==L) C+=$3; else {if (NR>1) print L,T,C; L=$1;T=$2;C=$3}} END{print L,T,C}' > $RESULTS/$PREFIX.canonical.splices
+        cat $OUTPUT/GAPS_*splice.cnts | sort -k1,1 > $RESULTS/$PREFIX.non-canonical.splices
+        mv $OUTPUT/*_splice.cnts $TEMP/
+
+
+        # CLEANUP SORTS # 
+        
+        mv $OUTPUT/*gene.srt $TEMP/
+        
+        # MAKE A BAM FILE #
+        
+        cat $OUTPUT/hg*sam $OUTPUT/*_parse_vis.sam > $OUTPUT/"$PREFIX"_full.sam
         MYSAM=$OUTPUT/"$PREFIX"_full.sam
-        samtools view -S $MYSAM $OUTPUT/$PREFIX.bam 
-        samtools sort $OUTPUT/$PREFIX.bam $OUTPUT/"$PREFIX"_sort
+        samtools view -S $MYSAM > $OUTPUT/"$PREFIX"_.bam 
+        samtools sort $OUTPUT/"$PREFIX"_.bam $OUTPUT/"$PREFIX"_sort
         samtools index $OUTPUT/"$PREFIX"_sort.bam
-    
+        mv $OUTPUT/*.sam $TEMP/ 
     fi
 
 

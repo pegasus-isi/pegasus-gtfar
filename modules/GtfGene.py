@@ -18,6 +18,7 @@ class GtfGene:
         elif line=="NULL":
             self.start=0; self.end=0; self.name="NULL"
         elif line.type != 'gene':
+            print line.geneID, line.geneType,line.hugoName
             print "BAD INIT"
             sys.exit()
         else:

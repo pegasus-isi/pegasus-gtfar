@@ -357,19 +357,22 @@ class MapRead:
 
         for i in range(len(self.hgLocs)):
             hg = self.hgLocs[i]; mySeq = self.seqs[i][0]
-
-            if self.seqType == "FLANKSEQ":
+            if self.seqType == "zFLANKSEQ":
                 if hg[1]=='+':
                     samSeq = mySeq;  spots = hg[2]; samStrand = '0'
                 else:
                     samSeq = revComp(mySeq); spots = hg[2]; samStrand='16'; self.qual = self.qual[-1::-1]
 
-            else:
+            elif self.seqType == "ANY ELSE":
                 if hg[1]=='+':
                     samSeq = mySeq;  spots = hg[2]; samStrand = '0'
                 else:
                     samSeq = revComp(mySeq); spots = hg[2][-1::-1]; samStrand='16'; self.qual = self.qual[-1::-1]
-
+            else:
+                if hg[1]=='+':
+                    samSeq = mySeq;  spots = hg[2]; samStrand = '0'
+                else:
+                    samSeq = revComp(mySeq); spots = hg[2]; samStrand='16'; self.qual = self.qual[-1::-1]
 
 
             for k in range(0,len(spots),2):
