@@ -65,12 +65,12 @@ def trueStrand(s1,s2,spots):
 
     if s1 == s2:
         strand = '+'
-        if spots[0] > spots[1]:
-            spots = spots[-1::-1]
+        #if spots[0] > spots[1]:
+        #    spots = spots[-1::-1]
     else:
         strand = '-'
-        if spots[0] < spots[1]:
-            spots = spots[-1::-1]
+        #if spots[0] < spots[1]:
+        #    spots = spots[-1::-1]
     if spots[0] > spots[-1]:
         spots = spots[-1::-1]
 
