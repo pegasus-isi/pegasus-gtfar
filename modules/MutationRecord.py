@@ -2,13 +2,10 @@
 
 
 import sys
-#from MutationSite import *
 from MutationCand import *
 from Sequence import *
 from Utilities import *
 
-
-#from ..tools.gtTools import *
 
 from math import fabs
 
@@ -94,6 +91,8 @@ class MutationRecord:
             
     def recordChrCands(self):
 
+        spliceBuffer = 2; tailBuffer = 3
+
         self.chrSites = dd(list)
         ## ITERATE THROUGH SORTED FILE UNTIL THE LINES NO LONGER CORRESPOND TO THE CORRECT CHROMOSOME ##
         while self.mapChr == self.chr:
@@ -137,18 +136,20 @@ class MutationRecord:
                         for i in range(len(myCands)-1,-1,-1):
                             start = 0
                             for j in range(0,len(self.mapPos),2):
-                                if myCands[i] >= self.mapPos[j] and myCands[i] <= self.mapPos[j+1]:
+                                if myCands[i] >= self.mapPos[j] + spliceBuffer and myCands[i] <= self.mapPos[j+1] - spliceBuffer:
 
                                     end = start+self.mapPos[j+1]-self.mapPos[j]+1;    candPos = myCands[i]-self.mapPos[j];  readIdx = start+candPos
+                                    
+                                    
                                     readBase = self.mapRead[start:end][candPos];  refBase = self.mapRef[start:end][candPos]; qualScr = self.mapQual[start:end][candPos]
-                                    mySites[i].record(self.line[1],self.line[2],readIdx,readBase,refBase,qualScr)
+                                    if readIdx > tailBuffer and readIdx < len(self.mapRead) - tailBuffer:
+                                        mySites[i].record(self.line[1],self.line[2],readIdx,readBase,refBase,qualScr)
 
                                 start = start + (self.mapPos[j+1] - self.mapPos[j] + 1)
 
                             if self.mapPos[-1] < myCands[i]: break
 
 
-                            #if not SPAN and self.mapPos[j+1] < 
                 
                     self.nextLine()
             while self.mapGene == self.gene:

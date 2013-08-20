@@ -118,7 +118,8 @@ def sam2Map(item):
 
 
 def cigar2List(loc,cigar):
-    
+   
+
     cigar=cigar[0:len(cigar)-1]
     cigar=cigar.split("M")
     init=int(cigar[0])

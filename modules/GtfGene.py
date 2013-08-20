@@ -55,14 +55,13 @@ class GtfGene:
 
 ###########################################################################################################################################
 
-
     def findMajorExons(self):
         tmpExons=[]
         if self.strand=="+":
             self.exons.sort()
             exStart=self.exons[0][0]; exEnd=self.exons[0][1]
             for i in range(1,len(self.exons)):
-                if self.exons[i][0] < exEnd:
+                if self.exons[i][0] <= exEnd:
                     if self.exons[i][1] > exEnd: exEnd = self.exons[i][1]
                 else:
                     tmpExons.append((exStart,exEnd))
@@ -72,7 +71,7 @@ class GtfGene:
             self.exons.sort(reverse=True,key= lambda student: student [1])
             exStart=self.exons[0][0]; exEnd=self.exons[0][1]
             for i in range(1,len(self.exons)):
-                if self.exons[i][1] > exStart:
+                if self.exons[i][1] >= exStart:
                     if self.exons[i][0] < exStart: exStart = self.exons[i][0]
                 else:
                     tmpExons.append((exStart,exEnd))
@@ -226,16 +225,26 @@ class GtfGene:
 
         
         while self.jPos < len(self.spliceInfo):
+            
+            
               
             if self.spliceInfo[self.jPos][0][0] <= gPos and gPos <= self.spliceInfo[self.jPos][0][1]:
 
                 return "EXONIC", (self.codonOffset + (gPos - self.spliceInfo[self.jPos][0][0])) %3,  self.spliceInfo[self.jPos]
 
-            elif self.spliceInfo[self.jPos-1][0][1] < gPos and gPos < self.spliceInfo[self.jPos][0][0]:
+            elif gPos < self.spliceInfo[self.jPos][0][0]:
 
-                jPrev = self.spliceInfo[self.jPos-1]; jNext = self.spliceInfo[self.jPos]
+                if self.jPos == 0:
+                    jHere = self.spliceInfo[self.jPos]
+                    return "INTRONIC",'NA',[[jHere[0][0],jHere[0][0]],[jHere[1][0],jHere[1][0]],"NULL"]
+                elif self.spliceInfo[self.jPos-1][0][1] < gPos:
+
+                    jPrev = self.spliceInfo[self.jPos-1]; jNext = self.spliceInfo[self.jPos]
                 
-                return "INTRONIC", 'NA',[[jPrev[0][1],jNext[0][0]],[jPrev[1][1],jNext[1][0]],"NULL"]
+                    return "INTRONIC", 'NA',[[jPrev[0][1],jNext[0][0]],[jPrev[1][1],jNext[1][0]],"NULL"]
+             
+
+
             else:
                 self.jPos+=1
                 self.codonOffset += ( self.spliceInfo[self.jPos][0][1] - self.spliceInfo[self.jPos][0][0] + 1 ) % 3 
@@ -271,17 +280,17 @@ class GtfGene:
                     self.flankSeqs[i][j] = self.flankSeqs[i][j].capitalize()
 
         
-
+###########################################################################################################################################
     
-    def mutateSeq(self):
+    def mutateSeq(self,exRate,intRate):
 
         if not self.seq:
             print "NO SEQ YET"
             sys.exit()
 
-        exRate  = 0.01 ; intRate = 0.01; mutList = dd(list); baseList = ["A","C","G","T"]
+        mutList = dd(list); baseList = ["A","C","G","T"]
 
-        mutation_rates = [0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.9, 1.0, 1.0, 1.0, 1.0, 1.0 , 1.0, 1.0 ]
+        mutation_rates = [0.15, 0.25, 0.35, 0.45, 0.5, 0.55, 0.65, 0.75, 0.9, 1.0, 1.0, 1.0 , 1.0, 1.0 ]
         for i in range(len(self.exons[1])):
             start=self.exons[1][i][0]; end = self.exons[1][i][1]; span=end-start; k= 0 
             

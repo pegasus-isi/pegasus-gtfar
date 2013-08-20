@@ -29,7 +29,7 @@ def process_file(logfile,reads,OUTSTR):
 
             if INIT:
                 INIT=False
-                print READS,MAPPED
+                #print READS,MAPPED
                 START_READS=READS
                 TOT+=MAPPED
                 print "INFO: STARTING READS: ",READS," ( length=",RL,")"

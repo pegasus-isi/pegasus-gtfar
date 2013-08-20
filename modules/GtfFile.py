@@ -26,9 +26,6 @@ class GtfFile:
         
         self.open = True; self.FIRSTPRINT=True; self.notes = None; self.mutFile = None; self.simReads = None; self.counter = 0
         
-        ##############################################
-
-
         tmpLine=self.fName.readline().strip()
         while tmpLine[0]=="#":
             tmpLine=self.fName.readline().strip()
@@ -47,9 +44,7 @@ class GtfFile:
             if self.gene.validOffsets():
                 self.genes.append(self.gene)
                 self.geneKey[self.gene.name] = self.gene 
-
              
-    
     def startNextChromosome(self):
 
         if self.line.chr == 'NA':
@@ -136,6 +131,7 @@ class GtfFile:
                 gene.findSplicingInfo()
                 for cand in mutations[gene.name]:
                     ## OK GET THESE DISTS ##
+                    
                     cand.seqType,cand.codonOffset,candJxns = gene.findJxns(cand.pos)
                     cand.evalJxns(candJxns)
                     
@@ -239,7 +235,6 @@ class GtfFile:
         
         
 
-##################################################################################################################################################################
        
        
 
@@ -250,7 +245,7 @@ class GtfFile:
 
 
 
-    def simulateReads(self):
+    def simulateReads(self,mutationRate=0.01,exRate=0.01,intRate=0.01):
 
         if self.simReads == None:
             self.simReads = open(self.prefix+"_simreads.fq",'w')
@@ -261,14 +256,14 @@ class GtfFile:
         for gene in self.genes:
             if not gene.seq:
                 gene.getSeqFromChr(self.seq)
-            gene.mutateSeq()
-            self.makeReads(gene)
+            gene.mutateSeq(exRate,intRate)
+            self.makeReads(gene,mutationRate)
 
 
-    def makeReads(self,gene):
+    def makeReads(self,gene,mutationRate):
   
         k=0
-        exonic   = randrange(0,1000)
+        exonic   = randrange(0,5000)
         intronic = randrange(0,1000)
         
         self.cntKey.write("%s EXONIC %s INTRONIC %s\n" % (gene.name,exonic,intronic))
@@ -280,14 +275,13 @@ class GtfFile:
         base_list = ["A","C","G","T"]
         qualStr= "".join(["B" for x in range(self.readlen)])
 
+
         for t in gene.transcripts:
 
             tranBases = makeFeatureSeq(gene.seq,t[1][1])
 
             if len(tranBases) <=self.readlen: continue
-            offset = len(tranBases) - self.readlen
-
-
+            offset = len(tranBases) - self.readlen 
 
             for i in range(readsPerTran):
                 
@@ -305,7 +299,7 @@ class GtfFile:
                         else:
                             tSeq[j] = mutationInfo[3]
                             gene.mutationKey[spots[1]][6]+=1
-                    if random() < 0.01:
+                    if random() < mutationRate:
                         tSeq[j] = choice(base_list)
             
                 tmpID = "@SAMPLE_"+str(self.counter)+"_"+gene.name
@@ -355,7 +349,7 @@ class GtfFile:
         for key in sorted(gene.mutationKey):
             info = gene.mutationKey[key]
             if info != []:
-                self.mutKey.write("%s %s %s %s %s %s %s %s %s %s\n" % (gene.name, info[0],gene.chr,info[1],info[2],info[3],info[4],info[5],info[6],info[7]))
+                self.mutKey.write("%s %s %s %s %s %s %s %s %s %s %s\n" % (gene.name, info[1],gene.chr,info[2],gene.strand,info[0],info[3],info[4],info[5],info[6],info[7]))
 
 
 ##################################################################################################################################################################

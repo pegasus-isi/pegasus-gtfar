@@ -23,7 +23,7 @@ def runthrough(fName,genomePath,prefix,readlen=100):
         gtf.loadGenesOnChromosome()
         gtf.addFasta(genomePath+'/'+gtf.chr+'.fa') 
         gtf.uniquifySeqs(SILENT=True)
-        gtf.simulateReads() 
+        gtf.simulateReads(0.015,0.0025,0.005)
         gtf.startNextChromosome()
     
 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser = OptionParser(usage=usage)
 
     parser.add_option("-r", "--readlen", default = 100, type='int', help="Expected Read Length")
-    parser.add_option("-p", "--prefix", default = 'mygtf', type='string', help="Output Filename Prefix")
+    parser.add_option("-p", "--prefix", default = 'sim', type='string', help="Output Filename Prefix")
     parser.add_option("-g", "--genomePath", default = None, type='string', help="Path to genome chr fasta files")
 
     (options, args) = parser.parse_args()

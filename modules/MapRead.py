@@ -25,11 +25,10 @@ class MapRead:
 
         self.samStrings = []; self.locStrings = []; self.seqType = seqType
        
-
         if type == 'MAPPING' or type == 'SAM':
-        
+
             if len(self.readLines) > 1:  self.disambiguate()
-            
+             
             self.hgLocs = [self.readLines[0][0]]; self.geneLocs = [[self.readLines[0][1]]]; self.seqs = [self.readLines[0][2]]
             
             for i in range(1,len(self.readLines)):
@@ -77,6 +76,7 @@ class MapRead:
 
 
     def startTrim(self,n,minLen,maxLen):
+
         seqLen = 0; myStrand = self.readLines[0][n][1]; newSpots = []; readLen = len(self.readLines[0][2][0])
         for i in range(0,minLen,2):
             x1 = set([]); x2=set([])
@@ -97,22 +97,26 @@ class MapRead:
                 
                 
     def tailTrim(self,n,minLen,maxLen):
+
+
+        
         seqLen = 0; myStrand = self.readLines[0][n][1]; newSpots = []; readLen = len(self.readLines[0][2][0])
         for i in range(0,minLen,2):
             x1 = set([]); x2=set([])
             for j in range(len(self.readLines)):
                 sData=self.readLines[j][n][2]
                 x1.add(sData[len(sData)-(i+2)]); x2.add(sData[len(sData)-(i+1)])
-
             if len(x2) == 1:
                 x2 = x2.pop()
                 if len(x1) == 1:    x1=x1.pop()
                 else:
                     if x2 > max(x1):     x1=max(x1)
                     else:           x1=min(x1)
-                newSpots.extend([x1,x2])
+
+                newSpots.extend([x2,x1])
                 seqLen += fabs(x2-x1)+1
 
+        newSpots.reverse()
         if myStrand == "+":
             return newSpots,(readLen-seqLen,readLen)
         else:
@@ -146,113 +150,10 @@ class MapRead:
         if len(hgResult[0]) == len(geResult[0]) and hgResult[1] == geResult[1]:
             self.TRIMMED=True
             fd = self.readLines[0]; A=int(hgResult[1][0]); B=int(hgResult[1][1])
+
             self.readLines = [[(fd[0][0],fd[0][1],hgResult[0]), (fd[1][0],fd[1][1],geResult[0]), (fd[2][0][A:B],fd[2][1][A:B])]]
-
-
-
-
-
-
-
-
-
-
-    def trimLeft(self,hgLens,maxMap,minMap):
-        if maxMap[0] == minMap[0]:
-
-            newChr = []; newGene = []; self.TRIMMED=True
-            for i in range(len(self.readLines[0][0][2])):
-                tmpHg=set([]); tmpGene=set([])
-
-                for j in range(len(self.readLines)):
-
-                    tmpHg.add(self.readLines[j][0][2][i])
-                    tmpGene.add(self.readLines[j][1][2][i])
-                    
-                if len(tmpHg) == 1:
-                    newChr.append(tmpHg.pop())
-                    newGene.append(tmpGene.pop())
-                for j in range(len(self.readLines)):
-
-                    tmpGene.add(self.readLines[j][1][2][i])
-                if len(tmpGene) == 1: newGene.append(tmpGene.pop())
-
-            if len(newGene) == 1:
-                addedCands = sorted([ (self.readLines[j][1][2][1],self.readLines[j][0][2][1]) for j in range(len(self.readLines)) ])
-                newGene.append(addedCands[0][0])
-                newChr.append(addedCands[0][1])
-            seqDist=0;
-            for i in range(0,len(newGene),2):
-                seqDist+=(newGene[i+1]-newGene[i])+1
-            self.qual = self.qual[0:seqDist]
-            for i in range(len(self.readLines)):
-                self.readLines[i][0] = (self.readLines[i][0][0],self.readLines[i][0][1],newChr)
-                self.readLines[i][1] = (self.readLines[i][1][0],self.readLines[i][1][1],newGene)
-                self.readLines[i][2] = (self.readLines[i][2][0][0:seqDist], self.readLines[i][2][1][0:seqDist])
-        else:
-        
-            ### TEST IT OUT ###
-
-            newMap  = [self.readLines[0][0][0],self.readLines[0][0][1],maxMap[1][0:minMap[0]]];
-            newGene = [self.readLines[0][1][0],self.readLines[0][1][1],maxMap[2][0:minMap[0]]];
-            NEWLEN=int(sum([fabs(newMap[2][i+1]-newMap[2][i])+1 for i in range(0,len(newMap[2]),2)]))
-            self.qual = self.qual[0:NEWLEN]
-            
-            for i in range(len(self.readLines)):
-                self.readLines[i][0] = newMap
-                self.readLines[i][1] = newGene
-                self.readLines[i][2] = ( self.readLines[i][2][0][0:NEWLEN], self.readLines[i][2][1][0:NEWLEN] )
-
-
-    def trimRight(self,hgLens,maxMap,minMap):
-        if maxMap[0] == minMap[0]:
-            newChr = []; newGene = []; self.TRIMMED=True; k=0
-            for i in range(len(self.readLines[0][0][2])):
-                tmpHg=set([]); tmpGene=set([])
-                for j in range(len(self.readLines)):
-                    tmpHg.add(self.readLines[j][0][2][i])
-                    tmpGene.add(self.readLines[j][1][2][i])
-                    
-                if len(tmpHg) == 1:
-                    newChr.append(tmpHg.pop())
-                    newGene.append(tmpGene.pop())
-                else:
-                    k=i
-
-
-            if len(newGene) == 1:
-                addedCands = sorted([ (self.readLines[j][1][2][i],self.readLines[j][0][2][i]) for j in range(len(self.readLines)) ]) 
-                newGene = [addedCands[0][0]] + newGene
-                newChr  = [addedCands[0][1]] + newChr
-
-
-            seqDist=0
-            for i in range(0,len(newGene),2):
-                seqDist+=(newGene[i+1]-newGene[i])+1
-
-            seqStart = len(self.qual)-seqDist
-            self.qual = self.qual[seqStart::]
-            for i in range(len(self.readLines)):
-                self.readLines[i][0] = (self.readLines[i][0][0],self.readLines[i][0][1],newChr)
-                self.readLines[i][1] = (self.readLines[i][1][0],self.readLines[i][1][1],newGene)
-                self.readLines[i][2] = (self.readLines[i][2][0][seqStart::], self.readLines[i][2][1][seqStart::])
-        
-
-        else:
-            TRIM = maxMap[1][0:maxMap[0]-minMap[0]];    self.TRIMMED=True; TRIMLEN = int(sum([fabs(TRIM[i+1]-TRIM[i])+1 for i in range(0,len(TRIM),2)])) 
-            newMap  = [self.readLines[0][0][0],self.readLines[0][0][1],maxMap[1][(maxMap[0]-minMap[0])::]];  self.qual = self.qual[TRIMLEN::]
-               
-            for i in range(len(self.readLines)):
-
-                self.readLines[i][0] = newMap; gmap = self.readLines[i][1]
-                        
-                if len(self.readLines[i][1][2]) > minMap[0]:    self.readLines[i][1] = (gmap[0],gmap[1],gmap[2][len(gmap[2])-len(newMap[2])::])
-                else:                                           self.readLines[i][1] = (gmap[0],gmap[1],[gmap[2][0]+TRIMLEN]+gmap[2][1::])
-                        
-                self.readLines[i][2] = ( self.readLines[i][2][0][TRIMLEN::], self.readLines[i][2][1][TRIMLEN::] )
-                            
-
-
+            self.qual      = self.qual[A:B]
+    
 
     def removeDuplicates(self):
         n=1; self.readLines.sort()
@@ -290,18 +191,15 @@ class MapRead:
 
                 #READ=self.readLines[0][2][0]; REF=refSet.pop()
                 #cStrand = self.readLines[0][0][1]; rStrand=self.readLines[0][1][1]
+        
                 self.trim()
-                hgEnds   = set([h[0][2][-1] for h in self.readLines]);
-                hgStarts = set([h[0][2][0]  for h in self.readLines]);
-                hgLens   = [(len(h[0][2]),h[0][2],h[1][2]) for h in self.readLines];
-                maxMap   = max(hgLens);
-                minMap   = min(hgLens);
 
-            #    if len(hgStarts) == 1:
-             #       self.trimLeft(hgLens,maxMap,minMap)
+          #      hgEnds   = set([h[0][2][-1] for h in self.readLines]);
+          #      hgStarts = set([h[0][2][0]  for h in self.readLines]);
+          #      hgLens   = [(len(h[0][2]),h[0][2],h[1][2]) for h in self.readLines];
+          #      maxMap   = max(hgLens);
+          #      minMap   = min(hgLens);
 
-              #  elif len(hgEnds) == 1:
-               #     self.trimRight(hgLens,maxMap,minMap)
             
             self.removeDuplicates()
 

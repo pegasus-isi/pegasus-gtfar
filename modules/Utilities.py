@@ -18,6 +18,7 @@ def fileExtension(fname):
     return fname.split(".")[len(fname.split("."))-1]
 
 
+
 def errorQuit(outString):
     sys.stderr.write(outString+'\n')
     sys.exit(2)

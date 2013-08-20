@@ -15,41 +15,104 @@ from math import fabs
 
 class MapFile:
 
-    def __init__(self,fileHandle,prefix,FTYPE,strandSpecific=None):
+    def __init__(self,mapFile,keyFile,refType,GAPPED,prefix,strandSpecific=None):
+ 
 
-        ## FIGURE OUT THE FILE FORMAT ##
-        self.fileHandle = fileHandle
-        self.fname = open(fileHandle); self.prefix = prefix; self.fType = FTYPE; self.index = 0; self.key = {}
+        self.mapFile,self.keyFile,self.refType,self.GAPPED,self.prefix = mapFile,keyFile,refType,GAPPED,prefix
 
+        self.mapHandle = open(self.mapFile); self.keyHandle = open(self.keyFile)
+        
+        self.invalid, self.showAMBIG, self.FULLSEQ, self.FLANKSEQ = False, False, False, False
+        
         self.samOut, self.mapOut,self.AntiOut, self.geneOut,self.spliceOut,self.featOut,self.antiSense = None, None , None, None, None, None, None
+        
+        self.index = 0; self.key = {}
 
         self.sense, self.open = True, True
 
-        self.showAMBIG , self.FULLSEQ, self.FLANKSEQ = False,False, False
+        ## CHECK: NON EMPTY FILE/ FILE FORMAT / STRAND-SPECIFICITY ##
+        
+        self.firstLine = self.mapHandle.readline().split()
+        if self.firstLine==[]:  self.invalid = "EMPTY_MAPFILE"
 
-        if fileHandle.split(".")[-1] == "mapping":      self.format = "MAPPING"
-        elif fileHandle.split(".")[-1] == "sam":        self.format = "SAM"
-        else:                                           errorQuit('Invalid mapfile')
-
-        self.firstLine = self.fname.readline().split()
-        if self.firstLine==[]: errorQuit('Empty mapfile')
-           
-        if self.format == "MAPPING":
+        elif self.mapFile.split(".")[-1] == "mapping":
+            self.format = "MAPPING"
             if strandSpecific != None:
                 if strandSpecific == '0' or strandSpecific == '+':      self.antiSense = '-'
                 else:                                                   self.antiSense = '+'
-        else:
+
+
+        elif self.mapFile.split(".")[-1] == "sam":        
+            self.format = "SAM"
             if strandSpecific!= None:
                 if strandSpecific == '0' or strandSpecific == "+":      self.antiSense = '16'
                 else:                                                   self.antiSense = '0'
+        else:
+            self.invalid = "MAPFILE_EXTENSION"
+        
+        ##########################   LOAD THE KEY   #####################
+
+        if self.invalid: return
+
+ 
+
+        if self.refType   == "EXONIC":                               FEATURES = ["TRAN","GENE"]
+        elif self.refType == "INTRONIC":                             FEATURES = ["ITRN","GENE","FLNK"]
+        else:                                                        FEATURES = ["GENE"]
+            
+        for line in self.keyHandle:
+            line    = line.split()
+            feature = line[0].split("|")[6][0:4]
+            if feature in FEATURES:
+                if feature == "FLNK":
+                    for i in range(1,len(line)):
+                        line[i]=[[x.split("-")[0],x.split("-")[1]] for x in line[i].split(",")]
+                        for j in range(len(line[i])):
+                            for k in range(len(line[i][j])):
+                                if line[i][j][k][0]=="N":       line[i][j][k]=int(line[i][j][k][1::])*-1
+                                else:                           line[i][j][k]=int(line[i][j][k])
+                    self.key[line[0]]=[line[1],line[2],line[3]]
+                else:
+                    for i in range(1,len(line)):
+                        line[i]=[[int(x.split("-")[0]),int(x.split("-")[1])] for x in line[i].split(",")]
+                    self.key[line[0]]=[line[1],line[2],line[3]]
+
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
         
 
 ##############################################################################################################
 ############################################   ADD KEY   #####################################################
 ##############################################################################################################
 
+
+
+#print
+
     def loadKey(self,keyFile):    
-        if self.fType == "EXONIC":
+        if self.refType == "EXONIC":
             for line in open(keyFile):
                 line=line.split()
                 refType=line[0].split("|")[6][0:4]
@@ -57,7 +120,7 @@ class MapFile:
                     for i in range(1,len(line)):
                         line[i]=[[int(x.split("-")[0]),int(x.split("-")[1])] for x in line[i].split(",")]
                     self.key[line[0]]=[line[1],line[2],line[3]]
-        elif self.fType == "INTRONIC":
+        elif self.refType == "INTRONIC":
             for line in open(keyFile):
                 line=line.split()
                 refType=line[0].split("|")[6][0:4]
@@ -75,7 +138,7 @@ class MapFile:
                                 else:
                                     line[i][j][k]=int(line[i][j][k])
                     self.key[line[0]]=[line[1],line[2],line[3]]
-        elif self.fType == "GAPPED":
+        elif self.refType == "GAPPED":
             for line in open(keyFile):
                 line = line.split()
                 refType=line[0].split("|")[6][0:4]
@@ -83,7 +146,7 @@ class MapFile:
                     for i in range(1,len(line)):
                         line[i]=[[int(x.split("-")[0]),int(x.split("-")[1])] for x in line[i].split(",")]
                     self.key[line[0]]=[line[1],line[2],line[3]]
-        elif self.fType == "HG19":
+        elif self.refType == "HG19":
             return
         else: 
             errorQuit("Invalid Ref Type")
@@ -117,7 +180,6 @@ class MapFile:
     def relocate(fPos,key,DIST):
 
         fKey,gKey,hKey = key[0],key[1],key[2];  POST = False; gPos =[]; hPos =[]
-        
         for i in range(len(fKey)):
             
             if POST or (fPos >= fKey[i][0] and fPos <= fKey[i][1]):
@@ -141,67 +203,52 @@ class MapFile:
 
 
     @staticmethod
-    def relocateGenePos(fPos,key,DIST):
-        fKey,gKey,hKey = key[0],key[1],key[2];  POST = False; gPos =[]; hPos =[]; eData = []
-        ### DO THIS LIKE A SIMPLETON ###
+    def relocateFullGene(fPos,key,dList,fStrand):
+        fKey,gKey,hKey = key[0],key[1],key[2]; hgList = []; k=0; i=0
 
 
-        for i in range(len(gKey)):
+        while len(hgList) < len(dList):
+            if i == len(key[1]):
+                for n in range(k,len(dList)):
+                        if fStrand == "-":
+                            hgList.append(key[2][i-1][1] - (dList[n] - key[1][i-1][1]) )
+                        else:
+                            hgList.append(key[2][i-1][1] + (dList[n] - key[1][i-1][1]) )
+                break
 
-            if POST or (fPos>=gKey[i][0] and fPos<= gKey[i][1]):
 
-                if not POST:  myOffset = fPos - gKey[i][0]
 
-                if fPos == gKey[i][0]: eData.append("EX-STR")
-                else:                  eData.append("EX-MID")
+            if dList[k] < key[1][i][1]:
+                for j in range(k,len(dList)):
+                    if dList[j] <= key[1][i][0]:
+                        if fStrand == "-":
+                            hgList.append( key[2][i][0] + (key[1][i][0] - dList[j]) )
+                        else:
+                            hgList.append( key[2][i][0] - (key[1][i][0] - dList[j]) )
 
-                gPos.extend([gKey[i][0] + myOffset, gKey[i][0] + myOffset + DIST])
-
-                if hKey[i][0] < hKey[i][1]: hPos.extend( [ hKey[i][0] + myOffset, hKey[i][0] + myOffset + DIST ] )
-                else:                       hPos.extend( [ hKey[i][0] - myOffset,  hKey[i][0] - myOffset - DIST ] )
-
-                if gKey[i][1] >= fPos + DIST and gKey[i][1] >= gKey[i][0] + DIST:
-
-                    if fPos + DIST == gKey[i][1]:
-                        eData.append("EX-END")
+                    elif dList[j] >= key[1][i][0] and dList[j] <= key[1][i][1]:
+                   
+                        if fStrand == "-":
+                            hgList.append( key[2][i][0] - (dList[j] - key[1][i][0]) )
+                        else:
+                            hgList.append( key[2][i][0] + (dList[j] - key[1][i][0]) )
                     else:
-                        eData.append("EX-MID")
-                    break
-                else:
-                    eData.append("EX-END")
-                    gPos[-1] = gKey[i][1]; hPos[-1] = hKey[i][1]
-                    DIST -= (1 + gKey[i][1] - (gKey[i][0] + myOffset) )
-                    POST = True; myOffset = 0                 
-
-            elif  (i>0)  and  (fPos>gKey[i-1][1] and fPos < gKey[i][0]) :
+                        k=j
+                        break
+            i+=1
+        return dList,hgList
 
 
 
-                hgPrev = hKey[i-1]; myOffset = fPos - gKey[i-1][1];    gPos.extend([ fPos, fPos+DIST ])
-
-                eData.append("INT")
-
-                if hgPrev[0] < hgPrev[1]: hPos.extend( [hgPrev[1] + myOffset, hgPrev[1] + myOffset + DIST ] )
-                else:                     hPos.extend( [hgPrev[1] - myOffset, hgPrev[1] - myOffset - DIST ] )
-
-                if fPos + DIST < gKey[i][0] and gKey[i][0] >= gKey[i-1][1] + DIST:
-                    if fPos + DIST == gKey[i][0] -1: eData.append("IN-END")
-                    else:                            eData.append("IN-MID")
-                    break
-                else:
-                    eData.extend(["IN-END","EX-STR"])
-                    gPos[-1] = gKey[i][0]; hPos[-1] = hKey[i][0]
-                    DIST -= (1 + gKey[i][0] - (gKey[i-1][1] + myOffset))
-                    POST = True; myOffset = 0
-
-        return gPos,hPos,eData
-
-
-    def relocateCigar(self,fPos,cigar,key,FULLSEQ=False):
+    def relocateCigar(self,fPos,cigar,key,fStrand,FULLSEQ=False):
         fPos = fPos-1
-        cigar = cigar.strip().split('M')
-        
+        if self.refType == "GENES":
+            dList = cigar2List(fPos,cigar)
+            geneLocs, hgLocs = self.relocateFullGene(fPos,key,dList,fStrand)
+            return geneLocs, hgLocs
+          
         if not FULLSEQ:
+            cigar = cigar.strip().split('M')
             gInit, hInit  = self.relocate(fPos,key,int(cigar[0])-1)
             nPos = fPos + int(cigar[0])
 
@@ -212,19 +259,8 @@ class MapFile:
                 gInit.extend(gNext); hInit.extend(hNext)
                 nPos = nPos + gap + match  ## COULD BE WRONG ##
             return gInit,hInit
-        else:
-
-
-            gInit, hInit , eData = self.relocateGenePos(fPos,key,int(cigar[0])-1)
-            nPos = fPos + int(cigar[0])
-
-            for pair in cigar[1:len(cigar)-1]:
-                c=pair.split('N')
-                gap = int(c[0]); match = int(c[1])
-                gNext,hNext, eNext = self.relocateGenePos(nPos + gap, key, match-1) 
-                gInit.extend(gNext); hInit.extend(hNext); eData.append("GAP"), eData.extend(eNext)
-                nPos = nPos + gap + match  ## COULD BE WRONG ##
-            return gInit,hInit
+            
+            
 
 
 
@@ -243,6 +279,7 @@ class MapFile:
                 if strandCnt == 1 or mapLines[i][5] != self.antiSense:
                     s = mapLines[i][2].split("|");  tmpKey = self.key["|".join(s[0:len(s)-1])+"|"]
                     geneTmp,hgTmp = self.relocate(int(mapLines[i][3]),tmpKey,len(mapLines[i][1])-1)
+                    
                     hgStrand,hgLoc = trueStrand(mapLines[i][5],s[2], hgTmp )
                     myLine = [ ( s[3] , hgStrand, hgLoc  ) , ( s[0],mapLines[i][5],geneTmp ) , ( mapLines[i][1],mapLines[i][4] ) ]
 
@@ -347,9 +384,7 @@ class MapFile:
 
     def parseGappedLines(self,mapLines,strandCnt,sense):
 
-
             ### NOTICE WE ARE TACILITY ASSUMING SAM FORMAT ###
-
 
             tMaps =[]; tCats = [];  catLines = []; newLines = []
 
@@ -361,9 +396,9 @@ class MapFile:
 
                     if s[-1] == "FULLSEQ":
                         self.FULLSEQ = True
-                        geneTmp, hgTmp = self.relocateCigar(int(mapLines[i][3]),mapLines[i][5],tmpKey,FULLSEQ=True)
+                        geneTmp, hgTmp = self.relocateCigar(int(mapLines[i][3]),mapLines[i][5],tmpKey,s[2],FULLSEQ=True)
                     else:
-                        geneTmp, hgTmp = self.relocateCigar(int(mapLines[i][3]),mapLines[i][5],tmpKey,)
+                        geneTmp, hgTmp = self.relocateCigar(int(mapLines[i][3]),mapLines[i][5],tmpKey,s[2],FULLSEQ=False)
 
                     
                     signStrand = sam2Map(mapLines[i][1])
@@ -406,7 +441,6 @@ class MapFile:
 
             self.spliceExp[spliceStr]+=1
 
-
      
 
 ##############################################################################################################
@@ -444,12 +478,13 @@ class MapFile:
 
     def getReads(self):
 
+
         firstID = self.firstLine[0]; strandSet = set([]); mapLines=[]; self.index+=1
         if self.format == "MAPPING":
             while self.firstLine[0] == firstID:
                 mapLines.append(self.firstLine)
                 strandSet.add(self.firstLine[5])
-                self.firstLine = self.fname.readline().split()
+                self.firstLine = self.mapHandle.readline().split()
                 if self.firstLine == []:
                     self.open = False
                     break
@@ -459,20 +494,20 @@ class MapFile:
             if strandCnt == 1:
                 if strandSet.pop() == self.antiSense: sense = False
 
-            if self.fType == "EXONIC":
+            if self.refType == "EXONIC":
                 self.parseExonicLines(mapLines,strandCnt,sense)
             
-            elif self.fType == "INTRONIC":
+            elif self.refType == "INTRONIC":
                 self.parseIntronicLines(mapLines,strandCnt,sense)
 
-            elif self.fType == "HG19":
+            elif self.refType == "HG19":
                 self.parseUngappedGenomicLines(mapLines,strandCnt,sense)
 
         else:
             while self.firstLine[0] == firstID:
                 mapLines.append(self.firstLine)
                 strandSet.add(self.firstLine[1])
-                self.firstLine = self.fname.readline().split()
+                self.firstLine = self.mapHandle.readline().split()
                 if self.firstLine == []:
                     self.open = False; break
             strandCnt = len(strandSet); sense = True
@@ -480,13 +515,16 @@ class MapFile:
             if strandCnt == 1:
                 if strandSet.pop() == self.antiSense: sense = False
              
-            if self.fType == "HG19":
-                self.parseGappedGenomicLines(mapLines,strandCnt,sense)
+            if self.GAPPED:
+                
+                if self.refType == "HG19":
+                    self.parseGappedGenomicLines(mapLines,strandCnt,sense)
+                if self.refType == "GENES" or self.refType == "EXONIC":
 
-            elif self.fType == "GAPPED":
-                self.parseGappedLines(mapLines,strandCnt,sense)
+                    self.parseGappedLines(mapLines,strandCnt,sense)
 
             else:
+                print self.refType
                 errorQuit("SAM FORMAT FOR REQUIRES GAPPED ALIGNMENT")
 
 
@@ -631,12 +669,12 @@ class MapFile:
 
             self.novelAreas.clear()
 
-            self.fname = open(self.fileHandle)
-            for line in self.fname:
+            self.mapHandle = open(self.mapFile)
+            for line in self.mapHandle:
                 line=line.split()
-                myChr= line[2]; myPos = int(line[3]); myRound=myPos - myPos%1000; myStrand = line[5]
-                
-                if myRound in self.passAreas[myChr]:
+                myChr= line[2]; myPos = int(line[3]); myRound=myPos - myPos%1000; myStrand = line[5]; myMaps = int(line[7])
+               
+                if myMaps == 1 and myRound in self.passAreas[myChr]:
                     self.passAreas[myChr][myRound].append((myPos,myStrand))
             
             for chr in self.passAreas:
@@ -662,9 +700,9 @@ class MapFile:
 
 
 
-        if self.fType == "GAPPED":
-            if self.FULLSEQ: self.fType = "GENE-GAP"
-            else:            self.fType = "CAT-GAP" 
+        if self.refType == "GAPPED":
+            if self.FULLSEQ: self.refType = "GENE-GAP"
+            else:            self.refType = "CAT-GAP" 
 
         for key in self.key.keys():
             key = key.split("|")
@@ -672,18 +710,18 @@ class MapFile:
                 k="|".join(key[0:6])
                 exSize = int(key[7]); gSize = int(key[8])
                 if key[0] in self.geneSeen:
-                    self.geneOut.write("%s %s %s | %s %s %s %s\n" % (k,exSize,gSize,self.fType,self.geneExp[key[0]][0],self.geneExp[key[0]][1],self.geneExp[key[0]][2]))
+                    self.geneOut.write("%s %s %s | %s %s %s %s\n" % (k,exSize,gSize,self.refType,self.geneExp[key[0]][0],self.geneExp[key[0]][1],self.geneExp[key[0]][2]))
                 else:
-                    self.geneOut.write("%s %s %s | %s %s %s %s\n" % (k,exSize,gSize,self.fType,0,0,0))
+                    self.geneOut.write("%s %s %s | %s %s %s %s\n" % (k,exSize,gSize,self.refType,0,0,0))
         
         for s in self.spliceExp.keys():
-            self.spliceOut.write("%s %s %s\n" % (s,self.fType,self.spliceExp[s]))
+            self.spliceOut.write("%s %s %s\n" % (s,self.refType,self.spliceExp[s]))
 
-        if self.fType != "GAPPED":
+        if self.refType != "GAPPED":
             self.featOut = open(self.prefix+'_feat.cnts','w')
 
             for f in self.featExp.keys():
-                self.featOut.write("%s %s %s\n" % (f,self.fType,self.featExp[f]))
+                self.featOut.write("%s %s %s\n" % (f,self.refType,self.featExp[f]))
 
 
 
@@ -715,7 +753,9 @@ class MapFile:
 
     def close(self):
 
-        self.fname.close()
+        self.mapHandle.close()
+
+        #self.fname.close()
         if self.samOut: self.samOut.close()
         if self.mapOut: self.mapOut.close()
         if self.AntiOut: self.AntiOut.close()
