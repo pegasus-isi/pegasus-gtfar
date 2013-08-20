@@ -595,6 +595,33 @@ class MapFile:
 #############################################################################################################################################################
 
 
+    def storeGeneCnts(self):
+
+        if self.index == 1:
+            self.geneExp = {}
+            self.geneSeen = set([])
+       
+
+        for i in range(len(self.read.hgLocs)):
+            for gene in self.read.geneLocs[i]:
+                if gene[0] not in self.geneExp:
+                    self.geneExp[gene[0]]= [0,0,0,0,0,0]; self.geneSeen.add(gene[0])
+                
+                if self.read.sense:
+                    if self.read.uniq and not self.read.multi:
+                        self.geneExp[gene[0]][0]+=1
+                    elif self.read.uniq:
+                        self.geneExp[gene[0]][1]+=1
+                    else:
+                        self.geneExp[gene[0]][2]+=1
+                else:
+                    if self.read.uniq and not self.read.multi:
+                        self.geneExp[gene[0]][3]+=1
+                    elif self.read.uniq:
+                        self.geneExp[gene[0]][4]+=1
+                    else:
+                        self.geneExp[gene[0]][5]+=1
+
     def storeExpression(self):
 
         if self.index == 1:
@@ -648,6 +675,55 @@ class MapFile:
 
     
 
+    def writeExpression(self):
+
+        self.geneOut = open(self.prefix+'_gene.cnts','w')
+        self.spliceOut = open(self.prefix+'_splice.cnts','w')
+
+        if self.refType == "GAPPED":
+            if self.FULLSEQ: self.refType = "GENE-GAP"
+            else:            self.refType = "CAT-GAP" 
+
+        for key in self.key.keys():
+            key = key.split("|")
+            if key[6] == "GENE":
+                k="|".join(key[0:6])
+                exSize = int(key[7]); gSize = int(key[8])
+                if key[0] in self.geneSeen:
+                    self.geneOut.write("%s %s %s | %s %s %s %s\n" % (k,exSize,gSize,self.refType,self.geneExp[key[0]][0],self.geneExp[key[0]][1],self.geneExp[key[0]][2]))
+                else:
+                    self.geneOut.write("%s %s %s | %s %s %s %s\n" % (k,exSize,gSize,self.refType,0,0,0))
+        
+        for s in self.spliceExp.keys():
+            self.spliceOut.write("%s %s %s\n" % (s,self.refType,self.spliceExp[s]))
+
+        if self.refType != "GAPPED":
+            self.featOut = open(self.prefix+'_feat.cnts','w')
+
+            for f in self.featExp.keys():
+                self.featOut.write("%s %s %s\n" % (f,self.refType,self.featExp[f]))
+
+
+
+    def writeGeneCnts(self):
+
+        self.geneOut = open(self.prefix+'_gene.cnts','w')
+
+        for key in self.key.keys():
+            key = key.split("|")
+            if key[6] == "GENE":
+                k="|".join(key[0:6])
+                exSize = int(key[7]); gSize = int(key[8])
+                if key[0] in self.geneSeen:
+                    EXP=self.geneExp[key[0]]
+                    self.geneOut.write("%s %s %s | %s sense: %s %s %s antisense: %s %s %s\n" % (k,exSize,gSize,self.refType,EXP[0],EXP[1],EXP[2],EXP[3],EXP[4],EXP[5]))
+                else:
+                    self.geneOut.write("%s %s %s | %s sense: 0 0 0 antisense: 0 0 0\n" % (k,exSize,gSize,self.refType))
+        
+
+
+
+
 
 
 
@@ -692,36 +768,6 @@ class MapFile:
 
 
 
-    def writeExpression(self):
-
-        self.geneOut = open(self.prefix+'_gene.cnts','w')
-        self.spliceOut = open(self.prefix+'_splice.cnts','w')
-
-
-
-
-        if self.refType == "GAPPED":
-            if self.FULLSEQ: self.refType = "GENE-GAP"
-            else:            self.refType = "CAT-GAP" 
-
-        for key in self.key.keys():
-            key = key.split("|")
-            if key[6] == "GENE":
-                k="|".join(key[0:6])
-                exSize = int(key[7]); gSize = int(key[8])
-                if key[0] in self.geneSeen:
-                    self.geneOut.write("%s %s %s | %s %s %s %s\n" % (k,exSize,gSize,self.refType,self.geneExp[key[0]][0],self.geneExp[key[0]][1],self.geneExp[key[0]][2]))
-                else:
-                    self.geneOut.write("%s %s %s | %s %s %s %s\n" % (k,exSize,gSize,self.refType,0,0,0))
-        
-        for s in self.spliceExp.keys():
-            self.spliceOut.write("%s %s %s\n" % (s,self.refType,self.spliceExp[s]))
-
-        if self.refType != "GAPPED":
-            self.featOut = open(self.prefix+'_feat.cnts','w')
-
-            for f in self.featExp.keys():
-                self.featOut.write("%s %s %s\n" % (f,self.refType,self.featExp[f]))
 
 
 

@@ -7,7 +7,7 @@ from modules.MapFile import *
 from modules.ProgressBar import *
 import os
 				
-def process_file(mapFile,keyFile,FTYPE,GAPPED,prefix,strandSpecific,VERBOSE):
+def process_file(mapFile,keyFile,FTYPE,GAPPED,prefix,strandSpecific,VERBOSE,expressionOnly):
 
     progressBar = ProgressBar(sys.stdout,"Parsing Alignment...",'.','Complete',1000000,VERBOSE)
 
@@ -21,17 +21,26 @@ def process_file(mapFile,keyFile,FTYPE,GAPPED,prefix,strandSpecific,VERBOSE):
         mapping.getReads()
 
         if FTYPE != "HG19":
-            mapping.storeExpression()
-            mapping.writeLocations()
+            if expressionOnly:
+                mapping.storeGeneCnts()
+            else:
+                mapping.storeExpression()
+                mapping.writeLocations()
 
     
     if FTYPE != "HG19":
-        mapping.writeExpression()
-        mapping.close()
-        systemCall="sort -k14n,14 -k6,6 -k8n,8 < "+prefix+"_gene.loc > "+prefix+"_gene.srt"
-        os.system(systemCall)
+        if expressionOnly:
+            mapping.writeGeneCnts()
+            mapping.close()
+        else:
+            mapping.writeExpression()
+            mapping.close()
+            systemCall="sort -k14n,14 -k6,6 -k8n,8 < "+prefix+"_gene.loc > "+prefix+"_gene.srt"
+            os.system(systemCall)
     else:
         mapping.writeNovelGenes()
+        mapping.close()
+
     progressBar.complete()
     return "PASS"
 
@@ -48,6 +57,7 @@ if __name__ == '__main__':
     parser.add_option("-g", "--gapped", action = 'store_true', default = False, help="Flag to denote gapped alignment")
     parser.add_option("-s", "--strand", default = "NA", type='string', help="0,+, OR 16,-")
     parser.add_option("-v", "--verbose", action = 'store_true', default = False,  help="verbose output")
+    parser.add_option("-j", "--justExpression", action = 'store_true', default = False,  help="verbose output")
 
 
 
@@ -65,7 +75,7 @@ if __name__ == '__main__':
 
     if len(args)==1 and REFTYPE != None and options.key != None and options.prefix != None:
         if options.strand.upper() in [ "BOTH", "NA", "NONE", "EITHER" ]: options.strand = None
-        PROGRAM_RESULT=process_file(args[0],options.key,REFTYPE,options.gapped,options.prefix,options.strand,options.verbose)
+        PROGRAM_RESULT=process_file(args[0],options.key,REFTYPE,options.gapped,options.prefix,options.strand,options.verbose,options.justExpression)
 
     else:
         parser.print_help()
