@@ -21,20 +21,24 @@ def process_file(mapFile,keyFile,FTYPE,GAPPED,prefix,strandSpecific,VERBOSE,expr
         mapping.getReads()
 
         if FTYPE != "HG19":
-            if expressionOnly:
-                mapping.storeGeneCnts()
-            else:
-                mapping.storeExpression()
+            mapping.storeGeneCnts()
+            #if expressionOnly:
+            #    mapping.storeGeneCnts()
+            if not expressionOnly:
+                #mapping.storeFeatures()
                 mapping.writeLocations()
 
     
     if FTYPE != "HG19":
-        if expressionOnly:
-            mapping.writeGeneCnts()
-            mapping.close()
-        else:
-            mapping.writeExpression()
-            mapping.close()
+        mapping.writeGeneCnts()
+        mapping.close()
+        if not expressionOnly:
+            #if expressionOnly:
+            #mapping.writeGeneCnts()
+            #mapping.close()
+            #   else:
+            #mapping.writeExpression()
+            #mapping.close()
             systemCall="sort -k14n,14 -k6,6 -k8n,8 < "+prefix+"_gene.loc > "+prefix+"_gene.srt"
             os.system(systemCall)
     else:

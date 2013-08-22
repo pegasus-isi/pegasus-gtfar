@@ -95,7 +95,7 @@ function exonic_map_and_parse {
     ITER=$1; MYREADS=$2; MYREF=$3
 
     if [ $ITER -eq 1 ]; then
-        echo  "Mapping reads to exonic seqs (iteration 1)..." 
+        echo  "Mapping reads to exonic seqs (iteration 1)..."
         perm $EXON_100_F1 $MYREADS --seed F1 -v 2 -B -o exonic1.mapping -u exonic1_miss.fastq --printNM >> MAP.log
         if [ $? != 0 ]; then echo "perm-fail"; exit; fi  
         parse_alignment.py exonic1.mapping -k $KEY --ref=exonic --verbose -p exonic1 --strand - 
@@ -109,7 +109,7 @@ function exonic_map_and_parse {
         parse_alignment.py exonic2.mapping -k $KEY --ref=exonic -p exonic2 --verbose --strand -
         if [ $? != 0 ]; then echo "parse-fail"; exit; fi  
         sort -m -k14n,14 -k6,6 -k8n,8 exonic1_gene.srt exonic2_gene.srt > exonic_iter_gene.srt
-         call_mutations.py exonic_iter_gene.srt $GTF --ref=exonic -g $HG19 -p exonic_iterative --annotate --verbose
+        call_mutations.py exonic_iter_gene.srt $GTF --ref=exonic -g $HG19 -p exonic_iterative --annotate --verbose
         if [ $? != 0 ]; then echo "call-fail"; exit; fi 
     fi
 }
@@ -158,7 +158,7 @@ function multiple_gapped_alignment {
     echo -n "......"
     clipR $GENECLIP_40_F1 catclip_miss.fastq --anchorL 40 --seed F1 -v 1 --ignoreRepeatR 10 --ignoreDummyR 45 -u geneclip_miss.fastq -o gene_gap.sam --noSamHeader >> MAP.log 
     echo -n "......"
-    clipR $HG19CLIP_40_F1 geneclip_miss.fastq --anchorL 40 --seed F1 -v 4 --ignoreRepeatR 10 --ignoreDummyR 40 -u remaining_reads.fq -o hg_gap_vis.sam --noSamHeader >> MAP.log 
+    clipR $HG19CLIP_40_F1 geneclip_miss.fastq --anchorL 40 --seed F1 -v 4 --ignoreRepeatR 10 --ignoreDummyR 40 -u remaining_reads.fastq -o hg_gap_vis.sam --noSamHeader >> MAP.log 
     if [ $? != 0 ]; then echo "clipR-fail"; exit; else echo "Complete"; fi 
 
     ## PARSING ##
@@ -182,6 +182,7 @@ if [ $PROGRAM == 'test' ]; then
     echo "Output:  "$OUTPUT    
     echo ""
 
+    cd $OUTPUT 
     ## MAPPING TO MAJOR ANNOTATIONS ##
 
     exonic_map_and_parse 1 $READS   
@@ -212,7 +213,9 @@ if [ $PROGRAM == 'test' ]; then
     cat tmp/intronic*splice.cnts | sort -k1,1 | awk '{if ($1==L) C+=$3; else {if (NR>1) print L,T,C; L=$1;T=$2;C=$3}} END{print L,T,C}' > $PREFIX.intEx.jxns &
     cat tmp/exonic*splice.cnts | sort -k1,1 | awk '{if ($1==L) C+=$3; else {if (NR>1) print L,T,C; L=$1;T=$2;C=$3}} END{print L,T,C}' > $PREFIX.canonical.splices
     cat tmp/*gap_splice.cnts | sort -k1,1 > $PREFIX.non-canonical.splices
-    mv tmp/*novelAreas.cnts > $PREFIX.novelAreas.cnts
+    mv tmp/*novelAreas.cnts  $PREFIX.novelAreas.cnts
+    mv tmp/remaining_reads.fastq  $PREFIX.remaining_reads.fastq
+    parse_log.py tmp/MAP.log > $PREFIX.mapStats.txt
 
     cat tmp/hg.sam tmp/*_vis.sam > $PREFIX.sam
     samtools view -bS -o $PREFIX.bam $PREFIX.sam 
