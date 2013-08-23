@@ -56,7 +56,11 @@ class GtfFile:
 
     def addFasta(self,filePath):
         c=open(filePath)
-        if self.chr != c.readline().strip().split(">")[1]:
+        fChr = c.readline().strip().split()[0].split(">")[1]
+        #if self.chr != c.readline().strip().split(">")[1]:
+        if self.chr != fChr:
+            print self.chr,fChr
+            
             print "Wrong Chromosome File Error"; sys.exit()
         else:
             for line in c:

@@ -21,7 +21,7 @@ def runthrough(fName,genomePath,prefix,readlen=100):
     while gtf.open:
         gtf.loadGenesOnChromosome()
         gtf.addFasta(genomePath+'/'+gtf.chr+'.fa') 
-        gtf.uniquifySeqs()
+        #gtf.uniquifySeqs()
         gtf.printAnnotation(TYPE='ALL')
         gtf.startNextChromosome()
     
