@@ -11,7 +11,7 @@ from math import fabs
 
 ##########################################################################################################################################
 #####################################################  MAPFILE-FILE CLASS START ##########################################################
-##########################################################################################################################################
+########print##################################################################################################################################
 
 class MapFile:
 
@@ -109,7 +109,6 @@ class MapFile:
 
 
 
-#print
 
     def loadKey(self,keyFile):    
         if self.refType == "EXONIC":
@@ -322,7 +321,6 @@ class MapFile:
                     geneTmp,hgTmp = self.relocate(int(mapLines[i][3]),tmpKey,len(mapLines[i][1])-1)
                     hgStrand,hgLoc = trueStrand(mapLines[i][5],s[2], hgTmp )
 
-                    #print hgStrand, hgLoc
 
 
                     myLine = [ ( s[3] , hgStrand, hgLoc  ) , ( s[0],mapLines[i][5],geneTmp ) , ( mapLines[i][1],mapLines[i][4] ) ]

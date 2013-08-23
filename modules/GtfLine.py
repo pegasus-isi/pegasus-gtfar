@@ -13,7 +13,6 @@ import difflib
 class GtfLine:
     def __init__(self,lp):
         line=lp.split();
-        print len(line)
         if len(line)==0:
             self.valid=False
             self.chr = 'NA'
