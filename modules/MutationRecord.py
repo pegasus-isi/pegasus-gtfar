@@ -15,146 +15,100 @@ from collections import defaultdict as dd
 ##########################################################################################################################################
 
 class MutationRecord:
-    def __init__(self,fileHandle,prefix,TYPE,coverage,diffRate):
-        self.fileHandle = fileHandle
-        self.open = False
+    def __init__(self,mapFile,prefix,coverage,diffRate,SPECIES="HUMAN"):
+        self.mapFile = mapFile; self.mapHandle = open(self.mapFile);    self.open = True; self.offset = [0,0]; self.chr = None
         self.nextLine()
-        self.fType = TYPE; self.prefix = prefix
-        self.coverage_parameter = coverage;   self.rate_parameter = diffRate;     self.endLength=-1
+        self.chr = self.mapChr
+        if not self.open:       errorQuit("EMPTY LOCATION FILE")
+        
+        self.spliceBuffer = 3; self.coverage_parameter = coverage;   self.rate_parameter = diffRate; self.cands = {}
+      
+        self.specificSnps = open(prefix+'_specific.snps','w')
 
-###########################################################################################################################################################
+        if SPECIES == "HUMAN":
+            self.chr2Num ={'chr1': 1, 'chr2': 2, 'chr3': 3,'chr4': 4, 'chr5': 5, 'chr6': 6,'chr7': 7, 'chr8': 8, 'chr9': 9, 'chr10': 10, 'chr11': 11, 'chr12': 12, 'chr10': 10, 'chr11': 11, 'chr12': 12,
+                                'chr13': 13, 'chr14': 14, 'chr15': 15, 'chr16': 16, 'chr17': 17, 'chr18': 18,'chr19': 19, 'chr20': 20, 'chr21': 21,'chr22': 22, 'chrX': 23, 'chrY': 24, 'chrM': 25}
+        elif SPECIES == "RHESUS" or SPECIES == "MONKEY":
+            self.chr2Num = {'chr01': 1, 'chr02a': 2, 'chr02b': 3, 'chr03': 4, 'chr04': 5, 'chr05': 6,'chr06': 7, 'chr07': 8, 'chr08': 9,'chr09': 10, 'chr10': 11, 'chr11': 12, 'chr12': 13,
+                    'chr13': 14, 'chr14': 15, 'chr15': 16, 'chr16': 17, 'chr17': 18, 'chr18':19 ,'chr19': 20, 'chrX': 21}
 
-    def nextLine(self):
+
+##########################################################################################################################################################
+
+    def nextLine(self,SEEK=None):
         if self.open:
-            self.line = self.fStream.readline().split()
+            if SEEK != None:
+                self.mapHandle.seek(SEEK)
+            
+            tmpOffset = self.mapHandle.tell()
+            self.line = self.mapHandle.readline().split()
             if len(self.line)>0:
-                self.mapChr, self.mapGene = self.line[3], self.line[5]
 
-                self.mapPos = [int(x) for x in self.line[7].split(",")]
-                
-                self.mapRead,self.mapRef,self.mapQual = self.line[9], self.line[10], self.line[11]
+
+                self.readID,self.mapChr,self.mapStrand,self.hgStart,self.hgEnd,self.mapRead,self.mapRef,self.mapQual,self.mapSubs,self.geneLoc,self.geneFeature = self.line
+
+                self.hgStart, self.hgEnd, self.mapSubs = int(self.hgStart), int(self.hgEnd), int(self.mapSubs)
+                if self.mapChr != self.chr:
+                    self.offset = [self.offset[1],tmpOffset]
             else:
+                self.offset = [self.offset[1],tmpOffset]
                 self.mapGene = None
                 self.mapChr  = None
                 self.open = False
-                self.fStream.close()
-        else:
-            self.fStream = open(self.fileHandle)
-            self.open    = True
-            self.line = self.fStream.readline().split()
-            self.mapChr, self.mapGene = self.line[3], self.line[5]
-            self.mapPos = [int(x) for x in self.line[7].split(",")]
-            self.mapRead,self.mapRef,self.mapQual = self.line[9], self.line[10], self.line[11]
-            ##########################
-            self.chr  = self.mapChr
-            self.gene = self.mapGene
-
+                #self.mapHandle.close()
 ###########################################################################################################################################################
             
-
-    def findCands(self):
-        self.cands = {}; self.candMut = 3; candCnt=0
-        while self.open:
-            geneCands = dd(int)
-            while self.mapGene == self.gene:
-            
-                if int(self.line[12]) != 0 and self.line[1]=='UNIQ':
-
-                    start = 0
-                    spliceBuffer = 3
-                    diffs=[]
-                    for i in range(0,len(self.mapPos),2):
-                        if self.mapPos[i+1]-self.mapPos[i] > spliceBuffer*2:
-                            end = start + (self.mapPos[i+1] - self.mapPos[i] +1)
-                            readSeq = self.mapRead[start:end];    refSeq  = self.mapRef[start:end]
-                            diffs.extend([self.mapPos[i]+j for j in range(spliceBuffer,len(readSeq)-spliceBuffer) if readSeq[j]!=refSeq[j]])
-                        start = start + (self.mapPos[i+1] - self.mapPos[i] + 1)
-                    for d in diffs:
-                        geneCands[d]+=1
-                
-                self.nextLine()
-            
-            passCands=[]
-            for k in geneCands:
-                if geneCands[k] >= self.candMut:
-                    passCands.append(k); candCnt+=1
-            self.cands[self.gene] = sorted(passCands,reverse=True)
-
-            if not self.open:
-                self.nextLine()
-                return 
-            else:
-                self.gene = self.mapGene
-
-###########################################################################################################################################################
-            
-    def recordChrCands(self):
-
-        spliceBuffer = 2; tailBuffer = 3
-
-        self.chrSites = dd(list)
-        ## ITERATE THROUGH SORTED FILE UNTIL THE LINES NO LONGER CORRESPOND TO THE CORRECT CHROMOSOME ##
-        while self.mapChr == self.chr:
-
-            ## ITERATE THROUGH FILE UNTIL A GENE WITH CANDIDATES IS FOUND ##
-            while self.cands[self.mapGene] == []:
-                self.nextLine()
-                if not self.open:
-                    break 
-            ## LET FIRST OCCURANCE OF A CANDIDATE GENE BE MARKED ##
-            if self.open:
-                self.gene = self.mapGene
-            
-            ## IF THIS GENE CORRESPONDS TO A FUTURE CHROSOMOME; BREAK OUT OF LOOP #
-                if self.mapChr != self.chr:
-                    break
-            ## INITIALIZE GENE CANDIDATES FOR THE GENE ##
-                myCands = self.cands[self.gene]
-                mySites = [MutationCand(x) for x in myCands]
-            else:
-                break
-
-            ## AS LONG AS GENE CANDIDATES REMAIN - IF THE READ POSITION IS PAST THE CANDIDATE EVALUATE; OTHERWISE RECORD OR ITERATE THROUGH READS ##
-            while len(myCands) > 0:
-
-                if self.mapPos[0] > myCands[-1] or self.mapGene != self.gene:
-
-                    ALTS = sum(mySites[-1].cnts) - max(mySites[-1].cnts)
-                    TOT  = float(sum(mySites[-1].cnts))
-                    
+    def geneCandSearch(self):
+        while self.chr == self.mapChr:
+            if self.mapSubs > 0 and (len(self.mapRead) > 2*self.spliceBuffer) and self.chr in self.chr2Num.keys():
+                diffs = [(self.hgStart+i,self.mapRef[i],self.mapRead[i]) for i in range(self.spliceBuffer,len(self.mapRead)-self.spliceBuffer) if self.mapRead[i] != self.mapRef[i]]
+                for d in diffs:
+                    if d[0] not in self.cands.keys():
+                        self.cands[d[0]] = [d[1],[0,0,0,0]]
+                    self.cands[d[0]][1][baseSwap(d[2])]+=1
+            self.nextLine()
 
 
-                    if TOT !=0 and (ALTS / TOT > 0.05 or mySites[-1].diffs / TOT > 0.05):
-                        self.chrSites[self.gene].append(mySites[-1])
-                    mySites.pop();  myCands.pop()
-
-                else:
-                    if self.mapPos[-1] >= myCands[-1] and self.line[1]!="AMBIG":
-
-                        rType = self.line[1]; aType = self.line[2]
-                        for i in range(len(myCands)-1,-1,-1):
-                            start = 0
-                            for j in range(0,len(self.mapPos),2):
-                                if myCands[i] >= self.mapPos[j] + spliceBuffer and myCands[i] <= self.mapPos[j+1] - spliceBuffer:
-
-                                    end = start+self.mapPos[j+1]-self.mapPos[j]+1;    candPos = myCands[i]-self.mapPos[j];  readIdx = start+candPos
-                                    
-                                    
-                                    readBase = self.mapRead[start:end][candPos];  refBase = self.mapRef[start:end][candPos]; qualScr = self.mapQual[start:end][candPos]
-                                    if readIdx > tailBuffer and readIdx < len(self.mapRead) - tailBuffer:
-                                        mySites[i].record(self.line[1],self.line[2],readIdx,readBase,refBase,qualScr)
-
-                                start = start + (self.mapPos[j+1] - self.mapPos[j] + 1)
-
-                            if self.mapPos[-1] < myCands[i]: break
-
-
-                
-                    self.nextLine()
-            while self.mapGene == self.gene:
-                self.nextLine()
-        self.chr = self.mapChr
-                
+    def geneCandCall(self):
         
-#################################print###########################################################################################################################
-###########################################################################################################################################################
+        candList = []; n = 0
+        for c in self.cands:
+            if max(self.cands[c][1]) > self.coverage_parameter/2 :    candList.append((c,MutationCand(self.chr,c,self.cands[c][0],self.cands[c][1],self.coverage_parameter,self.rate_parameter  )))
+        
+        if len(candList) == 0:
+            self.chr = self.mapChr
+            if self.open: self.mapHandle.seek(self.offset[1])
+            return 
+        self.cands = {}; candList.sort()
+       
+        ##   ------------------------------------------------------------------------  ##
+        if self.open:   self.nextLine(SEEK = self.offset[0])
+        else:
+            self.open = True; self.nextLine(SEEK = self.offset[1])
+        
+        while self.chr == self.mapChr:
+            n = 0
+            while n < len(candList):
+                position,candidate = candList[n]
+                if position < self.hgStart:
+                    candidate.evaluate(self.specificSnps,self.chr2Num[self.chr])
+                    candList.remove(candList[n])
+                elif position < self.hgEnd:
+                    if self.hgStart + self.spliceBuffer <= position and position <= self.hgEnd - self.spliceBuffer:
+                        candidate.update(self.hgStart,self.mapRead,self.mapRef,self.geneLoc,self.geneFeature)
+                    n+=1
+                else:
+                    break
+            self.nextLine()
+            if len(candList) == 0: break 
+
+        
+        for c in candList: c[1].evaluate(self.specificSnps,self.chr2Num[self.chr])
+        
+        if self.open:
+            self.chr = self.mapChr
+            self.nextLine(SEEK = self.offset[1])
+        else:
+            return
+    
+

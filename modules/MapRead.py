@@ -3,12 +3,13 @@
 import os
 import sys
 import difflib
+from Bio.Seq import reverse_complement
 from collections import defaultdict as dd
 from math import fabs
 
 from Sequence import *
 
-#from ..gtTools.seq import *
+#from ..gtTools.seq import split *
 
 
 ##########################################################################################################################################
@@ -18,142 +19,408 @@ from Sequence import *
 
 
 class MapRead:
-    def __init__(self,type,sense,ID,qual,subs,tMaps,readLines,seqType=None):
+    def __init__(self,mapLines,readKey,strandRule):
+ 
+        
+        self.strandRule = strandRule
+        if strandRule == "OPPOSITE":
+            self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): False,("-","-"): False}
+        elif strandRule == "MATCH":
+            self.strandKey = {("+","-"): False,("-","+"): False,("+","+"): True,("-","-"): True}
+        else:
+            self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): True,("-","-"): True}
 
+        refAbbrev = {'EXONIC': 'EXNS', 'KNOWN-JXNS': 'KJXN', 'NOVEL-JXNS': 'NJXN', 'INTRONIC': 'ITRN','INTERGENIC': 'GENE','FULL-GENE': 'GENE'}
+        
+        
+        self.line = mapLines
+        myType = refAbbrev[mapLines.refType]
+        
 
-        self.ID = ID; self.sense = sense; self.qual = qual; self.subs = subs; self.features = tMaps; self.readLines = readLines; self.PALINDROMIC = False; self.TRIMMED = False;
+        self.key = {}
+        keyHandle = open(readKey)
 
-        self.samStrings = []; self.locStrings = []; self.seqType = seqType
-       
-        if type == 'MAPPING' or type == 'SAM':
+        for keyLine in keyHandle:
+            keyLine = keyLine.split()
+            if keyLine[0].split("|")[6][0:4] == myType:
+                self.key[keyLine[0]] = [[[int(x.split('-')[0]),int(x.split('-')[1])] for x in keyLine[i].split(",")] for i in range(1,len(keyLine))]
 
-            if len(self.readLines) > 1:  self.disambiguate()
-             
-            self.hgLocs = [self.readLines[0][0]]; self.geneLocs = [[self.readLines[0][1]]]; self.seqs = [self.readLines[0][2]]
-            
-            for i in range(1,len(self.readLines)):
+        self.switchStrand = {'0':'+','16':'-','+':'0','-':'16'}
+        
+        if mapLines.format == "MAPPING":
+            self.loadRead = self.pullMappingLine
 
-                if self.readLines[i][0] != self.hgLocs[-1]:
-                    self.hgLocs.append(self.readLines[i][0])
-                    self.seqs.append(self.readLines[i][2])
-                    self.geneLocs.append([self.readLines[i][1]])
-                else:
-                    if self.readLines[i][1] != self.geneLocs[-1][-1]:
-                        self.geneLocs[-1].append(self.readLines[i][1])
-             
-            if len(self.hgLocs) == 1:
-                self.uniq = True; self.multi=False
-                if len(self.geneLocs[0])!=1:
-                    self.multi=True
+        
+        elif mapLines.format == "SAM":
+            if mapLines.refType == "INTERGENIC":
+                self.loadRead = self.pullGenomeLine
             else:
-                self.uniq=False; self.multi=True
-
-###################################################################################################################################
-
+                self.loadRead = self.pullSamLine
+        
 
 
-                    
+
+    def pullMappingLine(self):
+
+        self.name, self.read, self.subs, self.qual, self.firstStrand = self.line.rName, self.line.read, self.line.subs, self.line.qual, self.line.mapStrand
+        self.invalid, self.hgUniq, self.geneUniq, self.hgLoc, self.geneLoc, self.fivePrimeBias = False, False, False, None, None, None
+
+
+        refSet = set([]); readMaps = []
+        while self.name == self.line.rName:
+
+            if self.line.mapStrand == "-":     refSet.add(reverse_complement(self.line.ref))
+            else:                              refSet.add(self.line.ref)
+           
+            self.relocate(self.key[self.line.fName],self.line.fPos,self.line.seqLen)
+            readMaps.append([(self.line.chr,self.line.refStrand,self.hgPos),(self.line.geneID,self.genePos),(self.line.mapStrand,self.line.refStrand)])
+            self.line.next()
+        if len(readMaps) == 1:
+            self.ref = refSet.pop()
+            if self.firstStrand  == "-":
+                self.read = reverse_complement(self.read); self.qual = self.qual[-1::]
+            
+            self.hgLoc, self.geneLoc, self.sense = readMaps[0][0], readMaps[0][1], self.strandKey[readMaps[0][2]]
+            self.hgUniq, self.geneUniq = True, True 
+        else:
+            self.fivePrimeBias = None
+            if len(refSet) == 1 and len(readMaps)<12:
+                self.ref = refSet.pop()
+                if self.firstStrand  == "-":
+                    self.read = reverse_complement(self.read); self.qual = self.qual[-1::]
+                self.multiMaps = readMaps
+                self.disambiguate()
+            else:
+                self.invalid = True
+                self.sense   = True
+                return 
+        
+      
+       
+
+    def pullSamLine(self):
+
+        self.name, self.read, self.subs, self.qual, self.firstStrand = self.line.rName, self.line.read, self.line.subs, self.line.qual, self.line.samStrand
+        self.invalid, self.hgUniq, self.geneUniq, self.hgLoc, self.geneLoc, self.fivePrimeBias = False, False, False, None, None, None
+        self.ref = self.read
+        readMaps = []
+        while self.name == self.line.rName:
+
+            self.relocateTuple(self.key[self.line.fName], self.line.fLocs) 
+            readMaps.append([(self.line.chr,self.line.refStrand,self.hgPos),(self.line.geneID,self.genePos),(self.switchStrand[self.line.samStrand],self.line.refStrand)])
+            self.line.next()
+        if len(readMaps) == 1:
+            self.hgLoc, self.geneLoc, self.sense = readMaps[0][0], readMaps[0][1], self.strandKey[readMaps[0][2]] 
+            self.hgUniq, self.geneUniq = True, True 
+        else:
+            if len(readMaps)<12:
+                self.multiMaps = readMaps
+                self.disambiguate()
+            else:
+                self.invalid = True
+                return 
+        
+    
+    def pullGenomeLine(self):
+
+        self.name, self.read, self.subs, self.qual, self.firstStrand = self.line.rName, self.line.read, self.line.subs, self.line.qual, self.line.samStrand
+        self.invalid, self.hgUniq, self.geneUniq, self.hgLoc, self.geneLoc, self.fivePrimeBias = False, False, False, None, None, None
+        self.ref = self.read
+        readMaps = []
+
+        while self.name == self.line.rName:
+            readMaps.append([(self.line.chr,self.line.refStrand,self.line.fLocs),(self.line.geneID,self.line.fLocs),(self.switchStrand[self.line.samStrand],self.line.refStrand)])
+            self.line.next()
+        if len(readMaps) == 1:
+            self.hgLoc, self.geneLoc, self.sense = readMaps[0][0], readMaps[0][1], self.strandKey[readMaps[0][2]] 
+            self.hgUniq, self.geneUniq = True, True 
+        else:
+            if len(readMaps)<12:
+                self.multiMaps = readMaps
+                self.disambiguate()
+            else:
+                self.invalid = True
+                return 
+        
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
 
 
 #####################################################################################################################################################
-
-    def palindromic(self):
-
-            ### CHECK FOR PALINDROMIC AMBIGUITY ###
-
-        if self.readLines[0][0] != self.readLines[-1][0] and self.readLines[0][0][0] == self.readLines[-1][0][0]:
-
-            if self.readLines[0][0][2][-1::-1] == self.readLines[-1][0][2]:
-
-                n=0; self.PALINDROMIC = True
-                while n < len(self.readLines):
-                    if self.readLines[n][0][1] != "+":
-                        self.readLines.remove(self.readLines[n])
-                    else:
-                        n+=1
-            else:
-                return
-
-
-    def startTrim(self,n,minLen,maxLen):
-
-        seqLen = 0; myStrand = self.readLines[0][n][1]; newSpots = []; readLen = len(self.readLines[0][2][0])
-        for i in range(0,minLen,2):
-            x1 = set([]); x2=set([])
-            for j in range(len(self.readLines)):
-                x1.add(self.readLines[j][n][2][i]);  x2.add(self.readLines[j][n][2][i+1])
-            if len(x1) == 1:
-                x1 = x1.pop()
-                if len(x2) == 1:    x2=x2.pop()
-                else:
-                    if x1 < min(x2): x2 = min(x2)
-                    else:            x2 = max(x2)
-                newSpots.extend([x1,x2])
-                seqLen += fabs(x2-x1)+1
-        if myStrand == "+":
-            return newSpots,(0,seqLen)
-        else:
-            return newSpots,(readLen-seqLen,readLen)
-                
-                
-    def tailTrim(self,n,minLen,maxLen):
-
-
-        
-        seqLen = 0; myStrand = self.readLines[0][n][1]; newSpots = []; readLen = len(self.readLines[0][2][0])
-        for i in range(0,minLen,2):
-            x1 = set([]); x2=set([])
-            for j in range(len(self.readLines)):
-                sData=self.readLines[j][n][2]
-                x1.add(sData[len(sData)-(i+2)]); x2.add(sData[len(sData)-(i+1)])
-            if len(x2) == 1:
-                x2 = x2.pop()
-                if len(x1) == 1:    x1=x1.pop()
-                else:
-                    if x2 > max(x1):     x1=max(x1)
-                    else:           x1=min(x1)
-
-                newSpots.extend([x2,x1])
-                seqLen += fabs(x2-x1)+1
-
-        newSpots.reverse()
-        if myStrand == "+":
-            return newSpots,(readLen-seqLen,readLen)
-        else:
-            return newSpots,(0,seqLen)
-
-        
-
-
-
-    def trim(self):
-
-        hgEnds   = set([h[0][2][-1] for h in self.readLines]);
-        hgStarts = set([h[0][2][0]  for h in self.readLines]);
-        minLen   = min([len(h[0][2]) for h in self.readLines])
-        maxLen   = max([len(h[0][2]) for h in self.readLines])
-       
-        geEnds   = set([h[1][2][-1] for h in self.readLines]);
-        geStarts = set([h[1][2][0]  for h in self.readLines]);
-       
-
-        if len(hgStarts) > 1 and len(hgEnds) > 1:
-            return 
-        else:
-            if len(hgStarts) == 1:   hgResult = self.startTrim(0,minLen,maxLen)
-            elif len(hgEnds) == 1:   hgResult = self.tailTrim(0,minLen,maxLen)
-            else:                    return 
-            if len(geStarts) == 1:   geResult = self.startTrim(1,minLen,maxLen)
-            elif len(geEnds) == 1:   geResult = self.tailTrim(1,minLen,maxLen)
-            else:                    return
-        
-        if len(hgResult[0]) == len(geResult[0]) and hgResult[1] == geResult[1]:
-            self.TRIMMED=True
-            fd = self.readLines[0]; A=int(hgResult[1][0]); B=int(hgResult[1][1])
-
-            self.readLines = [[(fd[0][0],fd[0][1],hgResult[0]), (fd[1][0],fd[1][1],geResult[0]), (fd[2][0][A:B],fd[2][1][A:B])]]
-            self.qual      = self.qual[A:B]
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
+
+
+#####################################################################################################################################################
+    
+
+
+    def relocateTuple(self,key,fTuple):
+
+        fKey,gKey,hKey =  key[0],key[1],key[2];  POST=False; gPos = []; hPos =[]
+
+        gGrow = gPos.extend
+        hGrow = hPos.extend
+
+        for j in range(0,len(fTuple),2):
+            fPos = fTuple[j]; DIST = fTuple[j+1]-fTuple[j]; POST = False
+            for i in range(len(fKey)):
+                if POST or (fPos >= fKey[i][0] and fPos <= fKey[i][1]):
+                    if not POST:
+                        myOffset = fPos - fKey[i][0]
+                    gGrow([gKey[i][0]+ myOffset, gKey[i][0] + myOffset + DIST  ])
+
+                    if hKey[i][0] < hKey[i][1]:
+                        hGrow( [ hKey[i][0] + myOffset, hKey[i][0] + myOffset + DIST ] )
+                    else:
+                        hGrow( [ hKey[i][0] - myOffset, hKey[i][0] - myOffset - DIST ] )
+
+                    if fKey[i][1] >= fPos + DIST and fKey[i][1] >= fKey[i][0] + DIST:
+                        break
+                    else:
+                        gPos[-1] = gKey[i][1]; hPos[-1] = hKey[i][1]
+                        DIST -= (1 + fKey[i][1] - (fKey[i][0] + myOffset) )
+                        POST = True; myOffset =0
+        self.genePos,self.hgPos = gPos,hPos
+
+
+
+########################################################################################################################################################
+
+
+
+    def relocate(self,key,fPos,DIST):
+
+
+        fKey,gKey,hKey =  key[0],key[1],key[2];  POST=False; gPos = []; hPos =[]
+        self.fivePrimeBias = (fPos,fKey[-1][-1])
+
+        gGrow = gPos.extend
+        hGrow = hPos.extend
+
+        for i in range(len(fKey)):
+            if POST or (fPos >= fKey[i][0] and fPos <= fKey[i][1]):
+                if not POST:
+                    myOffset = fPos - fKey[i][0]
+                gGrow([gKey[i][0]+ myOffset, gKey[i][0] + myOffset + DIST  ])
+
+                if hKey[i][0] < hKey[i][1]:
+                   hGrow( [ hKey[i][0] + myOffset, hKey[i][0] + myOffset + DIST ] )
+                else:
+                   hGrow( [ hKey[i][0] - myOffset, hKey[i][0] - myOffset - DIST ] )
+
+                if fKey[i][1] >= fPos + DIST and fKey[i][1] >= fKey[i][0] + DIST:
+                    break
+                else:
+                    gPos[-1] = gKey[i][1]; hPos[-1] = hKey[i][1]
+                    DIST -= (1 + fKey[i][1] - (fKey[i][0] + myOffset) )
+                    POST = True; myOffset =0
+        self.genePos,self.hgPos = gPos,hPos
+        #return gPos,hPos
+
+
+
+########################################################################################################################################################
+
+
+
+
+    def resolveAntiSense(self):
+        tmpMaps = [s for s in self.multiMaps if self.strandKey[s[2]]]
+
+        if len(tmpMaps) > 0:
+            self.sense = True
+            if len(tmpMaps) == 1:
+                self.hgUniq, self.geneUniq = True, True
+                self.hgLoc,self.geneLoc= tmpMaps[0][0],tmpMaps[0][1]
+            else:
+                self.multiMaps = tmpMaps
+        else:
+            self.sense = False
+
+    def resolveMultipleAnnotations(self):
+        self.multiMaps.sort()
+        if self.multiMaps[0][0] == self.multiMaps[-1][0]:
+            self.hgUniq = True 
+            self.hgLoc   = self.multiMaps[0][0]
+            self.sense = self.strandKey[self.multiMaps[0][2]]
+            self.multiGenes = [myMap[1][0] for myMap in self.multiMaps]
+        elif self.multiMaps[0][0][0] == self.multiMaps[-1][0][0]:
+            tmpGenes = [myMap[1][0] for myMap in self.multiMaps]
+            if len(set(tmpGenes)) == 1:
+                self.geneUniq = True
+                self.geneLoc = self.multiMaps[0][1]
+            else:
+                self.multiGenes = tmpGenes
+        else:
+            self.multiGenes = [myMap[1][0] for myMap in self.multiMaps]
+            #self.geneLoc = [geneMap[1] for geneMap in self.multiMaps]
+            self.sense = self.strandKey[self.multiMaps[0][2]]
+        return
+
+
+    def disambiguate(self):
+
+        if self.strandRule != None: self.resolveAntiSense()
+        else:                       self.sense = True
+        if not self.hgUniq:         self.resolveMultipleAnnotations() 
+        
+        
+
+
+
+
+
+
+    def samString(self):
+
+        myChr,myStrand,myPos = self.hgLoc
+        cigar = "".join([str(myPos[i]-myPos[i-1]+1)+"M" if i%2==1 else str(myPos[i]-myPos[i-1]-1)+"N" for i in xrange(1,len(myPos))])
+        return "\t".join([self.name,self.switchStrand[myStrand],myChr,str(myPos[0]),'255',cigar,'*','0','0',self.read,self.qual,'NM:i:'+str(self.subs)])
+
+
+    def jxnSearch(self):
+        self.spliced = False
+        myChr,myStrand,chrPos = self.hgLoc
+        myGene,genePos        = self.geneLoc
+
+        chrStrings  = [str(s) for s in chrPos]
+        geneStrings = [str(s) for s in genePos]
+
+        if len(chrPos) != len(genePos):
+            print "WRF OMG NOT SAME LENGTH??? FUUUK"
+            sys.exit()
+        
+        myOffset = 0 ; minLen = 10; mySplices = []; myPieces = []
+
+        for i in range(0,len(chrPos),2):
+
+            myDist = (chrPos[i+1] - chrPos[i]) + 1
+            if myDist > minLen or (i>0 and i + 2 < len(chrPos)):
+
+                geneData = myGene + ":" + ",".join(geneStrings[i:i+2])
+                
+                if i > 1:
+                    mySplices.append("".join([myChr,":",chrStrings[i-1],"-",chrStrings[i],"|",myGene,':',geneStrings[i-1],'-',geneStrings[i]]))
+
+                myPieces.append([self.name,myChr,myStrand,chrStrings[i],chrStrings[i+1],self.read[myOffset:myOffset+myDist],self.ref[myOffset:myOffset+myDist],self.qual,str(self.subs),geneData])
+            myOffset += myDist 
+        if len(mySplices) > 0:
+            self.spliced = True
+            totalSplice = ["EXONIC-SPLICED|"+",".join(mySplices)]
+            for i in range(len(myPieces)):  myPieces[i] = myPieces[i] + totalSplice
+        else:
+            self.spliced = False
+            for i in range(len(myPieces)):  myPieces[i] = myPieces[i] + ["EXONIC-CONT|"+myChr+"|"+myGene]
+        self.spliceJxns = mySplices
+        self.splitReads = myPieces
+
+
+    def hgJxnSearch(self):
+
+        myOffset = 0; minLen = 0; mySplice = None; myPieces = []
+        
+        myChr,myStrand,chrPos = self.hgLoc
+        chrStrings  = [str(s) for s in chrPos]
+        
+        for i in range(0,len(chrPos),2):
+            myDist = (chrPos[i+1] - chrPos[i]) + 1
+            if myDist > minLen or (i>0 and i + 2 < len(chrPos)):
+                if i > 1:   mySplice="".join(["INTERGENIC-SPLICED|",myChr,":",chrStrings[i-1],"-",chrStrings[i]])
+                myPieces.append([self.name,myChr,myStrand,chrStrings[i],chrStrings[i+1],self.read[myOffset:myOffset+myDist],self.ref[myOffset:myOffset+myDist],self.qual,str(self.subs),"INTERGENIC"])
+            myOffset += myDist 
+        if mySplice:
+            self.spliced = True
+            for i in range(len(myPieces)):  myPieces[i].append(mySplice)
+        else:
+            self.spliced = False
+            for i in range(len(myPieces)):  myPieces[i].append("INTERGENIC-CONT|"+myChr)
+        self.spliceJxns = [mySplice]
+        self.splitReads = myPieces
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def removeDuplicates(self):
         n=1; self.readLines.sort()
@@ -162,170 +429,217 @@ class MapRead:
                 self.readLines.remove(self.readLines[n])
             else:
                 n+=1
-
-
-
-
-
-
-
-    def disambiguate(self):
-
-            ### CHECK FOR PALINDROMIC AMBIGUITY ###
-        
         self.readLines.sort()
 
-
-        chrSet=set([]); geneSet=set([]); refSet=set([]); cStrand=set([])
-        for i in range(len(self.readLines)):
-            chrSet.add(self.readLines[i][0][0]); geneSet.add(self.readLines[i][1][0]); refSet.add(self.readLines[i][2][1]); cStrand.add(self.readLines[i][0][1]) #;  gStrand=self.readLines[i][1][1]; 
-
-        if len(chrSet) == 1:
-
-
-            if self.readLines[0][0][2][-1::-1] == self.readLines[-1][0][2]:
-                self.palindromic()
-
-
-            elif len(geneSet) == 1 and len(refSet)==1 and len(cStrand) == 1:
-
-                #READ=self.readLines[0][2][0]; REF=refSet.pop()
-                #cStrand = self.readLines[0][0][1]; rStrand=self.readLines[0][1][1]
         
-                self.trim()
-
-          #      hgEnds   = set([h[0][2][-1] for h in self.readLines]);
-          #      hgStarts = set([h[0][2][0]  for h in self.readLines]);
-          #      hgLens   = [(len(h[0][2]),h[0][2],h[1][2]) for h in self.readLines];
-          #      maxMap   = max(hgLens);
-          #      minMap   = min(hgLens);
-
-            
-            self.removeDuplicates()
-
-                        
-                
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##################################################################################################################################################################################
-##################################################################################################################################################################################
-#########################################################################  READ PROCESSES ########################################################################################
-##################################################################################################################################################################################
-##################################################################################################################################################################################
-
-
-
-
-
-
-##################################################################################################################################################################################
-#########################################################################  READ PROCESSES ########################################################################################
-##################################################################################################################################################################################
-##################################################################################################################################################################################
-
-
-
-
-
-    def visualizeStrings(self):
-
-        chrDict ={'chr1': 1, 'chr2': 2, 'chr3': 3,'chr4': 4, 'chr5': 5, 'chr6': 6,'chr7': 7, 'chr8': 8, 'chr9': 9, 'chr10': 10, 'chr11': 11, 'chr12': 12, 'chr10': 10, 'chr11': 11, 'chr12': 12, 
-                'chr13': 13, 'chr14': 14, 'chr15': 15, 'chr16': 16, 'chr17': 17, 'chr18': 18,'chr19': 19, 'chr20': 20, 'chr21': 21,'chr22': 22, 'chrX': 23, 'chrY': 24, 'chrMT': 25}
- 
-        if  self.uniq:
-            samScr='255'; hgType="UNIQ"
+        if len(self.readLines) == 1:
+            self.hgUniq = True; self.geneUniq = True
+        elif self.readLines[0][0] == self.readLines[-1][0]:
+            self.hgUniq  =  True
+            self.geneUniq = False
         else:
-            samScr='1';   hgType="AMBIG"
-
-        cigarStr = ''; spotStr = ''
-
-        for i in range(len(self.hgLocs)):
-            hg = self.hgLocs[i]; mySeq = self.seqs[i][0]
-            if self.seqType == "zFLANKSEQ":
-                if hg[1]=='+':
-                    samSeq = mySeq;  spots = hg[2]; samStrand = '0'
-                else:
-                    samSeq = revComp(mySeq); spots = hg[2]; samStrand='16'; self.qual = self.qual[-1::-1]
-
-            elif self.seqType == "ANY ELSE":
-                if hg[1]=='+':
-                    samSeq = mySeq;  spots = hg[2]; samStrand = '0'
-                else:
-                    samSeq = revComp(mySeq); spots = hg[2][-1::-1]; samStrand='16'; self.qual = self.qual[-1::-1]
-            else:
-                if hg[1]=='+':
-                    samSeq = mySeq;  spots = hg[2]; samStrand = '0'
-                else:
-                    samSeq = revComp(mySeq); spots = hg[2]; samStrand='16'; self.qual = self.qual[-1::-1]
+            self.hgUniq   = False
+            self.geneUniq = False
 
 
-            for k in range(0,len(spots),2):
-                cigarStr+=str(spots[k+1]-spots[k]+1)+"M"
-                if k+2< len(spots):
-                    cigarStr+= str(spots[k+2] - spots[k+1] -1)+"N"
+    def spliceEval(self):
 
- #           print self.hgLocs, self.ID,self.PALINDROMIC, self.TRIMMED 
-
-
-            self.samStrings.append(self.ID+'\t'+samStrand+'\t'+hg[0]+'\t'+str(spots[0])+'\t'+samScr+'\t'+cigarStr+'\t*\t0\t0\t'+samSeq+'\t'+self.qual+'\tNM:i:'+str(self.subs))
-        
-            for j in range(len(self.geneLocs[i])):
-                if len(self.geneLocs[i]) > 1: gType = "MULTI"
-                else:                         gType = "SINGLE"
-                gene = self.geneLocs[i][j]
-                if gene[1] == '+':
-                    mySeq = self.seqs[i][0]; myRef = self.seqs[i][1]
-                else:
-                    mySeq = revComp(self.seqs[i][0]); myRef = revComp(self.seqs[i][1]); self.qual[-1::-1]
-
-                spotStr=','.join([str(s) for s in gene[2]])
-                geneString=" ".join([self.ID,hgType,gType,hg[0],hg[1],gene[0],gene[1],spotStr,"SEQ/REF/QUAL",mySeq,myRef,self.qual,str(self.subs),str(chrDict[hg[0]])])
-                if geneString not in self.locStrings:   self.locStrings.append(geneString)
+        tmpGeneNames = set([])
+        for i in range(len(self.readLines)):
+            hgTmp = self.readLines[i][0]; geneTmp = self.readLines[i][1]; tmpGeneNames.add(geneTmp[0])
+            if len(geneTmp[1]) > 2:
+                geneHead = geneTmp[1][1] - geneTmp[1][0]
+                geneTail = geneTmp[1][len(geneTmp[1])-1] - geneTmp[1][len(geneTmp[1])-2]
+                read,ref = self.readLines[i][3][0],self.readLines[i][3][1]
+                strands   = self.readLines[i][2]
+                if geneHead < self.minOverlap:
+                    geneTmp[1] = geneTmp[1][2::]
+                    hgTmp[1]   = hgTmp[1][2::]
+                    read = read[geneHead+1::]
+                    ref  = ref[geneHead+1::]
+                    
+                if geneTail < self.minOverlap:
+                    geneTmp[1] = geneTmp[1][0:len(geneTmp[1])-2]
+                    hgTmp[1]   = hgTmp[1][0:len(hgTmp[1])-2]
+                    read = read[0:len(read)-(geneTail+1)]
+                    ref  = ref[0:len(ref)-(geneTail+1)]
                 
+                self.readLines[i] = [hgTmp,geneTmp,strands,[read,ref]]
+        self.removeDuplicates()
+
+        if not self.geneUniq and len(tmpGeneNames)==1:
+            if self.readLines[0][0][1][0] == self.readLines[-1][0][1][0] and self.readLines[0][0][1][-1] == self.readLines[-1][0][1][-1]:
+                ### CASE FALSE JUNCTION -- INTRONING JXN NEARBY --- ###
+                if len(self.readLines[0][0][1]) < len(self.readLines[-1][0][1]):
+                    MASTERmap = self.readLines[0]
+                else:
+                    MASTERmap = self.readLines[-1]
+                for i in range(len(self.readLines)):
+                    if self.readLines[i] != MASTERmap and self.readLines[i][0][1][0] == MASTERmap[0][1][0] and self.readLines[i][0][1][-1] == MASTERmap[0][1][-1]:
+                        self.readLines[i] = MASTERmap
+
+            self.removeDuplicates()
+        
+
+
+        
+
+
+
+    def removePalindromes(self):
+
+
+        if  self.readLines[0][0][1] != self.readLines[-1][0][1] and self.readLines[0][0][1] == self.readLines[-1][0][1][-1::-1]:
+
+            tHg = self.readLines[0][0]; tmpSeqs = self.readLines[0][3]; tLocs = self.readLines[0][0][1]
+            for i in range(len(self.readLines)):
+                if self.readLines[i][0][1] == tLocs[-1::-1]:
+                    if self.readLines[i][2][0] == "+":
+                        newStr = '-'
+                    else:
+                        newStr = '+'
+                    self.readLines[i] = [tHg,self.readLines[i][1],(newStr,self.readLines[i][2][1]),tmpSeqs]
+
+
+    def evaluate(self):
+
+        self.removeDuplicates()
+
+        if self.strandRule != None:
+            self.removeAntiSense()
+        else:
+            self.sense = True
+
+        self.spliceEval()
+
+        if not self.hgUniq:
+            self.removePalindromes()
+            self.removeDuplicates()
+        hgLocs = set([]); geneLocs = set([]); seqs = set([]); strands = set([]); features = set([])
+        for i in range(len(self.readLines)):
+            hgLocs.add((self.readLines[i][0][0],self.readLines[i][2],tuple(self.readLines[i][0][1])))
+            geneLocs.add((self.readLines[i][1][0],self.readLines[i][2],tuple(self.readLines[i][1][1])))
+            seqs.add(tuple(self.readLines[i][3]))
+            strands.add(self.readLines[i][2][0])
+
+        self.hgLocs = list(hgLocs)
+        self.geneLocs = list(geneLocs)
+        self.seqs = list(seqs)
+        mapStrands = list(strands)
+
+
+        if self.fType == "INTERGENIC":
+
+            if len(hgLocs) > 1:
+                self.valid = False
+            else:
+                self.seq = self.seqs[0][0]; self.ref = self.seqs[0][1]
+
+        elif len(self.seqs) > 1 or len(mapStrands)>1:
+
+            self.valid = False
+            multiGenome = set([])
+            for i in range(len(self.readLines)):
+                multiGenome.add((self.readLines[i][0][0],self.readLines[i][2],tuple(self.readLines[i][0][1]),tuple(self.readLines[i][3])))
+
+            self.multiGenome = list(multiGenome)
+        else:
+            
+            ## NOTE FIX THE QUAL REVERSE IT WHEN NECESSARY ##
+            self.seq = self.seqs[0][0]; self.ref = self.seqs[0][1]
+            if mapStrands.pop() == "-":
+                self.qual = self.qual[-1::-1]
+            if len(self.qual) > len(self.seq):
+                self.qual = self.seq[0:len(self.seq)]
+            
+########################################################################################
+
+
+    def findSplices(self):
+        self.spliceTags = []
+        if self.sense and self.geneUniq and self.valid and self.hgUniq:
+            if len(self.geneLocs[0][2]) > 2:
+                self.spliced = True
+                tmpGene = self.geneLocs[0][2]; tmpHg = self.hgLocs[0][2];
+                geneJumps = []; hgJumps = []; tmpName = self.geneLocs[0][0]; tmpChr = self.hgLocs[0][0]; tmpStrand = self.hgLocs[0][1][1]
+                for i in range(1,len(tmpGene),2):
+                    if i+1 < len(tmpGene):
+                        geneJumps.append((str(tmpGene[i]),str(tmpGene[i+1])))
+                        hgJumps.append((str(tmpHg[i]),str(tmpHg[i+1])))
+                for j in range(len(geneJumps)):
+                    junctionID = tmpChr+"_"+tmpStrand+"_"+hgJumps[j][0]+","+hgJumps[j][1]+"|"+tmpName+"_"+geneJumps[j][0]+","+geneJumps[j][1]
+                    self.spliceTags.append(junctionID)
+        if len(self.spliceTags)==0:
+            self.spliceTags.append("UNSPLICED")
+
+
+    def findGeneMaps(self):
+        
+        if not self.valid or self.fType == "INTERGENIC":
+            self.geneMaps =  []
+        elif self.geneUniq:
+            self.geneMaps = [self.geneLocs[0][0]]
+        else:
+            self.geneMaps = tuple(sorted(list(set([self.geneLocs[i][0] for i in range(len(self.geneLocs))]))))
+
+    def roundChrMaps(self):
+        roundMaps=[]        
+        tmpChr = self.hgLocs[0][0]
+        tmpLocs = self.hgLocs[0][2]
+        for i in range(0,len(tmpLocs),2):
+            roundMaps.append(tmpLocs[i]-tmpLocs[i]%1000)
+        return tmpChr,roundMaps
+
+
+    def splitLocations(self):
+
+        if self.valid and self.hgUniq and self.sense:
+            hg = self.hgLocs[0]
                  
-#########################################################################################################################################################################################################
+            if len(hg[2])>2: self.spliced = True
+            else:            self.spliced = False
+           
 
+            if self.fType == "INTRONIC":
+                if self.spliced: SPLICE_INFO="INTRONIC-JXNCROSS|"+hg[0]+":"
+                else:       SPLICE_INFO="INTRONIC-CONTAINED|"+hg[0]+":"
+            elif self.fType == "INTERGENIC":
+                if self.spliced: SPLICE_INFO="INTERGENIC-SPLICED|"+hg[0]+":"
+                else:       SPLICE_INFO="INTERGENIC-UNSPLICED|"+hg[0]+":"
+            else:
+                if self.spliced: SPLICE_INFO="EXONIC-SPLICED|"+hg[0]+":"
+                else:       SPLICE_INFO="EXONIC-UNSPLICED|"+hg[0]+":"
 
+            ## ------------------------------------------------------------------------------------------------------------------- ##
 
+            hgTmp, tmpSplices,spliceData = [],[],[]
+            tmpStart,n = 0,0
+              
+            for k in range(0,len(hg[2]),2):
+                hgStart = hg[2][k]; hgEnd = hg[2][k+1]
+                hgTmp.append([hgStart,hgEnd,self.seq[tmpStart:tmpStart+(hgEnd-hgStart)+1],self.ref[tmpStart:tmpStart+(hgEnd-hgStart)+1],self.qual[tmpStart:tmpStart+(hgEnd-hgStart)+1]])
+                tmpStart += (hgEnd-hgStart) +1
+                if k>1:     tmpSplices.append(str(hg[2][k-1])+"-"+str(hg[2][k]))
+            if len(tmpSplices) !=0:
+                SPLICE_INFO+=",".join(tmpSplices)
+            else:
+                SPLICE_INFO+="CONT"
 
+            geTmp = [[] for t in hgTmp]
+            for ge in self.geneLocs:
+                tmpSplices = []
+                for k in range(0,len(ge[2]),2):
+                    geTmp[n].append(ge[0]+":"+str(ge[2][k])+","+str(ge[2][k+1]))
+                    if k>1: tmpSplices.append((str(ge[2][k-1])+"-"+str(ge[2][k])))
+                    n+=1
+                if len(tmpSplices) != 0:
+                    spliceData.append(SPLICE_INFO+"|"+ge[0]+":"+",".join(tmpSplices))
+                else:
+                    spliceData.append(SPLICE_INFO+"|"+ge[0]+":CONT")
+                n=0
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#            for i in range(len(hgTmp)):
+#                print self.ID,hg[0],hg[1][0]," ".join([str(s) for s in hgTmp[i]]),self.subs,"|"," ".join(geTmp[i]),"|"," ".join(spliceData)
 
 
 
@@ -510,7 +824,6 @@ class MapRead:
 
 
 ##############################################################################################################
-
 
 
 

@@ -5,6 +5,7 @@ import sys
 import os 
 import difflib
 
+from MutationFile import *
 from Sequence import *
 from Utilities import *
 from GtfLine import *
@@ -12,19 +13,23 @@ from GtfGene import *
 from random import randrange
 from random import random 
 from random import choice
+from collections import defaultdict as dd
 
 ##########################################################################################################################################
 ##################################################  GTF FILE - CLASS START  ##############################################################
 ##########################################################################################################################################
 
 class GtfFile:
-    def __init__(self, fileHandle, prefix,readlen,TYPE="ALL",printKEY=True):
-        
+    def __init__(self, fileHandle, prefix,readlen,mutationList,TYPE="ALL",printKEY=True):
+       
+
         self.fName = open(fileHandle);  self.prefix = prefix;  self.readlen = readlen; self.PRINTKEY = printKEY
         
         self.index =0; self.genes = []; self.geneKey={}; self.seq = []
         
         self.open = True; self.FIRSTPRINT=True; self.notes = None; self.mutFile = None; self.simReads = None; self.counter = 0
+
+        self.MUTATIONS = False
         
         tmpLine=self.fName.readline().strip()
         while tmpLine[0]=="#":
@@ -32,7 +37,15 @@ class GtfFile:
         self.line = GtfLine(tmpLine)
         self.chr = self.line.chr
 
+        if mutationList != None:
+            self.mutationList = True
+            self.Mutations = MutationFile(mutationList)
+
 ############################################################################################################################################
+
+
+
+
 
 
     def loadGenesOnChromosome(self):
@@ -43,7 +56,6 @@ class GtfFile:
                 self.line = GtfLine(self.fName.readline())
             if self.gene.validOffsets():
                 self.genes.append(self.gene)
-                self.geneKey[self.gene.name] = self.gene 
              
     def startNextChromosome(self):
 
@@ -52,7 +64,7 @@ class GtfFile:
             self.open = False
         else:
             self.chr = self.line.chr; self.genes=[]; self.seq=[]; self.geneKey={}
-
+        
 
     def addFasta(self,filePath):
         c=open(filePath)
@@ -66,59 +78,131 @@ class GtfFile:
             for line in c:
                 self.seq.extend([s for s in line.strip()])
 
-###############################################print######################################################################################################3
+        if self.mutationList:
+            while self.chr == self.Mutations.chr:
+                x = self.Mutations.pos
+                if self.seq[x-1] != self.Mutations.ref:
+                    print "INCORRECT REF BASE"
+                    print self.seq[x-1]
+                    print self.Mutations.line
+                    errorQuit("BAD")
+                elif self.Mutations.prob > self.Mutations.minProb and self.Mutations.urn > self.Mutations.minUrn:
+                    self.seq[x-1] = self.Mutations.snp
+                self.Mutations.nextLine()
 
-
-    def uniquifySeqs(self,SILENT=False):
-        if self.notes == None and SILENT != True:
-            self.notes=open(self.prefix+'.notes','w')
-        
-        i=0; lastPos=GtfGene("NULL"); lastNeg=GtfGene("NULL"); removeList=[]; warnList=[]
-        while i < len(self.genes):
-            myGene=self.genes[i]
-            if myGene.strand == "+":
-                if myGene.start>lastPos.end:
-                    lastPos=myGene; i+=1
-                else:
-                    if myGene.end<= lastPos.end:
-                        removeList.append([myGene,lastPos,self.chr,'+']);  self.genes.remove(self.genes[i])
-                    else:
-                        warnList.append([myGene,lastPos,self.chr,'+']); i+=1; lastPos=myGene
-
-            else:
-                if myGene.start>lastNeg.end:
-                    lastNeg=myGene; i+=1
-                else:
-                    if myGene.end<= lastNeg.end:
-                        removeList.append([myGene,lastNeg,self.chr,'-']);  self.genes.remove(self.genes[i])
-                    else:
-                        warnList.append([myGene,lastNeg,self.chr,'-']); i+=1; lastPos=myGene
-        if self.notes != None:
-            for n in removeList:
-                self.notes.write('Note: %s is a subsequence of %s and will not be annotated (%s %s [%s to %s] vs. [%s to %s])\n' % (n[0].name,n[1].name,n[2],n[3],n[0].start,n[0].end,n[1].start,n[1].end))
-            for n in warnList:
-                self.notes.write('Note: %s shares sequence with %s and may cause ambiguity (%s %s [%s to %s] vs. [%s to %s])\n' % (n[0].name,n[1].name,n[2],n[3],n[0].start,n[0].end,n[1].start,n[1].end))
-
-            
 
 ###########################################################################################################################################################################################################
 
 
 
-    def concatSeq(self,gSeq,restarts):
-        mySeq=''
-        for restart in restarts: mySeq+=gSeq[restart[0]:restart[1]+1]
-        return mySeq
 
 
-    def junctionLocations(self,jumps):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+########################################################print###############################################################################################
+################################## METHODS TO PRINT OUT ANNOTATION AND SEQUENCES ######################################################################
+#######################################################################################################################################################
+
+
+    def getSeqAndKey(self,gSeq,geneStart,pieces):
+        mySeq = ''
+        fKey = []; gKey = []; fPos = 0
+
+        for start,end in pieces:
+            fKey.append((fPos,fPos+(end-start))); gKey.append((start-geneStart,end-geneStart)); fPos += (end-start)+1
+            mySeq += gSeq[start-geneStart:(end-geneStart) + 1]
+
+        return mySeq,listToString([fKey,gKey,pieces],['-',',',' '])
+                
+
+    def printFeatures(self,gene):
+
+
+        geneSeq = "".join(gene.seq)
+        geneStr=gene.name+"|"+gene.hugo+"|"+gene.strand+"|"+gene.chr+"|"+gene.type+"|"+gene.status+"|"
+       
+
+        if self.printTYPE != 'EXONIC':
+
+            for i in range(len(gene.introns)):
+                seq,key = self.getSeqAndKey(geneSeq,gene.start,gene.introns[i])
+                self.intronPrint.write(">%s\n%s\n" % ( geneStr+"ITRN"+str(i+1), seq))
+                if self.PRINTKEY:   self.keyFile.write("%s %s\n" % (geneStr+"ITRN"+str(i+1), key))
+
+        if self.printTYPE != 'INTRONIC':
+
+            seq,key = self.getSeqAndKey(geneSeq,gene.start,gene.exons)
+            self.exonPrint.write(">%s\n%s\n" % ( geneStr+"EXNS", seq))
+            if self.PRINTKEY:   self.keyFile.write("%s %s\n" % (geneStr+"EXNS",key))
+
+            for i in range(len(gene.knownJunks)):
+                seq,key = self.getSeqAndKey(geneSeq,gene.start,gene.knownJunks[i])
+                self.tranJunks.write(">%s\n%s\n" % ( geneStr+"KJXN"+str(i+1), seq))
+                if self.PRINTKEY:   self.keyFile.write("%s %s\n" % (geneStr+"KJXN"+str(i+1), key))
+            
+            for i in range(len(gene.novelJxns)):
+                seq,key = self.getSeqAndKey(geneSeq,gene.start,gene.novelJxns[i])
+                self.novelJunks.write(">%s\n%s\n" % ( geneStr+"NJXN"+str(i+1), seq))
+                if self.PRINTKEY:   self.keyFile.write("%s %s\n" % (geneStr+"NJXN"+str(i+1), key))
+            
+
+            seq,key = self.getSeqAndKey(geneSeq,gene.start,[(gene.start,gene.end)])
+            self.genePrint.write(">%s\n%s\n" % ( geneStr+"GENE", seq))
+            if self.PRINTKEY:
+                key = key.split()
+                key = " ".join([key[1],key[1],key[2]])
+                self.keyFile.write("%s %s\n" % (geneStr+"GENE",key))
+
         
-        locStrs=[[] for x in range(len(jumps))]
-        for i in range(len(jumps)):
-            for j in range(len(jumps[i])):
-                locStrs[i].append(str(jumps[i][j][0])+"-"+str(jumps[i][j][1]))
-            locStrs[i]=",".join(locStrs[i])
-        return " ".join(locStrs)
+
+    def printGenesOnChromosome(self,TYPE='ALL'):
+        self.printTYPE=TYPE
+        if self.FIRSTPRINT:
+            self.FIRSTPRINT = False
+            if TYPE=='ALL' or TYPE=='EXONIC':
+                self.genePrint   =   open(self.prefix+'_geneSeqs.fa','w')
+                self.exonPrint   =   open(self.prefix+'_exonSeqs.fa','w')
+                self.tranJunks   =   open(self.prefix+'_knownJxns.fa','w')
+                self.novelJunks  =   open(self.prefix+'_novelJxns.fa','w')
+            if TYPE=='ALL' or TYPE=='INTRONIC':
+                self.intronPrint = open(self.prefix+'_intronSeqs.fa','w')
+            if self.PRINTKEY:
+                self.keyFile     = open(self.prefix+'.key','w')
+        for gene in self.genes:
+            if not gene.seq:
+                gene.getSeqFromChr(self.seq)
+            self.printFeatures(gene)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ########################################################################################################################################################
@@ -169,74 +253,19 @@ class GtfFile:
                             if candJxns[0] == '3P': gene.flankSeqs[1][gene.extendLen + cand.spliceDist] = cand.altBase 
                             
 
-#######################################################################################################################################################
-################################## METHODS TO PRINT OUT ANNOTATION AND SEQUENCES ######################################################################
-#######################################################################################################################################################
 
 
 
 
 
-    def printAnnotation(self,TYPE='ALL'):
-        self.printTYPE=TYPE
-
-        if self.FIRSTPRINT:
-            self.FIRSTPRINT = False
-            if TYPE=='ALL' or TYPE=='EXONIC':
-                self.genePrint   = open(self.prefix+'_geneSeqs.fa','w')
-                self.exonPrint   = open(self.prefix+'_exonSeqs.fa','w')
-                self.catsOnly    = open(self.prefix+'_catsOnly.fa','w')
-            if TYPE=='ALL' or TYPE=='INTRONIC':
-                #self.genePrint   = open(self.prefix+'_geneSeqs.fa','w')
-                self.intronPrint = open(self.prefix+'_intronSeqs.fa','w')
-            
-            if self.PRINTKEY:
-                self.keyFile     = open(self.prefix+'.key','w')
-
-        for gene in self.genes:
-            if not gene.seq:
-                gene.getSeqFromChr(self.seq)
-            self.printSequence(gene)
 
 
-    def printSequence(self,gene):
 
-        geneSeq="".join(gene.seq)
-        geneStr=gene.name+"|"+gene.hugo+"|"+gene.strand+"|"+gene.chr+"|"+gene.type+"|"+gene.status+"|"
-        exCatSeq=self.concatSeq(geneSeq,gene.exons[1]); tCnt=0
-        catString=geneStr+"GENE|"+str(len(exCatSeq))+"|"+str(len(geneSeq))+"|"
 
-        if self.printTYPE != 'EXONIC':
 
-            flankSeqs = ["".join(seq) for seq in gene.flankSeqs]; iCnt=0
-            for i in range(len(gene.flankSeqs)):
-                flankSeq="".join(gene.flankSeqs[i])
-                flankStr=geneStr+"FLNK"+str(i)+":"+str(gene.flankLen)+"&"+str(gene.extend)+"|"
-                if i==0:
-                    self.intronPrint.write(">%s\n%s\n" % (flankStr+"5p",flankSeq))
-                else:
-                    self.intronPrint.write(">%s\n%s\n" % (flankStr+"3p",flankSeq))
-                if self.PRINTKEY: self.keyFile.write("%s %s\n" % (flankStr,self.junctionLocations(gene.flanks[i][1])))
-            
-            for i in gene.introns:
-                intSeq= self.concatSeq(geneSeq,i[1][1]); iCnt+=1
-                intStr=geneStr+"ITRN"+str(iCnt)+":"+str(len(intSeq))+"|"
-                self.intronPrint.write(">%s\n%s\n" % (intStr+"intRon",intSeq))
-                if self.PRINTKEY: self.keyFile.write("%s %s\n" % (intStr,self.junctionLocations(i[1])))
 
-        if self.printTYPE != 'INTRONIC':
 
-            self.exonPrint.write(">%s\n%s\n" % (catString+"CATSEQ",exCatSeq))
-            self.catsOnly.write(">%s\n%s\n" % (catString+"CATSEQ",exCatSeq))
-            self.genePrint.write(">%s\n%s\n" % (catString+"FULLSEQ",geneSeq))
-            if self.PRINTKEY:
-                self.keyFile.write("%s %s\n" % (catString,self.junctionLocations(gene.exons)))
-            for t in gene.transcripts:
-                tranSeq= self.concatSeq(geneSeq,t[1][1]); tCnt+=1
-                tranStr=geneStr+"TRAN"+str(tCnt)+":"+str(len(tranSeq))+"|"
-                self.exonPrint.write(">%s\n%s\n" % (tranStr+t[0],tranSeq))
-                if self.PRINTKEY: self.keyFile.write("%s %s\n" % (tranStr,self.junctionLocations(t[1])))
-        
+
         
 
        

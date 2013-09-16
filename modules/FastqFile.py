@@ -64,6 +64,9 @@ class FastqFile:
         self.readSeq=self.fname.readline().strip()
         self.readSign=self.fname.readline().strip()
         self.readQual=self.fname.readline().strip()
+        if len(self.readSeq) == 101:
+            self.readSeq  = self.readSeq[0:100]
+            self.readQual = self.readQual[0:100]
         self.phreds = [ord(q)-35 for q in self.readQual]
         
 

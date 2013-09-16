@@ -1,221 +1,210 @@
 #!/bin/bash
 
-
-
+### HARD CODED PATHS ###
 source /export/uec-gs1/knowles/analysis/tade/gtfar_source/optparse
 export PATH=$PATH:/export/uec-gs1/knowles/analysis/tade/gtfar_source
 
-#source /export/uec-gs1/knowles/analysis/jen_mapping/gtfar/gtfar_source/optparse
-#export PATH=$PATH:/export/uec-gs1/knowles/analysis/jen_mapping/gtfar/gtfar_source
+GC17=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/gencode17
 
 
-HG19=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/hg19
-
-#HGREF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/hg19/chr20.fa 
-HGREF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/hg19/hg19.txt
-
-#DATA=/export/uec-gs1/knowles/analysis/tade/gtfar_runs/data
-
-GTF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/gencode16/gencode.v16.annotation.gtf
-DATA=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/gencode16/annotation_data
-KEY=$DATA/gc16.key
-
-INDEXES=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/indexes
-GC16_IDXS=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/indexes/gc16
-HG19_IDXS=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/indexes/hg19
-
-#  INDEXES #
-
-EXON_100_F1=$GC16_IDXS/50_F1_gc16_exonSeqs.index
-EXON_100_F2=$GC16_IDXS/50_F2_gc16_exonSeqs.index
-EXON_100_F3=$GC16_IDXS/50_F3_gc16_exonSeqs.index
-EXON_100_F4=$GC16_IDXS/50_F4_gc16_exonSeqs.index
-
-INTRON_100_F1=$GC16_IDXS/50_F1_gc16_intronSeqs.index
-INTRON_100_F2=$GC16_IDXS/50_F2_gc16_intronSeqs.index
-INTRON_100_F3=$GC16_IDXS/50_F3_gc16_intronSeqs.index
-INTRON_100_F4=$GC16_IDXS/50_F4_gc16_intronSeqs.index
-
-CATCLIP_40_F1=$GC16_IDXS/40_F1_gc16_catsOnly.index
-GENECLIP_40_F1=$GC16_IDXS/40_F1_gc16_geneSeqs.index
-
-HG19_100_F1=$HG19_IDXS/50_F1_hg19.index
-HG19_100_F2=$HG19_IDXS/50_F2_hg19.index
-HG19_100_F3=$HG19_IDXS/50_F3_hg19.index
-HG19_100_F4=$HG19_IDXS/50_F4_hg19.index
-
-HG19CLIP_40_F1=$HG19_IDXS/40_F1_hg19.index
-
-KEY=$DATA/gc16.key
-CATS=$DATA/gc16_catsOnly.fa
-EXONS=$DATA/gc16_exonSeqs.fa
-GENES=$DATA/gc16_geneSeqs.fa
-INTRONS=$DATA/gc16_intronSeqs.fa
-#GTF=$DATA/TEST19_20.gtf 
 
 
-###  PROGRAMS:  annotate_references.py  call_mutations_from_locations.py  filter_fastq.py  modules  old  optparse  parse_sam_mapping.py
 
 
+# ------------------------------------------ UTILITY FUNCTIONS ----------------------------------------------------------- #
+
+function show_help {
+    echo $1
+    echo "Example: gtfar2 map -r SAMPLE_READS.fastq"
+    exit
+}
+
+function load_annotation {
+    if [ $ANNOTATION == "gc17" ] || [ $ANNOTATION == "GC17" ]; then
+        SPECIES="HUMAN"
+        GENOME_CHRS=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/chrs
+        GC17_INDEX=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/gencode17/index_files
+        HG19_F1_INDEX=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/index_files/GRCh37_50_F1.index
+        HG19_F2_INDEX=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/index_files/GRCh37_50_F2.index
+        HG19_F3_INDEX=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/index_files/GRCh37_50_F3.index
+        HG19_F4_INDEX=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/index_files/GRCh37_50_F4.index
+        HG19_CLIP1_INDEX=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/index_files/GRCh37_40_F1.index
+        EXON_INDEX_1=$GC17_INDEX/gc17_exonSeqs_50_F1.index
+        INTRON_INDEX_1=$GC17_INDEX/gc17_intronSeqs_50_F1.index
+        KNOWN_JXN_INDEX_1=$GC17_INDEX/gc17_knownJxns_50_F1.index
+        NOVEL_JXN_INDEX_1=$GC17_INDEX/gc17_novelJxns_50_F1.index
+        EXON_INDEX_2=$GC17_INDEX/gc17_exonSeqs_50_F2.index
+        INTRON_INDEX_2=$GC17_INDEX/gc17_intronSeqs_50_F2.index
+        KNOWN_JXN_INDEX_2=$GC17_INDEX/gc17_knownJxns_50_F2.index
+        NOVEL_JXN_INDEX_2=$GC17_INDEX/gc17_novelJxns_50_F3.index
+        EXON_CLIP1_40_INDEX=$GC17_INDEX/gc17_exonSeqs_40_F1.index
+        GENE_CLIP1_40_INDEX=$GC17_INDEX/gc17_geneSeqs_40_F1.index
+        EXONS=$GC17/gc17_exonSeqs.fa
+        GENES=$GC17/gc17_geneSeqs.fa
+        INTRONS=$GC17/gc17_intronSeqs.fa
+        KEY=$GC17/gc17.key
+        KNOWN_JXNS=$GC17/gc17_knownJxns.fa
+        NOVEL_JXNS=$GC17/gc17_novelJxns.fa
+        
+        #############
+       
+        GENOME_REF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/index_files/GRCh37_50_F1.index
+        GENOME_CLIP_REF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/index_files/GRCh37_40_F1.index
+
+        EXONS=$GC17_INDEX/gc17_exonSeqs_50_F1.index
+        INTRONS=$GC17_INDEX/gc17_intronSeqs_50_F1.index
+        KNOWN_JXNS=$GC17_INDEX/gc17_knownJxns_50_F1.index
+        NOVEL_JXNS=$GC17_INDEX/gc17_novelJxns_50_F1.index
+        GTF=$GC17/gencode.v17.chr_patch_hapl_scaff.annotation.gtf
+    elif [ $ANNOTATION == "MONKEY" ] || [ $ANNOTATION == "monkey" ]; then
+        SPECIES="MONKEY"
+        ANNOPATH=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/monkey/norgren_annotation
+        EXONS=$ANNOPATH/norgRhesus_exonSeqs.fa 
+        GENES=$ANNOPATH/norgRhesus_geneSeqs.fa 
+        INTRONS=$ANNOPATH/norgRhesus_intronSeqs.fa 
+        KNOWN_JXNS=$ANNOPATH/norgRhesus_knownJxns.fa 
+        NOVEL_JXNS=$ANNOPATH/norgRhesus_novelJxns.fa 
+        KEY=$ANNOPATH/norgRhesus.key  
+        GTF=$ANNOPATH/norgren_gcFixFormat.gtf
+        GENOME=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/monkey/monkey_genome/norg_genome.txt
+        GENOME_CLIP_REF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/monkey/monkey_genome/norg_genome.txt
+        GENOME_CHRS=$GENOME/chrs
+    else
+        show_help "ANNOTATION $ANNOTATION NOT SUPPORTED -choose gc17 or nothing"
+    fi
+}
+
+
+function check_output_dir {
+    if [ -d $OUTPUT ]; then echo "WARNING: output directory ("$OUTPUT") already exists; Files may be overwritten"; 
+    else mkdir $OUTPUT; fi 
+}
+
+
+function load_and_check_reads {
+    READS=$(readlink -m $READS)
+    READ_EXT=$(echo $READS | awk -F\. '{print $NF}')
+    if [ $READ_EXT != "fq" ] && [ $READ_EXT != "fastq" ]; then
+        echo "A valid read file in fq format is required"
+        show_help 
+    fi
+}
+
+
+function start_up_output {
+    echo ""   
+    echo "GTFAR-Pipeline Verson 0.0.4"
+    echo "SPECIES (-s):        "$SPECIES
+    echo "GTF ANNOTATION (-g): "$ANNOTATION "( "$(basename $GTF) ")"
+    echo "Reads:               "$READS
+    echo "Output Directory:    "$OUTPUT    
+    echo "Output File Prefix:  "$PREFIX    
+    echo ""
+}
+
+########################################################################################################################################################
+
+# ------------------------------------------ PIPELINE FUNCTIONS ----------------------------------------------------------- #
+
+function map_and_count {
+    MYPREFIX=$1; MYREADS=$2; MYREF=$3; MYTYPE=$4; MYSEED=$5; MYSUBS=$6
+    perm $MYREF $MYREADS --seed $MYSEED -v $MYSUBS -B -o $MYPREFIX.mapping -u $MYPREFIX"_miss.fastq" --printNM > $MYPREFIX.log 
+    if [ $? != 0 ]; then echo "perm-fail"; exit; fi 
+    echo "parse_alignment.py $MYPREFIX.mapping --strandRule different -k $KEY -p $MYPREFIX --verbose | sort -k4,4 > $MYPREFIX"_gene.srt" &"
+    parse_alignment.py $MYPREFIX.mapping --strandRule $STRANDRULE -k $KEY -p $MYPREFIX --verbose | sort -k2,2 -k4n,4 > $MYPREFIX"_gene.srt" &
+}
+
+function gap_map_and_count {
+    MYPREFIX=$1; MYREADS=$2; MYREF=$3; MYTYPE=$4
+    clipR $MYREF $MYREADS -o $MYPREFIX.sam --anchorL 40 --seed F1 -v 2 -e --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader -u $MYPREFIX"_miss.fastq" -s > $MYPREFIX.log
+    if [ $? != 0 ]; then echo "perm-fail"; exit; fi 
+    parse_alignment.py $MYPREFIX.sam  -k $KEY -p $MYPREFIX --verbose | sort -k2,2 -k4n,4  > $MYPREFIX"_gene.srt" & 
+} 
+
+function hg_map_and_count {
+    MYPREFIX=$1; MYREADS=$2; MYREF=$3; MYTYPE=$4; MYSEED=$5; MYSUBS=$6
+    perm $MYREF $MYREADS --seed $MYSEED -v $MYSUBS -B -o $MYPREFIX.sam -u $MYPREFIX"_miss.fastq" --printNM  > $MYPREFIX.log
+    if [ $? != 0 ]; then echo "perm-fail"; exit; fi 
+    echo "parse_alignment.py $MYPREFIX.mapping -k $KEY -p $MYPREFIX --verbose | sort -k4,4 > $MYPREFIX".novel" &"
+    parse_alignment.py $MYPREFIX.sam  -k $KEY -p $MYPREFIX --verbose | sort -k2,2 -k4n,4 > $MYPREFIX".novel" &
+}
+
+
+### ADD SOME OPTIONS FOR MISMATCHES AND WHAT NOT SO YOU CAN DO MORE SELECTION CRITERIA ##
 
 add_arg program 'annotation/filter-reads/iter-map' 
-
 add_option prefix -p 'test' 'OutPut Prefix'
+add_option annotation -a 'gc17' 'annotation - currently supported gc17'  
 add_option reads -r 'reads.fq/fastq'   'read file in fq format'
+add_option strandRule -s 'None'   'A rule for stranded ness (None, Same or Opposite' 
 add_option output -o 'output'   'output directory'
 add_flag showcommands -h 1 'Print all executed commands to standard out' 
 
-
 parseargs $@
 
-
-
-
-READ_EXT=$(echo $READS | awk -F\. '{print $NF}')
-
-if [ $READ_EXT != "fq" ] && [ $READ_EXT != "fastq" ]; then
-    echo "A valid read file in fq format is required"
-    echo "EXAMPLE: ./gtfar.sh iter-map -r myreads.fastq -o myoutputdir -r myprefix"
-    exit 
-fi
-
-if [ -d $OUTPUT ]; then echo "WARNING: output directory ("$OUTPUT") already exists; Files may be overwritten"; 
-else mkdir $OUTPUT; fi 
-
-
-
-
-
-
-######################################################  MAPPING/PARSING   #################################################################################
-
-
-function exonic_map_and_parse {
-
-    ITER=$1; MYREADS=$2; MYREF=$3
-
-    if [ $ITER -eq 1 ]; then
-        echo  "Mapping reads to exonic seqs (iteration 1)..."
-        perm $EXON_100_F1 $MYREADS --seed F1 -v 2 -B -o exonic1.mapping -u exonic1_miss.fastq --printNM >> MAP.log
-        if [ $? != 0 ]; then echo "perm-fail"; exit; fi  
-        parse_alignment.py exonic1.mapping -k $KEY --ref=exonic --verbose -p exonic1 --strand - 
-        if [ $? != 0 ]; then echo "parse-fail"; exit; fi 
-        call_mutations.py exonic1_gene.srt $GTF -g $HG19 -p exonic1 --ref=exonic --annotate --verbose
-        if [ $? != 0 ]; then echo "call-fail"; exit; fi 
-    elif [ $ITER -eq 2 ]; then
-        echo  "Mapping reads to exonic seqs (iteration 2)..." 
-        perm exonic1_exonSeqs.fa $MYREADS --seed F3 -v 5 -B -o exonic2.mapping -u exonic2_miss.fastq --printNM >> MAP.log
-        if [ $? != 0 ]; then echo "perm-fail"; exit; fi  
-        parse_alignment.py exonic2.mapping -k $KEY --ref=exonic -p exonic2 --verbose --strand -
-        if [ $? != 0 ]; then echo "parse-fail"; exit; fi  
-        sort -m -k14n,14 -k6,6 -k8n,8 exonic1_gene.srt exonic2_gene.srt > exonic_iter_gene.srt
-        call_mutations.py exonic_iter_gene.srt $GTF --ref=exonic -g $HG19 -p exonic_iterative --annotate --verbose
-        if [ $? != 0 ]; then echo "call-fail"; exit; fi 
-    fi
-}
-
-
-function intronic_map_and_parse {
-
-    ITER=$1; MYREADS=$2; MYREF=$3
-    if [ $ITER -eq 1 ]; then
-        echo  "Mapping reads to intronic seqs (iteration 1)..." 
-        perm $INTRON_100_F1 $MYREADS --seed F1 -v 2 -B -o intronic1.mapping -u intronic1_miss.fastq --printNM >> MAP.log
-        if [ $? != 0 ]; then echo "perm-fail"; exit; fi  
-        parse_alignment.py intronic1.mapping -k $KEY --ref=intronic -p intronic1 --verbose --strand -
-        if [ $? != 0 ]; then echo "parse-fail"; exit; fi 
-        call_mutations.py intronic1_gene.srt $GTF --ref=intronic -g $HG19 -p intronic1 --annotate --verbose
-        if [ $? != 0 ]; then echo "call-fail"; exit; fi 
-    elif [ $ITER -eq 2 ]; then
-        echo  "Mapping reads to intronic seqs (iteration 2)..." 
-        perm intronic1_intronSeqs.fa $MYREADS --seed F3 -v 5 -B -o intronic2.mapping -u intronic2_miss.fastq --printNM >> MAP.log
-        if [ $? != 0 ]; then echo "perm-fail"; exit; fi  
-        parse_alignment.py intronic2.mapping -k $KEY --ref=intronic -p intronic2 --verbose --strand -
-        if [ $? != 0 ]; then echo "parse-fail"; exit; fi 
-        sort -m -k14n,14 -k6,6 -k8n,8 intronic1_gene.srt intronic2_gene.srt > intronic_iter_gene.srt
-        call_mutations.py intronic_iter_gene.srt $GTF --ref=intronic -g $HG19 -p intronic_iterative --annotate --verbose
-        if [ $? != 0 ]; then echo "call-fail"; exit; fi 
-    fi
-}
-
-function genome_map_and_parse {
-
-    MYREADS=$1 
-    echo "Mapping reads to human genome......"
-    perm $HG19_100_F2 $MYREADS --seed F2 -v 4 -B -o hg.mapping --printNM -u hg_miss.fastq >> MAP.log 
-    perm $HG19_100_F2 $MYREADS --seed F2 -v 4 -B -o hg.sam > /dev/null
-    if [ $? != 0 ]; then echo "perm-fail"; exit; fi  
-    parse_alignment.py hg.mapping -k $KEY --ref=genomic -p hg --verbose  
-    }
-
-
-function multiple_gapped_alignment {
-
-    MYREADS=$1
+if [ $PROGRAM == 'map' ]; then 
     
-    echo -n "Performed Gapped Mapping to exons/genes/genome......"
-    clipR $CATCLIP_40_F1 $MYREADS --anchorL 40 --seed F1 -v 1 --ignoreRepeatR 10 --ignoreDummyR 45 -u catclip_miss.fastq -o cat_gap.sam --noSamHeader >> MAP.log 
-    echo -n "......"
-    clipR $GENECLIP_40_F1 catclip_miss.fastq --anchorL 40 --seed F1 -v 1 --ignoreRepeatR 10 --ignoreDummyR 45 -u geneclip_miss.fastq -o gene_gap.sam --noSamHeader >> MAP.log 
-    echo -n "......"
-    clipR $HG19CLIP_40_F1 geneclip_miss.fastq --anchorL 40 --seed F1 -v 4 --ignoreRepeatR 10 --ignoreDummyR 40 -u remaining_reads.fastq -o hg_gap_vis.sam --noSamHeader >> MAP.log 
-    if [ $? != 0 ]; then echo "clipR-fail"; exit; else echo "Complete"; fi 
-
-    ## PARSING ##
-
-    parse_alignment.py cat_gap.sam  -k $KEY --ref=exonic  -p cat_gap  --gapped  --verbose 
-    parse_alignment.py gene_gap.sam -k $KEY --ref=genes   -p gene_gap --gapped  --verbose 
-    parse_alignment.py hg_gap_vis.sam   -k $KEY --ref=genomic -p hg_gap   --gapped  --verbose 
-
-}
-
-
-
-
-
-
-if [ $PROGRAM == 'test' ]; then 
-   
-    echo "GTFAR-Pipeline Verson 0.0.03"
-    echo "GtfFile: "$GTF
-    echo "Reads:   "$READS
-    echo "Output:  "$OUTPUT    
-    echo ""
-
+    load_and_check_reads
+    check_output_dir
+    load_annotation
+    start_up_output
     cd $OUTPUT 
-    ## MAPPING TO MAJOR ANNOTATIONS ##
+    
+    map_and_count exons1 $READS $EXONS exonic F1 2 
+    map_and_count known_jxns1 exons1_miss.fastq $KNOWN_JXNS exonic F1 2
+    map_and_count novel_jxns1 known_jxns1_miss.fastq $NOVEL_JXNS exonic F1 2
+    map_and_count introns1 novel_jxns1_miss.fastq $INTRONS intronic F1 2
+    wait    
+    sort -m -k4,4 *.srt > TRANSCRIPTOME.sort 
+    call_mutations.py TRANSCRIPTOME.sort -s $SPECIES -p $PREFIX"_specific1.cands" | sort -k2n,2 >  $PREFIX"_transcriptome1.mutations"
 
-    exonic_map_and_parse 1 $READS   
-    intronic_map_and_parse 1 exonic1_miss.fastq 
-    exonic_map_and_parse 2 intronic1_miss.fastq
-    intronic_map_and_parse 2 exonic2_miss.fastq 
+    annotate_gtf.py $GTF -g $GENOME_CHRS -p new_ref -m $PREFIX"_transcriptome1.mutations"  -r 100
+    KEY=new_ref.key 
+
+    map_and_count exons2 introns1_miss.fastq new_ref_exonSeqs.fa exonic F2 4
+    map_and_count known_jxns2 exons2_miss.fastq  new_ref_knownJxns.fa exonic F2 4 
+    map_and_count novel_jxns2 known_jxns2_miss.fastq new_ref_novelJxns.fa exonic F2 4    
+    map_and_count introns2 novel_jxns2_miss.fastq new_ref_intronSeqs.fa intronic F2 4   
+    wait
+    sort -m -k4,4 *.srt > TRANSCRIPTOME_2.sort 
+    call_mutations.py TRANSCRIPTOME_2.sort -s $SPECIES -p $PREFIX"_specific2.cands" | sort -k2n,2 > $PREFIX"_transcriptome2.mutations" 
+   
+    gap_map_and_count clip_exons1 introns2_miss.fastq new_ref_exonSeqs.fa exonic
+    gap_map_and_count clip_gene1 clip_exons1_miss.fastq new_ref_geneSeqs.fa exonic
+    
+    
+    hg_map_and_count hg1 clip_gene1_miss.fastq $GENOME_REF     intergenic F1 2 
+    gap_map_and_count hg_gap1 hg1_miss.fastq   $GENOME_CLIP_REF  intergenic 
+
+    
+
+    sort -m -k2,2 -k4n,4 *.novel > novel.candidates
+
+    novel_search.py novel.candidates -k $KEY > $PREFIX".novelOutput"
+
+    
+    
+    
+    cd ..
+    
+    
 
     ### MAPPING TO HG 19 ###
     
-    genome_map_and_parse intronic2_miss.fastq
    
     ### GAPPED MAPPING ### 
 
-    multiple_gapped_alignment hg_miss.fastq
 
     echo "MAPPING-COMPLETE"
 
-    parse_log.py MAP.log
+
+    exit
 
     if [ ! -d tmp ]; then mkdir tmp; fi
     mv *.* tmp/
 
     echo ""; echo 'Analyzing Results/Creating Bam File'
 
-    cat tmp/*gene.cnts | sort -k1,1 -k5,5 | awk '{if ($5!=L) {if (NR!=1) print A,B,C,"|",L,X,Y,Z; A=$1;B=$2;C=$3;L=$5;X=$6;Y=$7;Z=$8} else {X+=$6;Y+=$7;Z+=$8}} END{print A,B,C,"|",L,X,Y,Z}' > $PREFIX.gene.cnts
-    cat tmp/*_iterative.mutations > $PREFIX.mutations
-    cat tmp/intronic*_feat.cnts | sort -k1,1 | awk '{if ($1==L) C+=$3; else {if (NR>1) print L,T,C; L=$1;T=$2;C=$3}} END{print L,T,C}' > $PREFIX.intronCnts
-    cat tmp/intronic*splice.cnts | sort -k1,1 | awk '{if ($1==L) C+=$3; else {if (NR>1) print L,T,C; L=$1;T=$2;C=$3}} END{print L,T,C}' > $PREFIX.intEx.jxns &
-    cat tmp/exonic*splice.cnts | sort -k1,1 | awk '{if ($1==L) C+=$3; else {if (NR>1) print L,T,C; L=$1;T=$2;C=$3}} END{print L,T,C}' > $PREFIX.canonical.splices
-    cat tmp/*gap_splice.cnts | sort -k1,1 > $PREFIX.non-canonical.splices
-    mv tmp/*novelAreas.cnts  $PREFIX.novelAreas.cnts
-    mv tmp/remaining_reads.fastq  $PREFIX.remaining_reads.fastq
-    parse_log.py tmp/MAP.log > $PREFIX.mapStats.txt
 
     cat tmp/hg.sam tmp/*_vis.sam > $PREFIX.sam
     samtools view -bS -o $PREFIX.bam $PREFIX.sam 

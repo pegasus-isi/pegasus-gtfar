@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-from modules.MutationRecord  import *
+from modules.NovelGene  import *
 from modules.ProgressBar  import *
 '''
 This program requires a gencode annotation file (gtf) and a path to the chr fasta files referenced in the gtf file
@@ -11,20 +11,19 @@ example: HG19=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/hu
 
 
 
-def mutationCall(sortedLocations,cov,diffRate,prefix,species,VERBOSE):
+def novelCall(sortedLocations,prefix,key,species,VERBOSE):
+
   
    
     
-    progressBar = ProgressBar(sys.stdout,"Calling Mutations...",'.','Complete',1,VERBOSE)
+    progressBar = ProgressBar(sys.stdout,"Searching for novel genes...",'.','Complete',1,VERBOSE)
     progressBar.increment()
 
 
-    mutations = MutationRecord(sortedLocations,prefix,cov,diffRate,species)
+    novel = NovelGene(sortedLocations,key,prefix,species)
 
-    while mutations.open:
-       
-        mutations.geneCandSearch()
-        mutations.geneCandCall()
+    while novel.open: 
+        novel.search()
     
     progressBar.complete()
 
@@ -36,9 +35,8 @@ if __name__ == '__main__':
     usage = "usage: ./%prog [options] data_file"
     parser = OptionParser(usage=usage)
 
-    parser.add_option("-c", "--coverage", default = 5,  type=int, help="Minimum Coverage for Mutation")
-    parser.add_option("-d", "--diffRate", default = 0.4, type=float, help="Minimum difference rate for mutation")
     parser.add_option("-s", "--chooseSpecies", default = "HUMAN", type='string', help="Change Species")
+    parser.add_option("-k", "--key", default = None, type='string', help="gene key")
     parser.add_option("-p", "--prefix", default = "test", type='string', help="prefix file name")
     parser.add_option("-v", "--verbose", action = 'store_true', default = False,  help="verbose output")
     
@@ -49,12 +47,12 @@ if __name__ == '__main__':
 
 
 
-    if len(args) == 1:
-        mutationCall(args[0],options.coverage,options.diffRate,options.prefix,options.chooseSpecies,options.verbose)
+    if len(args) == 1 and options.key!=None:
+        novelCall(args[0],options.prefix,options.key,options.chooseSpecies,options.verbose)
     else:
 
         parser.print_help()
         print ""
-        print "Example Usage: ./call_mutatations gene_map.srt --coverage 10 --diffRate 0.3 --verbose"
+        print "Example Usage: ./novel_search.py  gene_map.srt -k mykey --verbose"
         sys.exit(2)
 

@@ -23,8 +23,8 @@ class GtfGene:
             print "BAD INIT"
             sys.exit()
         else:
-            self.name, self.chr, self.start, self.end, self.strand, self.type, self.status,self.hugo = line.geneID, line.chr, line.start,line.end,line.strand,line.geneType,line.geneStatus,line.hugoName
-            
+
+            self.name, self.chr, self.start, self.end, self.strand, self.type, self.status,self.hugo = line.geneID, line.chr, line.start,line.end,line.strand,line.geneType,line.geneStatus,line.hugoName 
             self.readlen = readlen; self.minOverlap = minOverlap; self.flankLen = flankLen;  self.extend = readlen-minOverlap; self.length = self.end-self.start+1
             
             if self.end - self.start <= self.extend:
@@ -32,10 +32,12 @@ class GtfGene:
 
             self.extendLen = self.extend
             self.transcripts, self.exons, self.introns, self.flanks = [],[],[],[]
+            self.EXONS = set([])
             self.seq = []
             self.seqIndex=0
             self.flankSeqs = None
-            self.jPos    = 0 
+            self.jPos    = 0
+            self.maxJump = 10
             self.mutationKey = None
             
 ###############################print###########################################################################################################
@@ -46,150 +48,224 @@ class GtfGene:
     def addGtfLine(self, line):
         if line.type=='transcript':
             self.transcripts.append([line.tranID,[]])
-
         elif line.type == 'exon':
+            
+            
+            if line.start < self.start:
+                self.GENOME_RELATIVE = False
+
             self.transcripts[-1][1].append((line.start,line.end))
-            self.exons.append((line.start,line.end))
+            self.EXONS.add((line.start,line.end))
         else:
             return
   
 
 ###########################################################################################################################################
 
+
+
+    def checkOffsets(self):
+
+        self.exons = sorted(list(self.EXONS))
+        
+        if self.exons[0][0] < self.start:
+            for i in range(len(self.exons)):
+                self.exons[i] = (self.exons[i][0] + self.start -1, self.exons[i][1] + self.start -1)
+            for i in range(len(self.transcripts)):
+                self.transcripts[i][1].sort()
+                for j in range(len(self.transcripts[i][1])):
+                    self.transcripts[i][1][j] = (self.transcripts[i][1][j][0] + self.start -1, self.transcripts[i][1][j][1] + self.start -1)
+        if self.exons[-1][1] > self.end:
+            self.end = self.exons[-1][1]
+
+
+
+
     def findMajorExons(self):
-        tmpExons=[]
-        if self.strand=="+":
-            self.exons.sort()
-            exStart=self.exons[0][0]; exEnd=self.exons[0][1]
-            for i in range(1,len(self.exons)):
-                if self.exons[i][0] <= exEnd:
-                    if self.exons[i][1] > exEnd: exEnd = self.exons[i][1]
+        majorExons = []; k=0; OPEN_FRAME = True
+        exStart=self.exons[0][0]; exEnd=self.exons[0][1]
+        for i in range(1,len(self.exons)):
+            if self.exons[i][0] <= exEnd:
+                if self.exons[i][1] > exEnd: exEnd = self.exons[i][1]
+            else:
+                majorExons.append((exStart,exEnd))
+                exStart=self.exons[i][0]; exEnd=self.exons[i][1]
+        
+        majorExons.append((exStart,exEnd))
+        self.exons = sorted(majorExons)
+        majorSplice = []; myDists = []; tmpJxns = []
+
+        while k < len(self.exons):
+            if (self.exons[k][1]-self.exons[k][0]) > self.readlen:
+                myDists.append((self.readlen))
+
+                if majorSplice==[]:
+                    majorSplice.append((self.exons[k][1]-(self.readlen),self.exons[k][1]))
                 else:
-                    tmpExons.append((exStart,exEnd))
-                    exStart=self.exons[i][0]; exEnd=self.exons[i][1]
-            tmpExons.append((exStart,exEnd))
-        else:
-            self.exons.sort(reverse=True,key= lambda student: student [1])
-            exStart=self.exons[0][0]; exEnd=self.exons[0][1]
-            for i in range(1,len(self.exons)):
-                if self.exons[i][1] >= exStart:
-                    if self.exons[i][0] < exStart: exStart = self.exons[i][0]
-                else:
-                    tmpExons.append((exStart,exEnd))
-                    exStart=self.exons[i][0]; exEnd=self.exons[i][1]
-            tmpExons.append((exStart,exEnd))
-        self.exons = tmpExons
+                    majorSplice.append((self.exons[k][0],self.exons[k][0]+(self.readlen)))
+            else:
+                majorSplice.append(self.exons[k])
+                myDists.append((self.exons[k][1]-self.exons[k][0]+1))
+                    
+            if sum(myDists[0:len(myDists)-1]) >= self.readlen and sum(myDists[1:len(myDists)]) >= self.readlen:
+                tmpJxns.append(tuple(majorSplice))
+                OPEN_FRAME = False
+                while sum(myDists[1::]) >= self.readlen:
+                    majorSplice.remove(majorSplice[0])
+                    myDists.remove(myDists[0])
+            k+=1
+
+        if OPEN_FRAME and len(majorSplice)>1:
+            tmpJxns.append(tuple(majorSplice))
+        
+        self.knownJunks  = sorted(tmpJxns)
+
+            
+
+
 
 
 #######################################################################################################################################################
 
+    def findKnownJunctions(self):
+        tmpJxns=set([]); myJumps=set([])
+        for t in self.transcripts:
+            k=0; OPEN_FRAME = True 
+            tJxns = sorted(t[1]); mySplice=[]; myDists =[]
+            while k < len(tJxns):
 
-    def findTranscriptOffsets(self):
-        tmpTrans=[]
-        if self.strand=="+":
-            for t in self.transcripts:
-                tOffsets=[]; gOffsets=[]; hOffsets=[]; k=0
-                for loc in t[1]:
-                    hOffsets.append([loc[0],loc[1]])
-                    gOffsets.append([loc[0]-self.start,(loc[0]-self.start)+(loc[1]-loc[0])])
-                    tOffsets.append([k,k+loc[1]-loc[0]])
-                    k+=loc[1]-loc[0]+1
-                tmpTrans.append([t[0],[tOffsets,gOffsets,hOffsets]])
-        
-        else:
-            for t in self.transcripts:
-                tOffsets=[]; gOffsets=[]; hOffsets=[]; k=0
-                for loc in t[1]:
-                    hOffsets.append([loc[1],loc[0]])
-                    gOffsets.append([self.end-loc[1],self.end-loc[0]])
-                    tOffsets.append([k,k+loc[1]-loc[0]])
-                    k+=loc[1]-loc[0]+1
-                tmpTrans.append([t[0],[tOffsets,gOffsets,hOffsets]])
-        self.transcripts=tmpTrans
+                if (tJxns[k][1]-tJxns[k][0]) > self.readlen:
+                    myDists.append((self.readlen))
+                    if mySplice==[]:
+                        mySplice.append((tJxns[k][1]-(self.readlen),tJxns[k][1]))
+                    else:
+                        mySplice.append((tJxns[k][0],tJxns[k][0]+(self.readlen)))
+                else:
+                    mySplice.append(tJxns[k])
+                    myDists.append((tJxns[k][1]-tJxns[k][0]+1))
+                    
+                if sum(myDists[0:len(myDists)-1]) >= self.readlen and sum(myDists[1:len(myDists)]) >= self.readlen:
+
+                    if tuple(mySplice) not in self.knownJunks:
+                        tmpJxns.add(tuple(mySplice))
+                        for i in range(len(mySplice)-1):
+                            myJumps.add((mySplice[i][1],mySplice[i+1][0]))
+                    OPEN_FRAME = False
+                    while sum(myDists[1::]) >= self.readlen:
+                        mySplice.remove(mySplice[0])
+                        myDists.remove(myDists[0])
+                k+=1
+            if OPEN_FRAME and len(mySplice)>1:
+                if tuple(mySplice) not in self.knownJunks:
+                    tmpJxns.add(tuple(mySplice))
+                    for i in range(len(mySplice)-1):
+                        myJumps.add((mySplice[i][1],mySplice[i+1][0]))
+       
+        self.knownJunks = sorted( self.knownJunks + [j for j in tmpJxns] )
+        self.knownSplice = sorted([j for j in myJumps])
 
 
-##############################################################################################################################################################
 
-    def findFlankOffsets(self):
-
-        self.flanks=[]
-        if self.strand=="+":
-            ## FRONT FLANK ## 
-            tmpT=[[0,self.flankLen-1],[self.flankLen,self.flankLen+self.extend]]
-            tmpH=[[self.start-self.flankLen,self.start-1],[self.start,self.start+self.extend]]
-            tmpG=[["N"+str(self.flankLen),"N1"],[0,self.extend]]
-            self.flanks.append(["5P",[tmpT,tmpG,tmpH]])
+    def findNewJunctions(self):
+        novelJxns=[]
+        for i in range(len(self.exons)-2):
+            for j in range(i+2,len(self.exons)):
+                if j-i > self.maxJump: break
+                sCand = (self.exons[i][1],self.exons[j][0])
+                if sCand in self.knownSplice:
+                    continue
+                else:
+                    if self.exons[i][1]-self.exons[i][0] > self.readlen:
+                        firstEx = (self.exons[i][1] - self.readlen,self.exons[i][1])
+                    else:
+                        firstEx = self.exons[i]
+                    if self.exons[j][1]-self.exons[j][0] > self.readlen:
+                        secondEx = (self.exons[j][0],self.exons[j][0] + self.readlen)
+                    else:
+                        secondEx = self.exons[j]
+                     
+                    novelJxns.append((firstEx,secondEx))
+        self.novelJxns = novelJxns
+                
             
-            ## BACK FLANK  ##
-            tmpT=[[0,self.extend],[self.extend+1,self.flankLen+self.extend]]
-            tmpH=[[self.end-self.extend,self.end],[self.end+1,self.end+self.flankLen]]
-            tmpG=[[(self.end-self.start)-self.extend,(self.end-self.start)],[(self.end-self.start)+1,(self.end-self.start)+self.flankLen]]
-            
-            self.flanks.append(["3P",[tmpT,tmpG,tmpH]])
-        else:
-            ## FRONT FLANK ### 
-            tmpT=[[0,self.flankLen-1],[self.flankLen,self.flankLen+self.extend]]
-            tmpH=[[self.end+self.flankLen,self.end+1],[self.end,self.end-self.extend]]
-            tmpG=[["N"+str(self.flankLen),"N1"],[0,self.extend]]
-            self.flanks.append(["5P",[tmpT,tmpG,tmpH]])
-            ## BACK FLANK  ##
-            tmpT=[[0,self.extend],[self.extend+1,self.flankLen+self.extend]]
-            tmpH=[[self.start+self.extend,self.start],[self.start-1,self.start-self.flankLen ]]
-            tmpG=[[(self.end-self.start)-self.extend,(self.end-self.start)],[(self.end-self.start)+1,(self.end-self.start)+self.flankLen]]
-            
-            self.flanks.append(["3P",[tmpT,tmpG,tmpH]])
-            
+    def findIntrons(self):
+        introns=[]
+        for i in range(len(self.exons)):
+            if i > 0:
+
+
+                EX=self.exons[i]; PREV=self.exons[i-1]
+                
+                
+                
+                leftFlank  = max(PREV[1]-self.readlen,self.start)
+                rightFlank = min(EX[0] + self.readlen, self.end)
+                introns.append([(leftFlank,PREV[1]), (PREV[1]+1,EX[0]-1), (EX[0],rightFlank)])
+               # introns.append([(PREV[1]-self.readlen,PREV[1]), (PREV[1]+1,EX[0]-1), (EX[0],EX[0]+self.readlen)])
+        self.introns = introns
+
 
 
 #######################################################################################################################################################################
 
 
-    def findExonicOffsets(self):
-
-        tmpT=[]; tmpG=[]; tmpH=[]; k=0; n=0;
-        if self.strand=="+":
-                
-            for e in self.exons:
-                tmpH.append([e[0],e[1]]); tmpG.append([e[0]-self.start,(e[0]-self.start)+(e[1]-e[0])]); tmpT.append([k,k+e[1]-e[0]])
-                k+=e[1]-e[0]+1; n+=1
-                if n<len(self.exons):
-                    cut1=e[1]+1; cut2=self.exons[n][0]-1; span=cut2-cut1
-
-                    if cut1-self.extend >= self.start and cut2+self.extend <= self.end:     EXT=self.extend
-                    else:                                                                   EXT = min(cut1-self.start,self.end-cut2)
-
-                    intT = [[0,EXT-1],[EXT,span+EXT],[span+EXT+1,span+EXT+EXT]]
-                    intH = [[cut1-EXT,cut1-1],[cut1,cut2],[cut2+1,cut2+EXT]]
-                    intG = [[cut1-EXT-self.start,cut1-1-self.start],[cut1-self.start,cut2-self.start],[cut2+1-self.start,cut2+EXT-self.start]]
-                    self.introns.append([n,[intT,intG,intH]])
-        else:
-            for e in self.exons:
-                tmpH.append([e[1],e[0]]);     tmpG.append([self.end-e[1],self.end-e[0]]);      tmpT.append([k,k+e[1]-e[0]])
-                k+=e[1]-e[0]+1; n+=1
-                if n<len(self.exons):
-                    cut1=e[0]-1; cut2=self.exons[n][1]+1; span=cut1-cut2
-
-                    if cut1+self.extend <= self.end and  cut2-self.extend >= self.start:    EXT=self.extend
-                    else:                                                                   EXT=min(self.end-cut1, cut2 -self.start)
                     
-                    intT = [[0,EXT-1],[EXT,span+EXT],[span+EXT+1,span+EXT+EXT]]
-                    intH = [[cut1+EXT,cut1+1],[cut1,cut2],[cut2-1,cut2-EXT]]
-                    intG = [[self.end-(cut1+EXT),self.end-(cut1+1)],[self.end-cut1,self.end-cut2],[self.end-(cut2-1),self.end-(cut2-EXT)]]
-                    self.introns.append([n,[intT,intG,intH]])
-        self.exons = [tmpT,tmpG,tmpH]
-                    
-        
 
     def validOffsets(self):
 
         if self.name==None:
             return False
         else:
+            self.checkOffsets()
             self.findMajorExons()
-            self.findTranscriptOffsets()
-            self.findFlankOffsets()
-            self.findExonicOffsets()
+            self.findKnownJunctions()
+            self.findNewJunctions()
+            self.findIntrons() 
             return True
+
+
+
+
+
+
+#######################################################################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -255,31 +331,10 @@ class GtfGene:
 
     def getSeqFromChr(self,chrSeq):
 
-        baseComplement={'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N'}
-        self.seq = chrSeq[self.start-1:self.end]
-
-        if self.strand == '-':
-            self.seq.reverse()
-            for i in range(len(self.seq)):
-                self.seq[i] = baseComplement[self.seq[i].capitalize()]
-        else:
-            for i in range(len(self.seq)):
-                self.seq[i] = self.seq[i].capitalize()
+        self.seq = [base.capitalize() for base in chrSeq[self.start-1:self.end]]
 
         ##########################################################################
-        self.flankSeqs = [chrSeq[self.start-self.flankLen-1:self.start+self.extend],  chrSeq[self.end - self.extend-1:self.end+self.flankLen] ]
-
-        if self.strand == '-':
-            self.flankSeqs.reverse()
-            for i in range(len(self.flankSeqs)):
-                self.flankSeqs[i].reverse()
-                for j in range(len(self.flankSeqs[i])):
-                    self.flankSeqs[i][j] = baseComplement[self.flankSeqs[i][j].capitalize()]
-        else:
-            for i in range(len(self.flankSeqs)):
-                for j in range(len(self.flankSeqs[i])):
-                    self.flankSeqs[i][j] = self.flankSeqs[i][j].capitalize()
-
+        
         
 ###########################################################################################################################################
     
