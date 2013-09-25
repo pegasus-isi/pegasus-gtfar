@@ -116,9 +116,9 @@ function map_and_count {
 
 function gap_map_and_count {
     MYPREFIX=$1; MYREADS=$2; MYREF=$3; MYTYPE=$4
-    clipR $MYREF $MYREADS -o $MYPREFIX.sam --anchorL 40 --seed F1 -v 2 -e --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader -u $MYPREFIX"_miss.fastq" -s > $MYPREFIX.log
+    clipR $MYREF $MYREADS -o $MYPREFIX.sam --anchorL 40 --seed F1 -v 2 -e --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader --printNM -u $MYPREFIX"_miss.fastq" -s > $MYPREFIX.log
     if [ $? != 0 ]; then echo "perm-fail"; exit; fi 
-    parse_alignment.py $MYPREFIX.sam  -k $KEY -p $MYPREFIX --verbose | sort -k2,2 -k4n,4  > $MYPREFIX"_gene.srt" & 
+    parse_alignment.py $MYPREFIX.sam  -k $KEY -p $MYPREFIX --verbose | sort -k2,2 -k4n,4  > $MYPREFIX"_novelGENE.jxns" & 
 } 
 
 function hg_map_and_count {
@@ -126,7 +126,7 @@ function hg_map_and_count {
     perm $MYREF $MYREADS --seed $MYSEED -v $MYSUBS -B -o $MYPREFIX.sam -u $MYPREFIX"_miss.fastq" --printNM  > $MYPREFIX.log
     if [ $? != 0 ]; then echo "perm-fail"; exit; fi 
     echo "parse_alignment.py $MYPREFIX.mapping -k $KEY -p $MYPREFIX --verbose | sort -k4,4 > $MYPREFIX".novel" &"
-    parse_alignment.py $MYPREFIX.sam  -k $KEY -p $MYPREFIX --verbose | sort -k2,2 -k4n,4 > $MYPREFIX".novel" &
+    parse_alignment.py $MYPREFIX.sam  -k $KEY -p $MYPREFIX --verbose | sort -k2,2 -k4n,4 > $MYPREFIX"_novelGENE.cont" &
 }
 
 
@@ -155,8 +155,9 @@ if [ $PROGRAM == 'map' ]; then
     map_and_count novel_jxns1 known_jxns1_miss.fastq $NOVEL_JXNS exonic F1 2
     map_and_count introns1 novel_jxns1_miss.fastq $INTRONS intronic F1 2
     wait    
-    sort -m -k4,4 *.srt > TRANSCRIPTOME.sort 
-    call_mutations.py TRANSCRIPTOME.sort -s $SPECIES -p $PREFIX"_specific1.cands" | sort -k2n,2 >  $PREFIX"_transcriptome1.mutations"
+    cat *.srt | sort -k2,2 -k4n,4 > TRANSCRIPTOME.sort 
+    #sort -m -k4,4 *.srt > TRANSCRIPTOME.sort 
+    call_mutations.py TRANSCRIPTOME.sort -s $SPECIES -p $PREFIX | sort -k2n,2 >  $PREFIX"_transcriptome1.mutations"
 
     annotate_gtf.py $GTF -g $GENOME_CHRS -p new_ref -m $PREFIX"_transcriptome1.mutations"  -r 100
     KEY=new_ref.key 
@@ -165,9 +166,9 @@ if [ $PROGRAM == 'map' ]; then
     map_and_count known_jxns2 exons2_miss.fastq  new_ref_knownJxns.fa exonic F2 4 
     map_and_count novel_jxns2 known_jxns2_miss.fastq new_ref_novelJxns.fa exonic F2 4    
     map_and_count introns2 novel_jxns2_miss.fastq new_ref_intronSeqs.fa intronic F2 4   
-    wait
-    sort -m -k4,4 *.srt > TRANSCRIPTOME_2.sort 
-    call_mutations.py TRANSCRIPTOME_2.sort -s $SPECIES -p $PREFIX"_specific2.cands" | sort -k2n,2 > $PREFIX"_transcriptome2.mutations" 
+    #wait
+    #cat *.srt | sort -k2,2 -k4n,4 > TRANSCRIPTOME_2.sort 
+    #call_mutations.py TRANSCRIPTOME_2.sort -s $SPECIES -p $PREFIX | sort -k2n,2 > $PREFIX"_transcriptome2.mutations" 
    
     gap_map_and_count clip_exons1 introns2_miss.fastq new_ref_exonSeqs.fa exonic
     gap_map_and_count clip_gene1 clip_exons1_miss.fastq new_ref_geneSeqs.fa exonic
@@ -178,9 +179,9 @@ if [ $PROGRAM == 'map' ]; then
 
     
 
-    sort -m -k2,2 -k4n,4 *.novel > novel.candidates
+#    sort -m -k2,2 -k4n,4 *.novel > novel.candidates
 
-    novel_search.py novel.candidates -k $KEY > $PREFIX".novelOutput"
+#    novel_search.py novel.candidates -k $KEY > $PREFIX".novelOutput"
 
     
     

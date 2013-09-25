@@ -17,50 +17,73 @@ from collections import defaultdict as dd
 class MutationRecord:
     def __init__(self,mapFile,prefix,coverage,diffRate,SPECIES="HUMAN"):
         self.mapFile = mapFile; self.mapHandle = open(self.mapFile);    self.open = True; self.offset = [0,0]; self.chr = None
-        self.nextLine()
-        self.chr = self.mapChr
-        if not self.open:       errorQuit("EMPTY LOCATION FILE")
         
         self.spliceBuffer = 3; self.coverage_parameter = coverage;   self.rate_parameter = diffRate; self.cands = {}
       
-        self.specificSnps = open(prefix+'_specific.snps','w')
 
-        if SPECIES == "HUMAN":
-            self.chr2Num ={'chr1': 1, 'chr2': 2, 'chr3': 3,'chr4': 4, 'chr5': 5, 'chr6': 6,'chr7': 7, 'chr8': 8, 'chr9': 9, 'chr10': 10, 'chr11': 11, 'chr12': 12, 'chr10': 10, 'chr11': 11, 'chr12': 12,
+        HUMAN_CHRS = {'chr1': 1, 'chr2': 2, 'chr3': 3,'chr4': 4, 'chr5': 5, 'chr6': 6,'chr7': 7, 'chr8': 8, 'chr9': 9, 'chr10': 10, 'chr11': 11, 'chr12': 12, 'chr10': 10, 'chr11': 11, 'chr12': 12,
                                 'chr13': 13, 'chr14': 14, 'chr15': 15, 'chr16': 16, 'chr17': 17, 'chr18': 18,'chr19': 19, 'chr20': 20, 'chr21': 21,'chr22': 22, 'chrX': 23, 'chrY': 24, 'chrM': 25}
-        elif SPECIES == "RHESUS" or SPECIES == "MONKEY":
-            self.chr2Num = {'chr01': 1, 'chr02a': 2, 'chr02b': 3, 'chr03': 4, 'chr04': 5, 'chr05': 6,'chr06': 7, 'chr07': 8, 'chr08': 9,'chr09': 10, 'chr10': 11, 'chr11': 12, 'chr12': 13,
+        
+	MONKEY_CHRS = {'chr01': 1, 'chr02a': 2, 'chr02b': 3, 'chr03': 4, 'chr04': 5, 'chr05': 6,'chr06': 7, 'chr07': 8, 'chr08': 9,'chr09': 10, 'chr10': 11, 'chr11': 12, 'chr12': 13,
                     'chr13': 14, 'chr14': 15, 'chr15': 16, 'chr16': 17, 'chr17': 18, 'chr18':19 ,'chr19': 20, 'chrX': 21}
 
 
+	if SPECIES == "HUMAN": self.chr2Num = dd(lambda: None, HUMAN_CHRS)
+	elif SPECIES == "RHESUS" or SPECIES == "MONKEY": self.chr2Num == dd(lambda: None, MONKEY_CHRS)
+        
+	self.nextLine()
+        self.chr = self.mapChr
+        if not self.open:       errorQuit("EMPTY LOCATION FILE")
+        
+	self.specificSnps = open(prefix+'_specific.snps','w')
+
+        #if SPECIES == "HUMAN":
+        #    self.chr2Num ={'chr1': 1, 'chr2': 2, 'chr3': 3,'chr4': 4, 'chr5': 5, 'chr6': 6,'chr7': 7, 'chr8': 8, 'chr9': 9, 'chr10': 10, 'chr11': 11, 'chr12': 12, 'chr10': 10, 'chr11': 11, 'chr12': 12,
+                              #  'chr13': 13, 'chr14': 14, 'chr15': 15, 'chr16': 16, 'chr17': 17, 'chr18': 18,'chr19': 19, 'chr20': 20, 'chr21': 21,'chr22': 22, 'chrX': 23, 'chrY': 24, 'chrM': 25}
+        #elif SPECIES == "RHESUS" or SPECIES == "MONKEY":
+        #    self.chr2Num = {'chr01': 1, 'chr02a': 2, 'chr02b': 3, 'chr03': 4, 'chr04': 5, 'chr05': 6,'chr06': 7, 'chr07': 8, 'chr08': 9,'chr09': 10, 'chr10': 11, 'chr11': 12, 'chr12': 13,
+        #            'chr13': 14, 'chr14': 15, 'chr15': 16, 'chr16': 17, 'chr17': 18, 'chr18':19 ,'chr19': 20, 'chrX': 21}
+
+
 ##########################################################################################################################################################
-
+    
+    
     def nextLine(self,SEEK=None):
-        if self.open:
-            if SEEK != None:
-                self.mapHandle.seek(SEEK)
+        if SEEK != None:
+            self.mapHandle.seek(SEEK)
             
-            tmpOffset = self.mapHandle.tell()
-            self.line = self.mapHandle.readline().split()
-            if len(self.line)>0:
+        tmpOffset = self.mapHandle.tell()
+        self.line = self.mapHandle.readline().split()
 
 
-                self.readID,self.mapChr,self.mapStrand,self.hgStart,self.hgEnd,self.mapRead,self.mapRef,self.mapQual,self.mapSubs,self.geneLoc,self.geneFeature = self.line
 
-                self.hgStart, self.hgEnd, self.mapSubs = int(self.hgStart), int(self.hgEnd), int(self.mapSubs)
-                if self.mapChr != self.chr:
-                    self.offset = [self.offset[1],tmpOffset]
-            else:
+	while len(self.line) > 0 and self.chr2Num[self.line[1]] == None:
+		self.line = self.mapHandle.readline().split()
+   
+        if len(self.line) > 0:
+
+            self.readID,self.mapChr,self.mapStrand,self.hgStart,self.hgEnd,self.mapRead,self.mapRef,self.mapQual,self.mapSubs,self.geneLoc,self.geneFeature = self.line
+            self.hgStart, self.hgEnd, self.mapSubs = int(self.hgStart), int(self.hgEnd), int(self.mapSubs)
+                
+            if self.mapChr != self.chr:
+                if self.chr > self.mapChr:
+		    errorQuit("UNSORTED LOCATION FILE")
                 self.offset = [self.offset[1],tmpOffset]
-                self.mapGene = None
-                self.mapChr  = None
-                self.open = False
-                #self.mapHandle.close()
+	else:
+	    self.offset = [ self.offset[1],tmpOffset] 
+            self.open = False 
+	    self.mapGene,self.mapChr = None, None
+
+
+
+
 ###########################################################################################################################################################
-            
+           
+
+
     def geneCandSearch(self):
         while self.chr == self.mapChr:
-            if self.mapSubs > 0 and (len(self.mapRead) > 2*self.spliceBuffer) and self.chr in self.chr2Num.keys():
+            if self.mapSubs > 0 and (len(self.mapRead) > 2*self.spliceBuffer):
                 diffs = [(self.hgStart+i,self.mapRef[i],self.mapRead[i]) for i in range(self.spliceBuffer,len(self.mapRead)-self.spliceBuffer) if self.mapRead[i] != self.mapRef[i]]
                 for d in diffs:
                     if d[0] not in self.cands.keys():
@@ -80,12 +103,10 @@ class MutationRecord:
             if self.open: self.mapHandle.seek(self.offset[1])
             return 
         self.cands = {}; candList.sort()
-       
         ##   ------------------------------------------------------------------------  ##
-        if self.open:   self.nextLine(SEEK = self.offset[0])
-        else:
-            self.open = True; self.nextLine(SEEK = self.offset[1])
         
+	self.nextLine(SEEK = self.offset[0])
+	 
         while self.chr == self.mapChr:
             n = 0
             while n < len(candList):
@@ -106,8 +127,8 @@ class MutationRecord:
         for c in candList: c[1].evaluate(self.specificSnps,self.chr2Num[self.chr])
         
         if self.open:
-            self.chr = self.mapChr
             self.nextLine(SEEK = self.offset[1])
+	    self.chr = self.mapChr
         else:
             return
     
