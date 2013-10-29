@@ -17,17 +17,26 @@ MYPROC=$(nproc)
 function load_annotation {
     if [ $ANNOTATION == "gc18" ] || [ $ANNOTATION == "GC18" ]; then
         FEATURES=/export/uec-gs1/knowles/analysis/tade/gtfar_tests/GTFAR_OCTOBER/refs 
-        EXONS=$FEATURES/gc18_exonSeqs.fa
-        INTRONS=$FEATURES/gc18_intronSeqs.fa
+        #EXONS=$FEATURES/gc18_exonSeqs.fa
+        #INTRONS=$FEATURES/gc18_intronSeqs.fa
         GENES=$FEATURES/gc18_geneSeqs.fa
         KEY=$FEATURES/gc18.key
         
         DATA=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human 
+       
+
+        TRANSCRIPTOME=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/gencode18/readLength"$LENGTH"
         
+        EXONS=$TRANSCRIPTOME/*exonSeqs.fa 
+        INTRONS=$TRANSCRIPTOME/*intronSeqs.fa 
+        GENES=$TRANSCRIPTOME/*geneSeqs.fa 
+        KEY=$TRANSCRIPTOME/*.key 
+
+
         GTF=$DATA/gencode18/gencode.v18.annotation.gtf
         CHRS=$DATA/GRCh37_ensemble19/chrs
-        #GENOME=$DATA/GRCh37_ensemble19/GRCh37.p11.genome.fa 
-        GENOME=$DATA/GRCh37_ensemble19/JUST1.fa  
+        GENOME=$DATA/GRCh37_ensemble19/GRCh37.p11.genome.fa 
+        #GENOME=$DATA/GRCh37_ensemble19/JUST1.fa  
 
 
     elif [ $ANNOTATION == "gc17" ] || [ $ANNOTATION == "GC17" ]; then
@@ -116,7 +125,8 @@ function start_up_output {
 
 ### ADD SOME OPTIONS FOR MISMATCHES AND WHAT NOT SO YOU CAN DO MORE SELECTION CRITERIA ##
 
-add_arg program 'annotation/filter-reads/iter-map' 
+
+add_arg program 'annotation/filter-reads/map' 
 add_option prefix -p 'test' 'OutPut Prefix'
 add_option annotation -a 'gc18' 'annotation - currently supported gc17'  
 add_option reads -r 'reads.fq/fastq'   'read folder or file in fq format'
@@ -131,7 +141,7 @@ add_flag verbose -v 0 'Verbosity'
 
 parseargs $@
 
-if [ $PROGRAM == 'map' ]; then 
+if [ $PROGRAM == 'foo' ]; then 
     
 
     #cat tmp/hg.sam tmp/*_vis.sam > $PREFIX.sam
@@ -175,19 +185,23 @@ function get_seed {
 }
 
 function get_ref {
-    TMP_REF=$1; TMP_SEED=$2; MYLEN=$3
-    if [ -d $(dirname $TMP_REF)"/"indexes ] && [ -f $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)_"$TMP_SEED"_"$MYLEN".index ]; then
-        echo $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)_"$TMP_SEED"_"$MYLEN".index
-    elif [ -d $(dirname $TMP_REF)"/"indexes ] && [ -f $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .txt)_"$TMP_SEED"_"$MYLEN".index ]; then
-        echo $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .txt)_"$TMP_SEED"_"$MYLEN".index
-    else
-        echo $TMP_REF
-    fi 
+    TMP_REF=$1; TMP_SEED=$2; MYLEN=$3; CLIPPING=$4
+    MY_REF=$TMP_REF
+    if [ -d $(dirname $TMP_REF)"/"indexes ]; then 
+        if [ -f  $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)"_"$LENGTH"_"$TMP_SEED".index" ]; then
+            MY_REF=$(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)"_"$LENGTH"_"$TMP_SEED".index" 
+        
+        elif [ -f  $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .txt)"_"$LENGTH"_"$TMP_SEED".index" ]; then
+            MY_REF=$(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .txt)"_"$LENGTH"_"$TMP_SEED".index" 
+        elif [ -f  $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)"_clip_"$LENGTH"_"$TMP_SEED".index" ]; then
+            MY_REF=$(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)"_clip_"$LENGTH"_"$TMP_SEED".index" 
+        fi
+    fi  
+    echo $MY_REF
 } 
 
 function update_reads {
     REF=$1
-    echo $READLIST
     if [ -f miss_$(basename $REF .fa)"_"$ITER.txt ]; then rm miss_$(basename $REF .fa)"_"$ITER.txt; fi 
     for i in $(cat $READLIST); do
         echo $PWD/reads/$(basename $i .fastq)"_miss_"$(basename $REF .fa)".fastq" >> miss_$(basename $REF .fa)"_"$ITER.txt               
@@ -209,8 +223,7 @@ function map_and_parse {
     REF=$1;SUBS=$2;TYPE=$3; TRUTH=$4
     MYSEED=$(get_seed $SUBS $LENGTH)
     MYREF=$(get_ref $REF $MYSEED $LENGTH)
-
-    echo -n "RUNNING: perm $(basename $MYREF) $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > $(basename $REF .fa)"_"$ITER".log"....." 
+    echo -n "RUNNING: perm $(basename $REF) $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > $(basename $REF .fa)"_"$ITER".log"....." 
     if [ "$TRUTH" != "NO" ]; then perm $MYREF $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > $(basename $REF .fa)"_"$ITER".log"  ; fi   
     if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
     update_reads $REF
@@ -225,22 +238,23 @@ function map_and_parse {
     echo -n "."
     done
     wait 
-    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi
+    echo ""  
 }
      
 
 function novel_splice_search {
     REF=$1;SUBS=$2;TYPE=$3; TRUTH=$4
     MYSEED=$(get_seed $SUBS $LENGTH)
-    MYREF=$(get_ref $REF $MYSEED $LENGTH)
-    echo -n "RUNNING: clipR $(basename $MYREF) $READLIST --seed F0 -v $SUBS -e -u -s > $(basename $REF .fa)"_clip.log.......""
+    MYREF=$(get_ref $REF $MYSEED $LENGTH "CLIP")
+    echo -n "RUNNING: clipR $(basename $REF) $READLIST --seed F0 -v $SUBS -e -u -s > $(basename $REF .fa)"_clip.log.......""
     if [ "$TRUTH" != "NO" ]; then clipR $MYREF $READLIST --seed F1 -v $SUBS -e  --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader -u -s > $(basename $REF .fa)"_clip.log"; fi 
     if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
-    echo -n "RUNNING: gtfar-splice-search {GAPFILES}......"
+    echo -n "RUNNING: gtfar-splice-search {GAPFILES} > SPLICE_CANDIDATES.fa...... "
     if [ "$TRUTH" != "NO" ]; then categorize_and_annotate_novel_splice.py $(basename $REF .fa)*_*.sam -k $KEY --gtf $GTF -g $CHRS > SPLICE_CANDIDATES.fa ; fi 
     if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
     echo -n "RUNNING: perm SPLICE_CANDIDATES.fa $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > $(basename $REF .fa)"_"$ITER".log"....." 
-    if [ "$TRUTH" != "NO" ]; then perm SPLICE_CANDIDATES.fa $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > SPLICE_VALIDATE.log  ; fi   
+    if [ "$TRUTH" != "NO" ]; then perm SPLICE_CANDIDATES.fa $READLIST --seed F2 -v 3 -B --printNM -u -s > SPLICE_VALIDATE.log  ; fi   
     if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
     update_reads $REF 
     echo -n "Running: gtfar-parse {MAPFILES} --strandRule $STRANDRULE...."
@@ -253,7 +267,8 @@ function novel_splice_search {
     echo -n "."
     done
     wait 
-    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi
+    echo ""  
 
 }
 
@@ -265,12 +280,12 @@ function genomic_map {
     REF=$1;SUBS=$2;TYPE=$3; TRUTH=$4
     MYSEED=$(get_seed $SUBS $LENGTH)
     MYREF=$(get_ref $REF $MYSEED $LENGTH)
-
     echo -n "RUNNING: perm $(basename $MYREF) $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > $(basename $REF .fa)"_"$ITER".log"....." 
     if [ "$TRUTH" != "NO" ]; then perm $MYREF $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s --outputFormat sam > $(basename $REF .fa)"_"$ITER".log"  ; fi   
     if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
     GENOMELIST=$READLIST
     update_reads $REF
+    
     echo -n "RUNNING: clipR $(basename $MYREF) $READLIST --seed F0 -v $SUBS -e -u -s > $(basename $REF .fa)"_clip.log.......""
     if [ "$TRUTH" != "NO" ]; then clipR $MYREF $READLIST --seed F1 -v 1  --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader -u -s > $(basename $REF .fa)"_clip.log"; fi 
     if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
@@ -317,7 +332,8 @@ function combine_output {
 
 
 
-if [ $PROGRAM == 'multimap' ]; then 
+if [ $PROGRAM == 'MAP' ] || [ $PROGRAM == 'map' ]; then 
+
     check_dir $WORKING
     load_annotation
     if [ -d $READS ]; then
@@ -344,13 +360,13 @@ if [ $PROGRAM == 'multimap' ]; then
 
     if [ ! -d results ]; then  mkdir results; fi 
     if [ ! -d final_reads ]; then  mkdir final_reads; fi 
-    check_procs $READLIST    
-    map_and_parse $EXONS 3 "EXONS" NO
-    map_and_parse $INTRONS 3 "INTRONS" NO
-    novel_splice_search $GENES 1 "SPLICE" NO 
-    genomic_map $GENOME 3 "GENOME" NO
-    combine_output $GENOME NO
-
+    check_procs $READLIST   
+    echo "" 
+    map_and_parse $EXONS 3 "EXONS" YES
+    map_and_parse $INTRONS 3 "INTRONS" YES
+    novel_splice_search $GENES 1 "SPLICE" YES
+    genomic_map $GENOME 3 "GENOME" YES
+    combine_output $GENOME YES
     cd ..
     check_dir $OUTPUT
     cp -R $WORKING/final_reads $OUTPUT/
