@@ -8,15 +8,15 @@ from modules.MapData import *
 from modules.ProgressBar import *
 import os
 				
-def process_file(mapFile,keyFile,prefix,strandSpecific,VERBOSE):
+def process_file(mapFile,prefix,strandSpecific,VERBOSE):
 
     progressBar = ProgressBar(sys.stderr,"Parsing Alignment...",'.','Complete',100000,VERBOSE)
 
     mapLines = MapLines(mapFile)
 
-    mapReads = MapRead(mapLines,keyFile,strandSpecific)
+    mapReads = MapRead(mapLines,strandSpecific)
   
-    mapData  = MapData(prefix,keyFile,mapLines.refType,mapLines.fileName)
+    mapData  = MapData(prefix,mapLines.fileName)
 
 
     while mapLines.open:
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     usage = "usage: ./%prog [options] data_file"
     parser = OptionParser(usage=usage)
 
-    parser.add_option("-k", "--key", dest='key',default = None, type='string', help="    Path to key file")
+    #parser.add_option("-k", "--key", dest='key',default = None, type='string', help="    Path to key file")
     parser.add_option("-p", "--prefix", dest='prefix', default = None, type='string', help="   Prefix for OutPut")
     #parser.add_option("-r", "--ref", default = "NA", type='string', help="Reference Type Used for Mapping") 
     parser.add_option("-s", "--strandRule", default = "NA", type='string', help="Opposite,Match")
@@ -63,13 +63,13 @@ if __name__ == '__main__':
 
 
 
-    if len(args)==1  and options.key != None and options.prefix != None:
-        process_file(args[0],options.key,options.prefix,STRANDMATCH,options.verbose)
+    if len(args)==1  and options.prefix != None:
+        process_file(args[0],options.prefix,STRANDMATCH,options.verbose)
 
     else:
         parser.print_help()
         print ""
-        print "Example Usage: ./parse_alignment.py mymapping.sam -k gtf.key -p myexonicoutput --strand match"
+        print "Example Usage: ./parse_alignment.py mymapping.sam -p myexonicoutput --strand match"
         sys.exit(2)
 
     

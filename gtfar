@@ -7,20 +7,30 @@ export PATH=$PATH:/export/uec-gs1/knowles/analysis/tade/gtfar_source
 GC17=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/gencode17
 
 
-
+MYPROC=$(nproc)
 
 
 
 # ------------------------------------------ UTILITY FUNCTIONS ----------------------------------------------------------- #
 
-function show_help {
-    echo $1
-    echo "Example: gtfar2 map -r SAMPLE_READS.fastq"
-    exit
-}
 
 function load_annotation {
-    if [ $ANNOTATION == "gc17" ] || [ $ANNOTATION == "GC17" ]; then
+    if [ $ANNOTATION == "gc18" ] || [ $ANNOTATION == "GC18" ]; then
+        FEATURES=/export/uec-gs1/knowles/analysis/tade/gtfar_tests/GTFAR_OCTOBER/refs 
+        EXONS=$FEATURES/gc18_exonSeqs.fa
+        INTRONS=$FEATURES/gc18_intronSeqs.fa
+        GENES=$FEATURES/gc18_geneSeqs.fa
+        KEY=$FEATURES/gc18.key
+        
+        DATA=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human 
+        
+        GTF=$DATA/gencode18/gencode.v18.annotation.gtf
+        CHRS=$DATA/GRCh37_ensemble19/chrs
+        #GENOME=$DATA/GRCh37_ensemble19/GRCh37.p11.genome.fa 
+        GENOME=$DATA/GRCh37_ensemble19/JUST1.fa  
+
+
+    elif [ $ANNOTATION == "gc17" ] || [ $ANNOTATION == "GC17" ]; then
         SPECIES="HUMAN"
         GENOME_CHRS=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/chrs
         GC17_INDEX=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/gencode17/index_files
@@ -46,7 +56,7 @@ function load_annotation {
         KNOWN_JXNS=$GC17/gc17_knownJxns.fa
         NOVEL_JXNS=$GC17/gc17_novelJxns.fa
         
-        #############
+        #### #########
        
         GENOME_REF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/index_files/GRCh37_50_F1.index
         GENOME_CLIP_REF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/human/GRCh37_ensemble19/index_files/GRCh37_40_F1.index
@@ -57,27 +67,23 @@ function load_annotation {
         NOVEL_JXNS=$GC17_INDEX/gc17_novelJxns_50_F1.index
         GTF=$GC17/gencode.v17.chr_patch_hapl_scaff.annotation.gtf
     elif [ $ANNOTATION == "MONKEY" ] || [ $ANNOTATION == "monkey" ]; then
+
         SPECIES="MONKEY"
-        ANNOPATH=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/monkey/norgren_annotation
-        EXONS=$ANNOPATH/norgRhesus_exonSeqs.fa 
-        GENES=$ANNOPATH/norgRhesus_geneSeqs.fa 
-        INTRONS=$ANNOPATH/norgRhesus_intronSeqs.fa 
-        KNOWN_JXNS=$ANNOPATH/norgRhesus_knownJxns.fa 
-        NOVEL_JXNS=$ANNOPATH/norgRhesus_novelJxns.fa 
-        KEY=$ANNOPATH/norgRhesus.key  
-        GTF=$ANNOPATH/norgren_gcFixFormat.gtf
-        GENOME=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/monkey/monkey_genome/norg_genome.txt
-        GENOME_CLIP_REF=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/monkey/monkey_genome/norg_genome.txt
-        GENOME_CHRS=$GENOME/chrs
+        ANNO=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/monkey
+        GENOME=$ANNO/norg_genome/norg_genome.txt; CHRS=$ANNO/norg_genome/chrs
+
+        TRAN=$ANNO/norg_transcriptome_september
+        EXONS=$TRAN/norgSept_exonSeqs.fa; KNOWN_JXNS=$TRAN/norgSept_knownJxns.fa; NOVEL_JXNS=$TRAN/norgSept_novelJxns.fa; INTRONS=$TRAN/norgSept_intronSeqs.fa; GENES=$TRAN/norgSept_geneSeqs.fa; KEY=$TRAN/norgSept.key                                                         
     else
         show_help "ANNOTATION $ANNOTATION NOT SUPPORTED -choose gc17 or nothing"
     fi
 }
 
 
-function check_output_dir {
-    if [ -d $OUTPUT ]; then echo "WARNING: output directory ("$OUTPUT") already exists; Files may be overwritten"; 
-    else mkdir $OUTPUT; fi 
+function check_dir {
+    DIR=$1
+    if [ -d $DIR ]; then echo "WARNING: working directory ("$DIR") already exists; Files may be overwritten"; 
+    else mkdir $DIR; fi 
 }
 
 
@@ -97,7 +103,8 @@ function start_up_output {
     echo "SPECIES (-s):        "$SPECIES
     echo "GTF ANNOTATION (-g): "$ANNOTATION "( "$(basename $GTF) ")"
     echo "Reads:               "$READS
-    echo "Output Directory:    "$OUTPUT    
+    echo "Working Directory:    "$WORKING
+    echo "Output Directory:    "$OUTPUT
     echo "Output File Prefix:  "$PREFIX    
     echo ""
 }
@@ -106,111 +113,31 @@ function start_up_output {
 
 # ------------------------------------------ PIPELINE FUNCTIONS ----------------------------------------------------------- #
 
-function map_and_count {
-    MYPREFIX=$1; MYREADS=$2; MYREF=$3; MYTYPE=$4; MYSEED=$5; MYSUBS=$6
-    perm $MYREF $MYREADS --seed $MYSEED -v $MYSUBS -B -o $MYPREFIX.mapping -u $MYPREFIX"_miss.fastq" --printNM > $MYPREFIX.log 
-    if [ $? != 0 ]; then echo "perm-fail"; exit; fi 
-    echo "parse_alignment.py $MYPREFIX.mapping --strandRule different -k $KEY -p $MYPREFIX --verbose | sort -k4,4 > $MYPREFIX"_gene.srt" &"
-    parse_alignment.py $MYPREFIX.mapping --strandRule $STRANDRULE -k $KEY -p $MYPREFIX --verbose | sort -k2,2 -k4n,4 > $MYPREFIX"_gene.srt" &
-}
-
-function gap_map_and_count {
-    MYPREFIX=$1; MYREADS=$2; MYREF=$3; MYTYPE=$4
-    clipR $MYREF $MYREADS -o $MYPREFIX.sam --anchorL 40 --seed F1 -v 2 -e --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader --printNM -u $MYPREFIX"_miss.fastq" -s > $MYPREFIX.log
-    if [ $? != 0 ]; then echo "perm-fail"; exit; fi 
-    parse_alignment.py $MYPREFIX.sam  -k $KEY -p $MYPREFIX --verbose | sort -k2,2 -k4n,4  > $MYPREFIX"_novelGENE.jxns" & 
-} 
-
-function hg_map_and_count {
-    MYPREFIX=$1; MYREADS=$2; MYREF=$3; MYTYPE=$4; MYSEED=$5; MYSUBS=$6
-    perm $MYREF $MYREADS --seed $MYSEED -v $MYSUBS -B -o $MYPREFIX.sam -u $MYPREFIX"_miss.fastq" --printNM  > $MYPREFIX.log
-    if [ $? != 0 ]; then echo "perm-fail"; exit; fi 
-    echo "parse_alignment.py $MYPREFIX.mapping -k $KEY -p $MYPREFIX --verbose | sort -k4,4 > $MYPREFIX".novel" &"
-    parse_alignment.py $MYPREFIX.sam  -k $KEY -p $MYPREFIX --verbose | sort -k2,2 -k4n,4 > $MYPREFIX"_novelGENE.cont" &
-}
-
 
 ### ADD SOME OPTIONS FOR MISMATCHES AND WHAT NOT SO YOU CAN DO MORE SELECTION CRITERIA ##
 
 add_arg program 'annotation/filter-reads/iter-map' 
 add_option prefix -p 'test' 'OutPut Prefix'
-add_option annotation -a 'gc17' 'annotation - currently supported gc17'  
-add_option reads -r 'reads.fq/fastq'   'read file in fq format'
+add_option annotation -a 'gc18' 'annotation - currently supported gc17'  
+add_option reads -r 'reads.fq/fastq'   'read folder or file in fq format'
+add_option exons -e 'exons.fa'   'exonic file in fasta (or index format)'
+add_option introns -i 'introns.fa'   'intronic file in fasta (or index format)'
+add_option length -l 100   'length of reads'
 add_option strandRule -s 'None'   'A rule for stranded ness (None, Same or Opposite' 
 add_option output -o 'output'   'output directory'
+add_option working -w 'working'   'working directory'
 add_flag showcommands -h 1 'Print all executed commands to standard out' 
+add_flag verbose -v 0 'Verbosity' 
 
 parseargs $@
 
 if [ $PROGRAM == 'map' ]; then 
     
-    load_and_check_reads
-    check_output_dir
-    load_annotation
-    start_up_output
-    cd $OUTPUT 
-    
-    map_and_count exons1 $READS $EXONS exonic F1 2 
-    map_and_count known_jxns1 exons1_miss.fastq $KNOWN_JXNS exonic F1 2
-    map_and_count novel_jxns1 known_jxns1_miss.fastq $NOVEL_JXNS exonic F1 2
-    map_and_count introns1 novel_jxns1_miss.fastq $INTRONS intronic F1 2
-    wait    
-    cat *.srt | sort -k2,2 -k4n,4 > TRANSCRIPTOME.sort 
-    #sort -m -k4,4 *.srt > TRANSCRIPTOME.sort 
-    call_mutations.py TRANSCRIPTOME.sort -s $SPECIES -p $PREFIX | sort -k2n,2 >  $PREFIX"_transcriptome1.mutations"
 
-    annotate_gtf.py $GTF -g $GENOME_CHRS -p new_ref -m $PREFIX"_transcriptome1.mutations"  -r 100
-    KEY=new_ref.key 
-
-    map_and_count exons2 introns1_miss.fastq new_ref_exonSeqs.fa exonic F2 4
-    map_and_count known_jxns2 exons2_miss.fastq  new_ref_knownJxns.fa exonic F2 4 
-    map_and_count novel_jxns2 known_jxns2_miss.fastq new_ref_novelJxns.fa exonic F2 4    
-    map_and_count introns2 novel_jxns2_miss.fastq new_ref_intronSeqs.fa intronic F2 4   
-    #wait
-    #cat *.srt | sort -k2,2 -k4n,4 > TRANSCRIPTOME_2.sort 
-    #call_mutations.py TRANSCRIPTOME_2.sort -s $SPECIES -p $PREFIX | sort -k2n,2 > $PREFIX"_transcriptome2.mutations" 
-   
-    gap_map_and_count clip_exons1 introns2_miss.fastq new_ref_exonSeqs.fa exonic
-    gap_map_and_count clip_gene1 clip_exons1_miss.fastq new_ref_geneSeqs.fa exonic
-    
-    
-    hg_map_and_count hg1 clip_gene1_miss.fastq $GENOME_REF     intergenic F1 2 
-    gap_map_and_count hg_gap1 hg1_miss.fastq   $GENOME_CLIP_REF  intergenic 
-
-    
-
-#    sort -m -k2,2 -k4n,4 *.novel > novel.candidates
-
-#    novel_search.py novel.candidates -k $KEY > $PREFIX".novelOutput"
-
-    
-    
-    
-    cd ..
-    
-    
-
-    ### MAPPING TO HG 19 ###
-    
-   
-    ### GAPPED MAPPING ### 
-
-
-    echo "MAPPING-COMPLETE"
-
-
-    exit
-
-    if [ ! -d tmp ]; then mkdir tmp; fi
-    mv *.* tmp/
-
-    echo ""; echo 'Analyzing Results/Creating Bam File'
-
-
-    cat tmp/hg.sam tmp/*_vis.sam > $PREFIX.sam
-    samtools view -bS -o $PREFIX.bam $PREFIX.sam 
-    samtools sort $PREFIX.bam "$PREFIX"_sort
-    samtools index "$PREFIX"_sort.bam 
+    #cat tmp/hg.sam tmp/*_vis.sam > $PREFIX.sam
+    #samtools view -bS -o $PREFIX.bam $PREFIX.sam 
+    #samtools sort $PREFIX.bam "$PREFIX"_sort
+    #samtools index "$PREFIX"_sort.bam 
 
     if [ $? == 0 ]; then echo "Pipeline Complete Successfully"; exit; fi
 
@@ -219,9 +146,222 @@ if [ $PROGRAM == 'map' ]; then
 fi
 
 
+#############################################################################################################################################################
+################################################### UTILITIES FUNCTIONS #####################################################################################
+#############################################################################################################################################################
+
+
+function verbose_talk {
+    if [ $VERBOSE -gt 0 ]; then echo $1; fi }
+
+    
+function check_procs {
+    READNUM=$(wc -l $1 | awk '{print $1}')
+    if [ $READNUM -gt $MYPROC ]; then
+        echo "WARNING: "$MYPROC" cores are being employed for" $READNUM "files; Speed may not be maximized"
+    fi 
+   }
+
+
+
+function get_seed {
+    SUBS=$1;LEN=$2
+    if   [ "$SUBS" -gt "6" ]; then echo "F4";
+    elif [ "$SUBS" -gt "4" ]; then echo "F3"; 
+    elif [ "$SUBS" -gt "2" ]; then echo "F2"; 
+    elif [ "$SUBS" -gt "0" ]; then echo "F1";
+    else echo "FO"
+    fi
+}
+
+function get_ref {
+    TMP_REF=$1; TMP_SEED=$2; MYLEN=$3
+    if [ -d $(dirname $TMP_REF)"/"indexes ] && [ -f $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)_"$TMP_SEED"_"$MYLEN".index ]; then
+        echo $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)_"$TMP_SEED"_"$MYLEN".index
+    elif [ -d $(dirname $TMP_REF)"/"indexes ] && [ -f $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .txt)_"$TMP_SEED"_"$MYLEN".index ]; then
+        echo $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .txt)_"$TMP_SEED"_"$MYLEN".index
+    else
+        echo $TMP_REF
+    fi 
+} 
+
+function update_reads {
+    REF=$1
+    echo $READLIST
+    if [ -f miss_$(basename $REF .fa)"_"$ITER.txt ]; then rm miss_$(basename $REF .fa)"_"$ITER.txt; fi 
+    for i in $(cat $READLIST); do
+        echo $PWD/reads/$(basename $i .fastq)"_miss_"$(basename $REF .fa)".fastq" >> miss_$(basename $REF .fa)"_"$ITER.txt               
+    done
+    READLIST=miss_$(basename $REF .fa)"_"$ITER.txt 
+}    
+
+
+
+################################################################################################################################################################
+################################################################################################################################################################
+################################################### MAPPING FUNCTIONS ##########################################################################################
+################################################################################################################################################################
+################################################################################################################################################################
+
+
+
+function map_and_parse {
+    REF=$1;SUBS=$2;TYPE=$3; TRUTH=$4
+    MYSEED=$(get_seed $SUBS $LENGTH)
+    MYREF=$(get_ref $REF $MYSEED $LENGTH)
+
+    echo -n "RUNNING: perm $(basename $MYREF) $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > $(basename $REF .fa)"_"$ITER".log"....." 
+    if [ "$TRUTH" != "NO" ]; then perm $MYREF $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > $(basename $REF .fa)"_"$ITER".log"  ; fi   
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+    update_reads $REF
+
+    echo -n "Running: gtfar-parse {MAPFILES} --strandRule $STRANDRULE...."
+    for i in $(cat $INIT_READS); do 
+        SAMPLE=$(basename $i .fastq)
+        MYFILE=$(basename $REF .fa)*_*$SAMPLE*.mapping
+        MYPREF=$SAMPLE"_"$TYPE
+        if [ "$TRUTH" != "NO" ]; then parse_alignment.py $MYFILE -p $MYPREF --strandRule $STRANDRULE & fi                                                    
+        while [ $(jobs | wc -l) -gt $MYPROC ]; do sleep 200; done                                                     
+    echo -n "."
+    done
+    wait 
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+}
+     
+
+function novel_splice_search {
+    REF=$1;SUBS=$2;TYPE=$3; TRUTH=$4
+    MYSEED=$(get_seed $SUBS $LENGTH)
+    MYREF=$(get_ref $REF $MYSEED $LENGTH)
+    echo -n "RUNNING: clipR $(basename $MYREF) $READLIST --seed F0 -v $SUBS -e -u -s > $(basename $REF .fa)"_clip.log.......""
+    if [ "$TRUTH" != "NO" ]; then clipR $MYREF $READLIST --seed F1 -v $SUBS -e  --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader -u -s > $(basename $REF .fa)"_clip.log"; fi 
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+    echo -n "RUNNING: gtfar-splice-search {GAPFILES}......"
+    if [ "$TRUTH" != "NO" ]; then categorize_and_annotate_novel_splice.py $(basename $REF .fa)*_*.sam -k $KEY --gtf $GTF -g $CHRS > SPLICE_CANDIDATES.fa ; fi 
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+    echo -n "RUNNING: perm SPLICE_CANDIDATES.fa $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > $(basename $REF .fa)"_"$ITER".log"....." 
+    if [ "$TRUTH" != "NO" ]; then perm SPLICE_CANDIDATES.fa $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > SPLICE_VALIDATE.log  ; fi   
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+    update_reads $REF 
+    echo -n "Running: gtfar-parse {MAPFILES} --strandRule $STRANDRULE...."
+    for i in $(cat $INIT_READS); do 
+        SAMPLE=$(basename $i .fastq)
+        MYFILE=SPLICE_CANDIDATES*_*$SAMPLE*.mapping
+        MYPREF=$SAMPLE"_"$TYPE
+        if [ "$TRUTH" != "NO" ]; then parse_alignment.py $MYFILE -p $MYPREF  & fi                                                    
+        while [ $(jobs | wc -l) -gt $MYPROC ]; do sleep 200; done                                                     
+    echo -n "."
+    done
+    wait 
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+
+}
 
 
 
 
 
+function genomic_map {
+    REF=$1;SUBS=$2;TYPE=$3; TRUTH=$4
+    MYSEED=$(get_seed $SUBS $LENGTH)
+    MYREF=$(get_ref $REF $MYSEED $LENGTH)
+
+    echo -n "RUNNING: perm $(basename $MYREF) $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s > $(basename $REF .fa)"_"$ITER".log"....." 
+    if [ "$TRUTH" != "NO" ]; then perm $MYREF $READLIST --seed $MYSEED -v $SUBS -B --printNM -u -s --outputFormat sam > $(basename $REF .fa)"_"$ITER".log"  ; fi   
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+    GENOMELIST=$READLIST
+    update_reads $REF
+    echo -n "RUNNING: clipR $(basename $MYREF) $READLIST --seed F0 -v $SUBS -e -u -s > $(basename $REF .fa)"_clip.log.......""
+    if [ "$TRUTH" != "NO" ]; then clipR $MYREF $READLIST --seed F1 -v 1  --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader -u -s > $(basename $REF .fa)"_clip.log"; fi 
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+    
+    echo -n "Running: gtfar-parse {GENOMEFILES}...."
+    for i in $(cat $INIT_READS); do 
+        SAMPLE=$(basename $i .fastq)
+        if [ "$TRUTH" != "NO" ]; then parse_genomic.py $(basename $MYREF .fa)*$SAMPLE*.sam > $SAMPLE"_GENOME.stats" & fi 
+        while [ $(jobs | wc -l) -gt $MYPROC ]; do sleep 200; done                                                     
+        echo -n "."
+    done 
+    wait 
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+}
+
+function combine_output {
+    LASTREF=$1; TRUTH=$2
+    echo -n "Running: gtfar-combineOutput {OUTPUTFILES}...."
+    if [ "$TRUTH" != "NO" ]; then  
+        for i in $(paste $GENOMELIST); do 
+            SAMPLE=$(basename $i .fastq)
+            RNAME=$(basename $LASTREF .fa)
+            PREV=$(echo $SAMPLE | awk -F\_miss_ '{print $1}')
+            cat $RNAME*$SAMPLE.sam $RNAME*$SAMPLE"_miss_"$RNAME.sam > $PREV"_GENOME_vis.sam" & 
+            cp reads/$SAMPLE"_miss_"$RNAME"_miss_"$RNAME* final_reads/$PREV"_unmapped.fastq" & 
+            while [ $(jobs | wc -l) -gt $MYPROC ]; do sleep 20; done                                                     
+            echo -n "."
+        done
+        
+        for i in $(cat $INIT_READS); do 
+            SAMPLE=$(basename $i .fastq)
+                combine_gtfar_files.py EXPRESSION  -e $SAMPLE"_EXONS_gene.cnts"  -i $SAMPLE"_INTRONS_gene.cnts"  -s $SAMPLE"_SPLICE_gene.cnts"  > results/$SAMPLE"_gene.cnts" & 
+                combine_gtfar_files.py SPLICEDATA  -e $SAMPLE"_EXONS_splice.cnts"  -i $SAMPLE"_INTRONS_splice.cnts"  -s $SAMPLE"_SPLICE_splice.cnts"  > results/$SAMPLE"_splice.cnts" & 
+                combine_gtfar_files.py STATS  -e $SAMPLE"_EXONS.stats"  -i $SAMPLE"_INTRONS.stats"  -s $SAMPLE"_SPLICE.stats" -g $SAMPLE"_GENOME.stats"  > results/$SAMPLE.stats & 
+                cat $SAMPLE"_GENOME_vis.sam" $SAMPLE"_EXONS_vis.sam" $SAMPLE"_INTRONS_vis.sam" $SAMPLE"_SPLICE_vis.sam" > results/$SAMPLE"_visualize.sam"
+                while [ $(jobs | wc -l) -gt $MYPROC ]; do sleep 20; done                                                     
+                echo -n "."
+        done 
+    fi
+    wait 
+    if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi     
+}
+
+
+
+
+if [ $PROGRAM == 'multimap' ]; then 
+    check_dir $WORKING
+    load_annotation
+    if [ -d $READS ]; then
+        if [ ! -d $WORKING/reads ]; then  mkdir $WORKING/reads; fi 
+        for i in $READS/*.fastq; do 
+            FNAME=$(readlink -m $i)
+            if [ ! -f $WORKING/reads/$(basename $FNAME) ]; then
+                ln -s $FNAME $WORKING/reads/$(basename $FNAME)
+                echo $PWD/$WORKING/reads/$(basename $FNAME) >> $WORKING/initial_reads.txt  
+            fi
+        done
+    elif [ -f $READS ]; then
+        echo "OK A FILE"
+        exit
+    else
+        echo "A read file or path must be suppled"
+        exit
+    fi
+    ITER=1
+    cd $WORKING
+
+    INIT_READS=initial_reads.txt 
+    READLIST=$INIT_READS 
+
+    if [ ! -d results ]; then  mkdir results; fi 
+    if [ ! -d final_reads ]; then  mkdir final_reads; fi 
+    check_procs $READLIST    
+    map_and_parse $EXONS 3 "EXONS" NO
+    map_and_parse $INTRONS 3 "INTRONS" NO
+    novel_splice_search $GENES 1 "SPLICE" NO 
+    genomic_map $GENOME 3 "GENOME" NO
+    combine_output $GENOME NO
+
+    cd ..
+    check_dir $OUTPUT
+    cp -R $WORKING/final_reads $OUTPUT/
+    cp -R $WORKING/results $OUTPUT/
+
+    # NOW JUST MOVE THE FINAL READS and OUTPUT #
+
+    
+    
+
+
+
+fi 
 

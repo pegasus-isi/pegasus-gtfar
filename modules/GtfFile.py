@@ -20,16 +20,20 @@ from collections import defaultdict as dd
 ##########################################################################################################################################
 
 class GtfFile:
-    def __init__(self, fileHandle, prefix,readlen,mutationList,TYPE="ALL",printKEY=True):
-       
-
-        self.fName = open(fileHandle);  self.prefix = prefix;  self.readlen = readlen; self.PRINTKEY = printKEY
+    def __init__(self, fileHandle, prefix,readlen,mutationList=None,printKEY=True):
+      
+        try:
+            self.fName = open(fileHandle)
+        except TypeError:
+            errorQuit("A GTF FILE IS NOT SUPPLIED")
+        
+        
+        self.prefix = prefix;  self.readlen = readlen; self.PRINTKEY = printKEY
         
         self.index =0; self.genes = []; self.geneKey={}; self.seq = []
         
         self.open = True; self.FIRSTPRINT=True; self.notes = None; self.mutFile = None; self.simReads = None; self.counter = 0
 
-        self.MUTATIONS = False
         
         tmpLine=self.fName.readline().strip()
         while tmpLine[0]=="#":
@@ -40,6 +44,8 @@ class GtfFile:
         if mutationList != None:
             self.mutationList = True
             self.Mutations = MutationFile(mutationList)
+        else:
+            self.mutationList = False
 
 ############################################################################################################################################
 
@@ -67,7 +73,10 @@ class GtfFile:
         
 
     def addFasta(self,filePath):
-        c=open(filePath)
+        try:
+            c=open(filePath)
+        except IOError:
+            errorQuit("A valid path to chromosome fasta files was not provided")
         fChr = c.readline().strip().split()[0].split(">")[1]
         #if self.chr != c.readline().strip().split(">")[1]:
         if self.chr != fChr:
@@ -90,173 +99,131 @@ class GtfFile:
                     self.seq[x-1] = self.Mutations.snp
                 self.Mutations.nextLine()
 
-
-###########################################################################################################################################################################################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def addSpliceRecord(self,spliceRecord):
+        self.spliceCands = spliceRecord.validJxns
+        
+########################################################################################################################################
 ########################################################print###############################################################################################
 ################################## METHODS TO PRINT OUT ANNOTATION AND SEQUENCES ######################################################################
 #######################################################################################################################################################
 
 
-    def getSeqAndKey(self,gSeq,geneStart,pieces):
-        mySeq = ''
-        fKey = []; gKey = []; fPos = 0
 
-        for start,end in pieces:
-            fKey.append((fPos,fPos+(end-start))); gKey.append((start-geneStart,end-geneStart)); fPos += (end-start)+1
-            mySeq += gSeq[start-geneStart:(end-geneStart) + 1]
 
-        return mySeq,listToString([fKey,gKey,pieces],['-',',',' '])
-                
+    def featurePrint(self,features,fStr,geneStart,geneName,outPut):
+        
+        for F in features:
+            tmpSeq= "".join([self.geneSeq[f[0]-geneStart:(f[1]-geneStart)+1] for f in F])
+            if len(tmpSeq) >= self.readlen:
+                outPut.write(">%s\n%s\n" % (geneName+fStr+":"+listToString(F,["|","-"]), tmpSeq))
 
     def printFeatures(self,gene):
 
+        self.geneSeq =  "".join([ base.capitalize() for base in self.seq[gene.start-1:gene.end]])
+        geneInfo = gene.name+"|"+gene.hugo+"|"+gene.type+"|"+gene.chr+"|"+gene.strand+"|"
 
-        geneSeq = "".join(gene.seq)
-        geneStr=gene.name+"|"+gene.hugo+"|"+gene.strand+"|"+gene.chr+"|"+gene.type+"|"+gene.status+"|"
+        geneJxns = set([]);
+        for g in gene.knownJxns:
+            for i in range(1,len(g)): geneJxns.add(tuple((g[i-1][1],g[i][0])))
+
+        geneJxns = sorted([g for g in geneJxns])
        
+        if len(self.geneSeq) >= self.readlen:
+            self.genePrint.write(">%s\n%s\n" % ( geneInfo+"GENE:"+str(gene.start)+"-"+str(gene.end), self.geneSeq))
+            self.keyFile.write("%s %s \n" % (geneInfo+"GENE",listToString(gene.exons,[",","-"])))
+            self.keyFile.write("%s %s \n" % (geneInfo+"JXNS",listToString(geneJxns,["|",","])))
+            for start,end in gene.exons:
+                if end-start > self.readlen:
+                    self.exonPrint.write(">%s\n%s\n" % (geneInfo+"EXON:"+str(start)+"-"+str(end),self.geneSeq[start-gene.start:(end-gene.start)+1]))
 
-        if self.printTYPE != 'EXONIC':
+            self.featurePrint(gene.introns,"ITRN",gene.start,geneInfo,self.intronPrint)
+            self.featurePrint(gene.knownJxns,"KJXN",gene.start,geneInfo,self.exonPrint)
+            self.featurePrint(gene.novelJxns,"NJXN",gene.start,geneInfo,self.exonPrint)
 
-            for i in range(len(gene.introns)):
-                seq,key = self.getSeqAndKey(geneSeq,gene.start,gene.introns[i])
-                self.intronPrint.write(">%s\n%s\n" % ( geneStr+"ITRN"+str(i+1), seq))
-                if self.PRINTKEY:   self.keyFile.write("%s %s\n" % (geneStr+"ITRN"+str(i+1), key))
-
-        if self.printTYPE != 'INTRONIC':
-
-            seq,key = self.getSeqAndKey(geneSeq,gene.start,gene.exons)
-            self.exonPrint.write(">%s\n%s\n" % ( geneStr+"EXNS", seq))
-            if self.PRINTKEY:   self.keyFile.write("%s %s\n" % (geneStr+"EXNS",key))
-
-            for i in range(len(gene.knownJunks)):
-                seq,key = self.getSeqAndKey(geneSeq,gene.start,gene.knownJunks[i])
-                self.tranJunks.write(">%s\n%s\n" % ( geneStr+"KJXN"+str(i+1), seq))
-                if self.PRINTKEY:   self.keyFile.write("%s %s\n" % (geneStr+"KJXN"+str(i+1), key))
-            
-            for i in range(len(gene.novelJxns)):
-                seq,key = self.getSeqAndKey(geneSeq,gene.start,gene.novelJxns[i])
-                self.novelJunks.write(">%s\n%s\n" % ( geneStr+"NJXN"+str(i+1), seq))
-                if self.PRINTKEY:   self.keyFile.write("%s %s\n" % (geneStr+"NJXN"+str(i+1), key))
-            
-
-            seq,key = self.getSeqAndKey(geneSeq,gene.start,[(gene.start,gene.end)])
-            self.genePrint.write(">%s\n%s\n" % ( geneStr+"GENE", seq))
-            if self.PRINTKEY:
-                key = key.split()
-                key = " ".join([key[1],key[1],key[2]])
-                self.keyFile.write("%s %s\n" % (geneStr+"GENE",key))
 
         
 
     def printGenesOnChromosome(self,TYPE='ALL'):
-        self.printTYPE=TYPE
         if self.FIRSTPRINT:
             self.FIRSTPRINT = False
-            if TYPE=='ALL' or TYPE=='EXONIC':
-                self.genePrint   =   open(self.prefix+'_geneSeqs.fa','w')
-                self.exonPrint   =   open(self.prefix+'_exonSeqs.fa','w')
-                self.tranJunks   =   open(self.prefix+'_knownJxns.fa','w')
-                self.novelJunks  =   open(self.prefix+'_novelJxns.fa','w')
-            if TYPE=='ALL' or TYPE=='INTRONIC':
-                self.intronPrint = open(self.prefix+'_intronSeqs.fa','w')
-            if self.PRINTKEY:
-                self.keyFile     = open(self.prefix+'.key','w')
+            self.genePrint   =   open(self.prefix+'_geneSeqs.fa','w')
+            self.exonPrint   =   open(self.prefix+'_exonSeqs.fa','w')
+            self.intronPrint = open(self.prefix+'_intronSeqs.fa','w')
+            self.keyFile     = open(self.prefix+'.key','w')
         for gene in self.genes:
-            if not gene.seq:
-                gene.getSeqFromChr(self.seq)
             self.printFeatures(gene)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-########################################################################################################################################################
-##################################### METHODS TO EVALUATE MUTATIONS  ###################################################################################
-########################################################################################################################################################
-
-# INPUT IS A DICTIONARY OF MUTATION KEYS - THE KEY IS THE GENE ID - THE VALUE IS LIST A MUTATION CANDIDATE OBJECTS #
-
-    def evaluateMutations(self,mutations,minCov=3,minMut=0.5,minUrn=0.1):
-        if not self.mutFile:    self.mutFile=open(self.prefix+'.mutations','w')
+    def printSpliceData(self,TYPE='ALL'):
+        if self.FIRSTPRINT:
+            self.FIRSTPRINT = False
+           # self.genePrint   =   open(self.prefix+'_geneSeqs.fa','w')
+           # self.exonPrint   =   open(self.prefix+'_exonSeqs.fa','w')
+           # self.intronPrint = open(self.prefix+'_intronSeqs.fa','w')
+           # self.keyFile     = open(self.prefix+'.key','w')
         for gene in self.genes:
-            if len(mutations[gene.name]) > 0:
-                gene.getSeqFromChr(self.seq)
-                gene.findSplicingInfo()
-                for cand in mutations[gene.name]:
-                    ## OK GET THESE DISTS ##
-                    
-                    cand.seqType,cand.codonOffset,candJxns = gene.findJxns(cand.pos)
-                    cand.evalJxns(candJxns)
-                    
-                    if cand.seqType == "EXONIC":        cand.addRef(gene.seq[cand.pos-2:cand.pos+3])
-                    elif cand.seqType == "INTRONIC":    cand.addRef(gene.seq[cand.pos])
-                    else:
-                        if cand.seqType ==  "5P-FLNK":
-                                cand.addRef(gene.flankSeqs[0][gene.flankLen - cand.spliceDist])
-                        elif cand.seqType == "3P-FLNK":
-                                cand.addRef(gene.flankSeqs[1][gene.extendLen + cand.spliceDist  ])
 
-                    cand.evalStats()
+            spliceJxns = self.spliceCands[gene.name]
+            if len(spliceJxns)==0: continue
 
-                    self.mutFile.write('%s:%s %s | %s %s:%s %s | ' % (gene.chr,cand.hgPos,gene.strand,gene.hugo,gene.name,cand.pos,cand.seqType))
-                    self.mutFile.write('%s %s %s %g %s | ' % (cand.refBase,cand.altBase,cand.cov,cand.altRate,",".join([str(s) for s in cand.cnts])))
-             
+            self.geneSeq =  "".join([ base.capitalize() for base in self.seq[gene.start-1:gene.end]])
+            gStr = ">"+gene.name+"|"+gene.hugo+"|"+gene.chr+"|"+gene.strand+"|"
+            
+            geneInfo = ">"+gene.name+"|"+gene.hugo
+            chrInfo  =  gene.chr+"|"+gene.strand
+            k=1
+            gene.compilePairs()
+            introns=[(0,1)]+[i[1] for i in gene.introns]+[(gene.end+1,gene.end+100)]
+            
+            endInfo = dd(list); startInfo=dd(list)
+            seqTable = dd(str)
+            endTable = dd(str); startTable=dd(str)
+            for s in spliceJxns:
+                while k<len(introns) and introns[k][-1] < s[0]: k+=1 
+                m=k
+                if len(endInfo[s[0]]) == 0:
+                    if introns[k-1][-1] < s[0] and s[0] <introns[k][0]:
+                        if s[0] in gene.endTable:   endInfo[s[0]].append("exCANON")
+                        else:                       endInfo[s[0]].append("exNOVEL")
+                    else:                           endInfo[s[0]].append("intNOVEL")
+                    endInfo[s[0]].append(self.geneSeq[s[0]-(gene.start+self.readlen-2):s[0]-(gene.start-1)])
+                    endInfo[s[0]].append(self.geneSeq[s[0]-(gene.start-1):s[0]-(gene.start-1)+2])
+                
+                while m<len(introns) and introns[m][-1] < s[1]: m+=1
+                if len(startInfo[s[1]])==0:
+                    if introns[m-1][-1] < s[1] and s[1] < introns[m][0]:
+                        if s[1] in gene.startTable: startInfo[s[1]].append("exCANON")
+                        else:                       startInfo[s[1]].append("exNOVEL")
+                    else:                           startInfo[s[1]].append("intNOVEL")
+                    startInfo[s[1]].append(self.geneSeq[s[1]-gene.start:s[1]-gene.start+self.readlen-1])
+                    startInfo[s[1]].append(self.geneSeq[s[1]-gene.start-2:s[1]-gene.start]) 
+                spotStr = "-".join([str(x) for x in s])
+                intStr  = "-".join([endInfo[s[0]][2],startInfo[s[1]][2]])
+                mapSpots = [[s[0]-(self.readlen-2),s[0]],[s[1],s[1]+self.readlen-2]]
 
-                    self.mutFile.write('CODON: %s %s | ' % ("".join(cand.codonSeq), cand.codonOffset))
-                    if cand.spliceType=="BEG":  self.mutFile.write('j-dist: %s BEG %s %s %s | ' % (cand.spliceDist,cand.spliceClass,cand.start_tuple[0],cand.start_tuple[1]))
-                    else:                       self.mutFile.write('j-dist: %s END %s %s %s | ' % (cand.spliceDist,cand.spliceClass,cand.end_tuple[0],cand.end_tuple[1]))
-                    self.mutFile.write('uVal/qVal: %g %g %g %g | ' % (cand.urnRef,cand.urnAlt,cand.qualRef,cand.qualAlt))
+                if s in gene.validPairs:    jData = endInfo[s[0]][0]+"_CANON_"+startInfo[s[1]][0]
+                else:                       jData = endInfo[s[0]][0]+"_NOVEL_"+startInfo[s[1]][0]
 
-                    if cand.cov < minCov:       self.mutFile.write('EDIT=FALSE (Low Cov) \n')
-                    elif cand.altRate < minMut: self.mutFile.write('EDIT=FALSE (Low Mutation Rate) \n')
-                    elif cand.urnAlt < minUrn:  self.mutFile.write('EDIT=FALSE (Redundnant Positions) \n')
-                    else:
-                        self.mutFile.write('EDIT=TRUE \n')
-                        if cand.seqType != "5P-FLNK" and cand.seqType !="3P-FLNK" and cand.seqType != "FLANK":
-                            gene.seq[cand.pos] = cand.altBase
-                        else:
-                            if candJxns[0] == '3P': gene.flankSeqs[1][gene.extendLen + cand.spliceDist] = cand.altBase 
-                            
+
+                jStr=geneInfo+"|"+jData+"|"+chrInfo+"|"+"SPLICE="+intStr+":"+listToString(mapSpots,["|","-"])
+                #if s in gene.validPairs:    jStr = gStr+spotStr+"|"+intStr+"|"+endInfo[s[0]][0]+"_CANON_"+startInfo[s[1]][0]
+                #else:                       jStr = gStr+spotStr+"|"+intStr+"|"+endInfo[s[0]][0]+"_NOVEL_"+startInfo[s[1]][0]
+               
+                sys.stdout.write("%s\n%s\n" % (jStr,"".join([endInfo[s[0]][1],startInfo[s[1]][1]])))
+
+                
+                
 
 
 
 
 
+
+
+
+
+########################################################################################################################################################
 
 
 
@@ -285,15 +252,28 @@ class GtfFile:
             self.mutKey = open(self.prefix+"_mutation.key",'w')
             self.cntKey = open(self.prefix+"_cnt.key",'w')
                     
-
+        print len(self.genes)
+        ## YOU SHOULD MUTATE THE CHR NOT THE GENE OBVI ##
         for gene in self.genes:
-            if not gene.seq:
-                gene.getSeqFromChr(self.seq)
-            gene.mutateSeq(exRate,intRate)
             self.makeReads(gene,mutationRate)
+    
+    def makeReads(self,gene,expressionRate):
+        geneSeq =  "".join([ base.capitalize() for base in self.seq[gene.start-1:gene.end]])
+        print geneSeq[0:5]
+        print gene.name
+        print gene.hugo
+        print gene.start
+        print len(gene.exons)
+        print len(gene.introns)
+        print len(gene.knownJxns)
+        print len(gene.novelJxns)
+        print gene.exons
+        print gene.knownJxns
+        print "NOVEL"
+        sys.exit()
 
 
-    def makeReads(self,gene,mutationRate):
+    def makeReads2(self,gene,mutationRate):
   
         k=0
         exonic   = randrange(0,5000)
@@ -388,3 +368,53 @@ class GtfFile:
 ##################################################################################################################################################################
        
        
+##################################### METHODS TO EVALUATE MUTATIONS  ###################################################################################
+########################################################################################################################################################
+
+
+    def evaluateMutations(self,mutations,minCov=3,minMut=0.5,minUrn=0.1):
+        if not self.mutFile:    self.mutFile=open(self.prefix+'.mutations','w')
+        for gene in self.genes:
+            if len(mutations[gene.name]) > 0:
+                gene.getSeqFromChr(self.seq)
+                gene.findSplicingInfo()
+                for cand in mutations[gene.name]:
+                    ## OK GET THESE DISTS ##
+                    
+                    cand.seqType,cand.codonOffset,candJxns = gene.findJxns(cand.pos)
+                    cand.evalJxns(candJxns)
+                    
+                    if cand.seqType == "EXONIC":        cand.addRef(gene.seq[cand.pos-2:cand.pos+3])
+                    elif cand.seqType == "INTRONIC":    cand.addRef(gene.seq[cand.pos])
+                    else:
+                        if cand.seqType ==  "5P-FLNK":
+                                cand.addRef(gene.flankSeqs[0][gene.flankLen - cand.spliceDist])
+                        elif cand.seqType == "3P-FLNK":
+                                cand.addRef(gene.flankSeqs[1][gene.extendLen + cand.spliceDist  ])
+
+                    cand.evalStats()
+
+                    self.mutFile.write('%s:%s %s | %s %s:%s %s | ' % (gene.chr,cand.hgPos,gene.strand,gene.hugo,gene.name,cand.pos,cand.seqType))
+                    self.mutFile.write('%s %s %s %g %s | ' % (cand.refBase,cand.altBase,cand.cov,cand.altRate,",".join([str(s) for s in cand.cnts])))
+             
+
+                    self.mutFile.write('CODON: %s %s | ' % ("".join(cand.codonSeq), cand.codonOffset))
+                    if cand.spliceType=="BEG":  self.mutFile.write('j-dist: %s BEG %s %s %s | ' % (cand.spliceDist,cand.spliceClass,cand.start_tuple[0],cand.start_tuple[1]))
+                    else:                       self.mutFile.write('j-dist: %s END %s %s %s | ' % (cand.spliceDist,cand.spliceClass,cand.end_tuple[0],cand.end_tuple[1]))
+                    self.mutFile.write('uVal/qVal: %g %g %g %g | ' % (cand.urnRef,cand.urnAlt,cand.qualRef,cand.qualAlt))
+
+                    if cand.cov < minCov:       self.mutFile.write('EDIT=FALSE (Low Cov) \n')
+                    elif cand.altRate < minMut: self.mutFile.write('EDIT=FALSE (Low Mutation Rate) \n')
+                    elif cand.urnAlt < minUrn:  self.mutFile.write('EDIT=FALSE (Redundnant Positions) \n')
+                    else:
+                        self.mutFile.write('EDIT=TRUE \n')
+                        if cand.seqType != "5P-FLNK" and cand.seqType !="3P-FLNK" and cand.seqType != "FLANK":
+                            gene.seq[cand.pos] = cand.altBase
+                        else:
+                            if candJxns[0] == '3P': gene.flankSeqs[1][gene.extendLen + cand.spliceDist] = cand.altBase 
+                            
+
+
+
+
+

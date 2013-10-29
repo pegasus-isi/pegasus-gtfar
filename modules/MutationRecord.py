@@ -93,10 +93,9 @@ class MutationRecord:
 
 
     def geneCandCall(self):
-        
         candList = []; n = 0
         for c in self.cands:
-            if max(self.cands[c][1]) > self.coverage_parameter/2 :    candList.append((c,MutationCand(self.chr,c,self.cands[c][0],self.cands[c][1],self.coverage_parameter,self.rate_parameter  )))
+            if max(self.cands[c][1]) > self.coverage_parameter:    candList.append((c,MutationCand(self.chr,c,self.cands[c][0],self.cands[c][1],self.coverage_parameter,self.rate_parameter  )))
         
         if len(candList) == 0:
             self.chr = self.mapChr

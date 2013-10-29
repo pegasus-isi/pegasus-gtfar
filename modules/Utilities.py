@@ -38,7 +38,9 @@ def listToString(myList,delims):
             topLevel.append(delims[1].join([element for element in nextLevel]))
 
         return delims[2].join([t for t in topLevel])
-
+    
+    elif len(delims) == 2:
+        return delims[0].join([delims[1].join([str(s) for s in X]) for X in myList])
     print "BROKEN delims"
     sys.exit()
                 
