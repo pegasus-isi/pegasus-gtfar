@@ -14,10 +14,11 @@ sys.path.append('/home/rcf-47/souaiaia/analysis/tade/gtfar_source/modules')
 
 class FastqFile:
     def __init__(self,fileHandle,rlen,lowQ,avgQ,minTrim):
-        self.fname = open(fileHandle)
+        #self.fname = open(fileHandle)
+        self.fname = fileHandle
         self.readLen ,self.lowQual, self.minAvg, self.minTrim = rlen, lowQ, avgQ, minTrim
         self.adaptors=[]
-        self.multiple=10
+        self.multiple=25
         self.seedLen=10
         self.maxLowQuals=5
         self.adaptMatchRate=0.85

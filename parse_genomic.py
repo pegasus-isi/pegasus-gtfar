@@ -20,7 +20,12 @@ def process_files(myfiles):
     splice_cnt = 0; uniq_cnt =0; total =0
     for f in myfiles:
         INIT=True
-        for line in open(f):
+        try:
+            handle = open(f)
+        except IOError:
+            errorQuit("Invalid File "+f)
+
+        for line in handle:
             if line[0]=="@": continue
             line=line.split()
             if INIT:

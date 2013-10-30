@@ -187,6 +187,15 @@ function get_seed {
 function get_ref {
     TMP_REF=$1; TMP_SEED=$2; MYLEN=$3; CLIPPING=$4
     MY_REF=$TMP_REF
+    if [ "$CLIPPING" == "CLIP" ]; then
+        if [ -d $(dirname $TMP_REF)"/"indexes ]; then 
+            if [ -f  $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)"_clip_"$LENGTH"_"$TMP_SEED".index" ]; then
+                MY_REF=$(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)"_clip_"$LENGTH"_"$TMP_SEED".index"
+            elif [ -f  $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .txt)"_clip_"$LENGTH"_"$TMP_SEED".index" ]; then
+                MY_REF=$(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .txt)"_clip_"$LENGTH"_"$TMP_SEED".index"
+            fi
+        fi
+    fi 
     if [ -d $(dirname $TMP_REF)"/"indexes ]; then 
         if [ -f  $(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)"_"$LENGTH"_"$TMP_SEED".index" ]; then
             MY_REF=$(dirname $TMP_REF)"/"indexes/$(basename $TMP_REF .fa)"_"$LENGTH"_"$TMP_SEED".index" 
@@ -285,20 +294,20 @@ function genomic_map {
     if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
     GENOMELIST=$READLIST
     update_reads $REF
-    
-    echo -n "RUNNING: clipR $(basename $MYREF) $READLIST --seed F0 -v $SUBS -e -u -s > $(basename $REF .fa)"_clip.log.......""
+    MYREF=$(get_ref $REF F1 $LENGTH "CLIP")
+    echo -n "RUNNING: clipR $(basename $MYREF) $READLIST --seed F1 $MYSEED -v $SUBS -B --printNM -u -s > $(basename $REF .fa)"_"$ITER".log"....." 
     if [ "$TRUTH" != "NO" ]; then clipR $MYREF $READLIST --seed F1 -v 1  --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader -u -s > $(basename $REF .fa)"_clip.log"; fi 
     if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
-    
     echo -n "Running: gtfar-parse {GENOMEFILES}...."
     for i in $(cat $INIT_READS); do 
         SAMPLE=$(basename $i .fastq)
-        if [ "$TRUTH" != "NO" ]; then parse_genomic.py $(basename $MYREF .fa)*$SAMPLE*.sam > $SAMPLE"_GENOME.stats" & fi 
+        if [ "$TRUTH" != "NO" ]; then parse_genomic.py $(basename $REF .fa)*$SAMPLE*.sam > $SAMPLE"_GENOME.stats" & fi 
         while [ $(jobs | wc -l) -gt $MYPROC ]; do sleep 200; done                                                     
         echo -n "."
     done 
     wait 
     if [ $? != 0 ]; then echo "FAILURE"; else echo "SUCESS"; fi  
+    echo ""
 }
 
 function combine_output {
@@ -309,7 +318,7 @@ function combine_output {
             SAMPLE=$(basename $i .fastq)
             RNAME=$(basename $LASTREF .fa)
             PREV=$(echo $SAMPLE | awk -F\_miss_ '{print $1}')
-            cat $RNAME*$SAMPLE.sam $RNAME*$SAMPLE"_miss_"$RNAME.sam > $PREV"_GENOME_vis.sam" & 
+            cat $RNAME*$SAMPLE.sam $RNAME*$SAMPLE*"_miss_"*.sam > $PREV"_GENOME_vis.sam" & 
             cp reads/$SAMPLE"_miss_"$RNAME"_miss_"$RNAME* final_reads/$PREV"_unmapped.fastq" & 
             while [ $(jobs | wc -l) -gt $MYPROC ]; do sleep 20; done                                                     
             echo -n "."
@@ -362,10 +371,11 @@ if [ $PROGRAM == 'MAP' ] || [ $PROGRAM == 'map' ]; then
     if [ ! -d final_reads ]; then  mkdir final_reads; fi 
     check_procs $READLIST   
     echo "" 
-    map_and_parse $EXONS 3 "EXONS" YES
-    map_and_parse $INTRONS 3 "INTRONS" YES
-    novel_splice_search $GENES 1 "SPLICE" YES
-    genomic_map $GENOME 3 "GENOME" YES
+    map_and_parse $EXONS 3 "EXONS" NO
+    map_and_parse $INTRONS 3 "INTRONS" NO
+    novel_splice_search $GENES 1 "SPLICE" NO
+    genomic_map $GENOME 3 "GENOME" NO
+    
     combine_output $GENOME YES
     cd ..
     check_dir $OUTPUT

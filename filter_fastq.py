@@ -41,5 +41,10 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    process_file(args[0],options.readlen,options.lowqual,options.avgqual,options.trimlen,options.prefix)
+    if len(args) == 1:
+        FILE=open(args[0])
+    else:
+        FILE=sys.stdin
+
+    process_file(FILE,options.readlen,options.lowqual,options.avgqual,options.trimlen,options.prefix)
 
