@@ -286,7 +286,7 @@ class MapRead:
         self.geneID,self.geneAltID,self.geneGroup,self.refChr,self.refStrand,self.refType = self.readLines[0][1] 
         self.ref = self.readLines[0][2]
 
-        
+
         if len(set([r[0] for r in self.readLines])) == 1: self.hgUniq   = True
         if len(set([r[1] for r in self.readLines])) == 1: self.geneUniq = True
         

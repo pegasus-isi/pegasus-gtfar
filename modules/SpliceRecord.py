@@ -17,7 +17,7 @@ class SpliceRecord:
     def __init__(self):
         
         self.geneJumps = dd(lambda: dd(int))
-            
+        self.readLen  = 100
         self.validJxns = dd(list)
 
 
@@ -69,21 +69,20 @@ class SpliceRecord:
                 return ["NEIGHBOR",site,spot,dist,"NB-PARTNERS:"]+cands
 
     @staticmethod
-    def categorizeSplices(endData,startData,cnt,geneStarts,geneEnds):
+    def categorizeSplices(endData,startData,cnt,geneStarts,geneEnds,geneBegin,geneFinish,readLen=100):
         JD = startData[1]-endData[1]
         myCands = [[endData[1],startData[1],cnt]]
-
         if endData[0] == "NEIGHBOR" and startData[0] == "NEIGHBOR":
             if endData[2] in startData[5::] and ((endData[1]-endData[2]) == (startData[1]-startData[2])): myCands.append([endData[2],startData[2],cnt])
             elif endData[3] < 100 and endData[2]+JD in geneStarts and endData[2]+JD not in endData[5::]:       myCands.append([endData[2],endData[2]+JD,cnt])
             elif startData[3] < 100 and startData[2]-JD in geneEnds and startData[2]-JD not in startData[5::]: myCands.append([startData[2]-JD,startData[2],cnt])
 
         if endData[0] == "NEIGHBOR" and startData[0] == "NOVEL":
-            if endData[2] < endData[1] and endData[2] < (startData[1] - endData[3]): myCands.append([endData[2],startData[1]-endData[3],cnt])
-            elif endData[2] > endData[1] and endData[2] < (startData[1] + endData[3]):  myCands.append([endData[2],startData[1]+endData[3],cnt])
+            if   endData[2] < endData[1] and endData[2] < (startData[1] - endData[3]): myCands.append([endData[2],startData[1]-endData[3],cnt])
+            elif endData[2] > endData[1] and endData[2] < (startData[1] + endData[3]) and (startData[1]+endData[3]) < (geneFinish-readLen):  myCands.append([endData[2],startData[1]+endData[3],cnt])
 
         elif endData[0] == "NOVEL" and startData[0] == "NEIGHBOR":
-            if startData[2] < startData[1] and startData[2] > (endData[1] - startData[3]):      myCands.append([endData[1]-startData[3],startData[2],cnt])
+            if   startData[2] < startData[1] and startData[2] > (endData[1] - startData[3]) and (endData[1]-startData[3]) > (geneBegin+readLen): myCands.append([endData[1]-startData[3],startData[2],cnt])
             elif startData[2] > startData[1] and startData[2] > (endData[1] + startData[3]):    myCands.append([endData[1]+startData[3],startData[2],cnt])
             
         return myCands 
@@ -104,11 +103,14 @@ class SpliceRecord:
         for gene in gene_jumps:
             geneExons=self.geneExonTable[gene];         geneJxns=self.geneJxnTable[gene];       geneSplits = self.geneSplitTable[gene]
             geneStarts=set([x[1] for x in geneJxns]);   geneEnds=set([x[0] for x in geneJxns])
-        
             jxns = sorted([((x[0]+(geneExons[0][0]-1),x[1]+(geneExons[0][0]-1)),gene_jumps[gene][x]) for x in gene_jumps[gene]]); k=0; spliceCands = []
-    
+   
+            geneBegin = geneExons[0][0]; geneFinish = geneExons[-1][-1]
+
+
             for j in jxns:
                 endInfo = []; startInfo = []; jEnd =j[0][0]; jStart =j[0][1]; jumpDist = jStart-jEnd; JD=jumpDist
+                
                 while k < len(geneExons)-1 and jEnd > geneExons[k][1]: k+=1
                 m=k
                 if jEnd < geneExons[k][0]:                                  endInfo = ["INTRON",geneExons[k-1],jEnd-geneExons[k-1][1]]
@@ -122,7 +124,7 @@ class SpliceRecord:
                 else:                                                            errorQuit("WigRID")
             
                 endData,startData   =   self.findNearestSplice(jEnd,"END",geneSplits[endInfo[1]]), self.findNearestSplice(jStart,"START",geneSplits[startInfo[1]])
-                spliceCands += self.categorizeSplices(endData,startData,j[1],geneStarts,geneEnds)
+                spliceCands += self.categorizeSplices(endData,startData,j[1],geneStarts,geneEnds,geneBegin,geneFinish)
 
             spliceCands.sort()
             splicePass = []; lastCand = spliceCands[0]; lastSpot = lastCand[0:2]; lastCnt=lastCand[2]

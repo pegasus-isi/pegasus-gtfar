@@ -22,7 +22,7 @@ class MapData:
 
         self.prefix, self.refType,self.mapFile = prefix,"EXONIC",fName
         
-        self.spliceExp, self.chrCnt, self.groupCnts = dd(int), dd(int), dd(int)
+        self.spliceExp, self.chrCnt, self.groupCnts, self.subCnts = dd(int), dd(int), dd(int), dd(int)
        
         self.senseCnt, self.mitoCnt, self.ambigCnt , self.multiAnnoCnt, self.repetitiveCnt, self.hgUniqCnt, self.geneUniqCnt, self.readCnt, self.spliceCnt,self.uniqCnt = 0,0,0,0,0,0,0,0,0,0
         
@@ -60,13 +60,13 @@ class MapData:
 
     def processGeneRead(self,mapRead):
         self.readCnt +=1
+        self.subCnts[mapRead.subs]+=1
         if mapRead.sense:   self.senseCnt +=1
         if mapRead.mito:    self.mitoCnt +=1
         if mapRead.spliced:
             self.spliceCnt+=1
             self.spliceCnts[mapRead.spliceSite]+=1
 
-        
         
         ###################################################################################################3
         if mapRead.hgUniq:
@@ -89,15 +89,15 @@ class MapData:
 
         if mapRead.geneUniq:
             self.geneUniqCnt+=1
-            self.geneCnts[mapRead.geneID][0]+=1
+            self.geneCnts[mapRead.geneID+"|"+mapRead.geneAltID][0]+=1
             self.groupCnts[mapRead.geneGroup]+=1
         else:
             if mapRead.hgUniq:
                 self.multiAnnoCnt+=1
-                self.geneCnts[",".join([g.geneID for g in mapRead.multiGenes])][0]+=1
+                self.geneCnts[",".join([g.geneID+"|"+g.geneAltID for g in mapRead.multiGenes])][0]+=1
             if mapRead.repetitive: 
                 for g in mapRead.multiGenes:
-                    self.geneCnts[g.geneID][1]+=1
+                    self.geneCnts[g.geneID+"|"+g.geneAltID][1]+=1
         
 
 
@@ -148,9 +148,13 @@ class MapData:
         for splice in self.spliceCnts:
             self.spliceOut.write("%s %s\n" % (splice,self.spliceCnts[splice]))
 
+        mapSubs = [str(x[0])+": "+str(x[1]) for x in sorted([(k,self.subCnts[k]) for k in self.subCnts])]
+        
         self.statsOut = open(self.prefix+'.stats','w')
+        
         self.statsOut.write("QC-Statistics: %s \n" % self.mapFile)
         self.statsOut.write("Total-Reads[total,uniq/repetitive/ambiguous] %s %s %s %s\n" % (self.readCnt, self.hgUniqCnt,self.repetitiveCnt,self.ambigCnt))
+        self.statsOut.write("Total-Reads[Mismatches] %s\n" % (" ".join(mapSubs)))
         self.statsOut.write("Uniq-Reads[spliced/unspliced] %s %s \n" % (self.spliceCnt ,self.hgUniqCnt-self.spliceCnt))
         self.statsOut.write("MitoChondrial-Reads %s \n" % self.mitoCnt)
        

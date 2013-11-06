@@ -6,9 +6,9 @@ import sys
 #from modules.fastq.FastqFile import *
 from modules.FastqFile import *
 				
-def process_file(INFO,readlen,lowQual,avgQual,minTrim,outname):
+def process_file(INFO,readlen,lowQual,avgQual,minTrim,outname,multiple):
     
-    fastq = FastqFile(INFO,readlen,lowQual,avgQual,minTrim)
+    fastq = FastqFile(INFO,readlen,lowQual,avgQual,minTrim,multiple)
     fastq.loadAdaptor('three_prime_head',"START",'AGATCGGAAGAGCACACGT')
     fastq.loadAdaptor('five_prime_tail',"END","CACGACGCTCTTCCGATCT")
     fastq.loadAdaptor('three_prime_tail',"END",'GTATGCCGTCTTCTGCTTG')
@@ -38,6 +38,7 @@ if __name__ == '__main__':
     parser.add_option("-q", "--lowqual", default = 1, type='int', help="Low Quality Score")
     parser.add_option("-a", "--avgqual", default = 15, type='int', help="Minimum Avg Quality Score")
     parser.add_option("-p", "--prefix", default = 'foo', type='string', help="Output Filename Prefix")
+    parser.add_option("-m", "--multiple", default = 25, type='int', help="Trimming Multiple")
 
     (options, args) = parser.parse_args()
 
@@ -46,5 +47,5 @@ if __name__ == '__main__':
     else:
         FILE=sys.stdin
 
-    process_file(FILE,options.readlen,options.lowqual,options.avgqual,options.trimlen,options.prefix)
+    process_file(FILE,options.readlen,options.lowqual,options.avgqual,options.trimlen,options.prefix,options.multiple)
 

@@ -43,7 +43,7 @@ def fillUpSplice(myfile):
 
 
 
-def process_files(INSTRUCTIONS,exonFile,intronFile,spliceFile,genomeFile):
+def process_files(INSTRUCTIONS,exonFile,intronFile,spliceFile,genomeFile,logFile):
 
     if INSTRUCTIONS=="EXPRESSION":
         exTable=fillUpExpression(exonFile)
@@ -78,11 +78,38 @@ def process_files(INSTRUCTIONS,exonFile,intronFile,spliceFile,genomeFile):
                     print "|".join([p for p in data[0]])+"|"+s[1],cnts
     
     elif INSTRUCTIONS == "STATS":
-
-        for f in [exonFile,intronFile,spliceFile,genomeFile]:
+        FILES= [f for f in [exonFile,intronFile,spliceFile,genomeFile] if f!=None]
+        if logFile:
+            for line in open(logFile):
+                line=line.split()
+                if len(line)>1 and line[1]=="Reads:,":
+                    KEPT=int(line[5].split(",")[0])
+                    ID=line[0].split("/")[len(line[0].split("/"))-1]
+                    if ID.split(".")[0] in FILES[0]:
+                        print "Initial-File:",ID,"Reads:",KEPT
+                        print ""
+                        break
+        
+        TOTAL_READS=0
+        for f in FILES:
             for line in open(f):
-                print line.strip()
+                lp=line.split()
+                if lp[0]=="QC-Statistics:":
+                    FNAME=lp[1]
+                elif lp[0]=="Total-Reads[total,uniq/repetitive/ambiguous]":
+                    FREADS=int(lp[1]); TOTAL_READS+=int(lp[1])
+                    if logFile:
+                        print "Alignment-Step:",FNAME,"Alignment-Percentage:",int(lp[1])/float(KEPT)
+                    else:
+                        print "Alignment-Step:",FNAME
+                    print line.strip()
+                else:
+                    print line.strip()
             print ""
+        if logFile:
+            print "Total-Aligned-Reads:",TOTAL_READS,"Alignment-Percentage:",TOTAL_READS/float(KEPT)
+        else:
+            print "Total-Aligned-Reads:",TOTAL_READS
 
     else:
         errorQuit("INVALID INSTRUCTIONS")
@@ -99,12 +126,14 @@ if __name__ == '__main__':
     parser.add_option("-i", "--intronFile", default = None, type='string', help="Path to intron file")
     parser.add_option("-s", "--spliceFile", default = None, type='string', help="Path to splice file")
     parser.add_option("-g", "--genomeFile", default = None, type='string', help="Path to genome file")
+    parser.add_option("-l", "--logfile", default = None, type='string', help="Path to initial map log")
 
 
     (options, args) = parser.parse_args()
 
     if len(args)!=1:
-        print "NEED A ARGUMENT" 
+        print "NEED A ARGUMENT"
+        print "Options: EXPRESSION, SPLICEDATA, STATS"
         print args
         sys.exit()
    
@@ -112,4 +141,4 @@ if __name__ == '__main__':
     #    print "A key is required"
     #    sys.exit()
     else:
-        process_files(args[0],options.exonFile,options.intronFile,options.spliceFile,options.genomeFile)
+        process_files(args[0],options.exonFile,options.intronFile,options.spliceFile,options.genomeFile,options.logfile)

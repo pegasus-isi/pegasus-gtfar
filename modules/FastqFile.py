@@ -13,12 +13,12 @@ sys.path.append('/home/rcf-47/souaiaia/analysis/tade/gtfar_source/modules')
 ##########################################################################################################################################
 
 class FastqFile:
-    def __init__(self,fileHandle,rlen,lowQ,avgQ,minTrim):
+    def __init__(self,fileHandle,rlen,lowQ,avgQ,minTrim,multiple):
         #self.fname = open(fileHandle)
         self.fname = fileHandle
         self.readLen ,self.lowQual, self.minAvg, self.minTrim = rlen, lowQ, avgQ, minTrim
         self.adaptors=[]
-        self.multiple=25
+        self.multiple=multiple
         self.seedLen=10
         self.maxLowQuals=5
         self.adaptMatchRate=0.85
@@ -78,7 +78,7 @@ class FastqFile:
             self.finish=False
             
         if len(self.readSeq)!=self.readLen or len(self.readQual)!=self.readLen:
-            print "ERROR"
+            print "ERROR: incorrect read length"
             sys.exit()
         self.trimLoc = self.readLen;
     

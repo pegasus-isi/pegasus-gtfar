@@ -23,7 +23,7 @@
 ############################################################################
 
 #EXAMPLE: Parse a program to copy a txt file K times.  
-
+#True
 # add_arg input file.txt 
 # add_option times -k 1 'Number of times to copy file' 
 # add_flag verbose -v  True Verbosity
@@ -31,6 +31,7 @@
 # After the command parseargs $@
 
 # The command line: ./prog foo.bar -k 10 -v 
+# The command line: ./prog foo.bar --times 10 -v 
 
 # Would yield: FILE=foo.bar, TIMES=10, VERBOSE=1 
 
@@ -157,9 +158,14 @@ if [ $# -ge 3 ]; then
 		echo 'Error: Incorrect Short Form Input: '"$2"
 		exit 
 	fi 
-	if [ $3 == 1 ] || [ $3 == 0 ]; then 
-		local DEF=$3
+	if [ $3 == 1 ] || [ $3 == 0 ] || [ $3 == "True" ] || [ $3 == "False" ]; then 
+        if [ $3 == "True" ] || [ $3 == 0 ]; then
+            local DEF=0
+        else
+            local DEF=1
+        fi
 	else
+        echo $3
 		echo 'Error: Flag default can only be True or False '"$3"
 		exit 
 	fi
@@ -189,7 +195,19 @@ fi
 	
 
 function add_option { 
-if [ $# == 0 ]; then echo 'ERROR: add_option requires at least one argument'; exit; fi  
+
+## ADDING AN OPTION INVOLVES: option name, [option.short], [Default Value], [Description]
+## THe long form will always be the option name.  The Default Value will be None if it is not set.  
+
+if [ $# == 0 ]; then echo 'ERROR: add_option requires at least one argument'; exit; fi 
+
+if [ $1 == 'multi' ] || [ $1 == "MULTI" ]; then
+    shift
+    local MULTI='True'
+else
+    local MULTI='False'
+fi
+
 if [ $# == 1 ]; then 
 	local SHRT='None' 
 	local DEF='None' 
@@ -227,8 +245,11 @@ if [ $SHRT == 'None' ]; then
 else
 	OPT_SHORT[$OPTS_ADDED]='-'$SHRT 
 fi 
-OPT_LONG[$OPTS_ADDED]='--'$1 
-hput '__'"$(echo $1 | tr "[:lower:]" "[:upper:]")" short $SHRT TYPE Optn DEFAULT $DEF
+OPT_LONG[$OPTS_ADDED]='--'$1
+
+
+
+hput '__'"$(echo $1 | tr "[:lower:]" "[:upper:]")" short $SHRT TYPE Optn DEFAULT $DEF MULTI $MULTI
 eval $(echo $1 | tr "[:lower:]" "[:upper:]")=$DEF
 
 if [ $# == 4 ]; then OPT_DES[$OPTS_ADDED]=$4 
@@ -349,6 +370,7 @@ hput() {
     eval "$1""$2"='$3' 
     eval "$1""$4"='$5'    
     eval "$1""$6"='$7'
+    eval "$1""$8"='$9'    
 }
 
 hget() {
@@ -361,10 +383,10 @@ hget() {
 
 function parseargs {
 
-	if  [ -z $ARG_MIN ] && [ -z $ARG_MAX ] && [ -z $ARGS_ADDED ]; then 
-		ARG_MIN=0;
-		ARG_MAX=100; 
-	fi
+    ARG_MIN=0; ARG_MAX=100
+
+    if  [ -z $ARG_MIN ] && [ -z $ARGS_ADDED ]; then  ARG_MIN=0; fi
+    if  [ -z $ARG_MAX ] && [ -z $ARGS_ADDED ]; then  ARG_MAX=0; fi
 	
 	if [ -z != $ARGS_ADDED ]; then 
 		if [ -z $ARG_MIN ]; then
@@ -391,41 +413,62 @@ function parseargs {
 	do
 		if [ $1 == '--help' ] || [ $1 == '-h' ] || [ $1 == 'help' ] || [ $1 == 'HELP' ]; then usage; fi
 		if [ $1 == '--manual' ] || [ $1 == 'man' ] || [ $1 == 'manual' ] || [ $1 == 'MAN' ]; then usage; fi
-	
-		if [ -z != $ARG ];
-			then 
+
+
+		#if [ -z != $ARG ];
+		if [ -z != $CURRENT_OPTION ];
+            # IF PREV ITEM WAS OPTION - THEN ARG WILL BE TRUE AND NEXT ITEM WILL BE ADDED #
+			then
 			VAR=$(echo $CURRENT_OPTION | sed 's/..\(.*\)/\1/g') 
-			if [ $(echo $1 | sed 's/\(.\).*/\1/g') == '-' ];
+			#echo "UM" $VAR $CURRENT_OPTION
+            if [ $(echo $1 | sed 's/\(.\).*/\1/g') == '-' ];
 				then 
 				echo 'ERROR: An argument is required for this option: '"$VAR" 
 				echo ''
 				usage 
 				exit 
-			else 
-				eval $VAR=$1
-				ARG=
+			else
+                if [ $(echo `hget "$CURRENT_OPTION""MULTI"`) == "True" ]; then
+                    STR=$1
+                    shift
+			        while [ $(echo '-'"$1" | sed 's/.\(.\).*/\1/g') != '-' ] && [ $# -gt 0 ]                                 
+                    do
+                        STR=$STR" "$1
+                        shift
+                    done
+                    eval $VAR=\"$STR\"
+                else
+				    eval $VAR=$1
+                    shift
+                fi
 				CURRENT_OPTION=
-				shift 
-				continue 
+                continue 
 			fi	
 		else
+            # IF PREV ITEM WAS NOT AN OPTION -> EVALUATE CURRENT ITEM #
 			if [ $(echo '-'"$1" | sed 's/.\(.\).*/\1/g') != '-' ];
-				then 
+                # IF ITEM DOES NOT BEGIN WITH DASH -- IE ITS A POSITIONAL ARGUMENT #
+				then
 				Argc=`expr $Argc + 1`
 				Argv[$Argc]=$1 
 			else
+                # IF ITEM BEGINS WITH A DASH#
 				if [ $(echo '-'"$1" | sed 's/..\(.\).*/\1/g') == '-' ];
+                    # IF THERE IS ANOTHER DASH THEN IT IS A LONG FORM ITEM # 
 					then 
 					CURRENT_OPTION=$(echo $1 | sed 's/--/__/' | tr "[:lower:]" "[:upper:]")
 					if [ -z $(echo `hget "$CURRENT_OPTION"`) ]; then
+                        ## MAKE SURE THE LONG FORM ITEM IS VALID ##
 						echo 'ERROR: The long form option: '"$1"' is undeclared';
 						echo '' 
 						usage  
 						exit 
 					fi
-				else 
+				else
+                   # THERE IS NOT ANOTHER DASH - IT IS A SHORT FORM ITEM # 
 					CURRENT_OPTION=$(echo `hget $(echo '-'"$1" | sed 's/..\(.*\)/\1/g')`)
 					if [ -z "$CURRENT_OPTION" ]; then
+                        ## MAKE SURE THE LONG FORM ITEM IS VALID ##
 						echo 'ERROR: The short form option: '"$1"' is undeclared'
 						echo '' 
 						usage 
@@ -433,12 +476,13 @@ function parseargs {
 					fi  
 				fi			
 				if [ $(echo `hget "$CURRENT_OPTION""TYPE"`) == Flag ]; then
+                    # IF ITEM IS A FLAG THEN TURN THE FLAG ON/OFF AND SET THE ITEM BACK TO NULL # 
 					VAR=$(echo $CURRENT_OPTION | sed 's/..\(.*\)/\1/g')
 					if [ $(echo `hget "$CURRENT_OPTION""DEFAULT"`) == 1 ]; then eval $VAR=0; fi 
 					if [ $(echo `hget "$CURRENT_OPTION""DEFAULT"`) == 0 ]; then eval $VAR=1; fi   
 					CURRENT_OPTION= 
-				else
-					ARG=True
+				#else
+				#	ARG=True
 				fi 
 			fi
 	 	
@@ -458,7 +502,7 @@ function parseargs {
 
 
 	if [ $Argc -gt $ARG_MAX ]; then
-		echo 'ERROR: Too many arguments supplied ('"$Argc"')' 
+		echo 'ERROR:  Too many arguments supplied ('"$Argc"')' 
 		usage
 		exit 
 	fi 
