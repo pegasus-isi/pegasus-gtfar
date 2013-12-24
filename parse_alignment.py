@@ -14,8 +14,8 @@ def process_file(mapFile,prefix,strandSpecific,VERBOSE):
 
     mapLines = MapLines(mapFile)
 
-    mapReads = MapRead(mapLines,strandSpecific)
-  
+
+    mapReads = MapRead(mapLines,strandSpecific)  
     mapData  = MapData(prefix,mapLines.fileName)
 
 
@@ -34,11 +34,8 @@ if __name__ == '__main__':
     usage = "usage: ./%prog [options] data_file"
     parser = OptionParser(usage=usage)
 
-    #parser.add_option("-k", "--key", dest='key',default = None, type='string', help="    Path to key file")
     parser.add_option("-p", "--prefix", dest='prefix', default = None, type='string', help="   Prefix for OutPut")
-    #parser.add_option("-r", "--ref", default = "NA", type='string', help="Reference Type Used for Mapping") 
     parser.add_option("-s", "--strandRule", default = "NA", type='string', help="Opposite,Match")
-    #parser.add_option("-c", "--chooseSpecies", default = "HUMAN", type='string', help="Change Species")
     parser.add_option("-v", "--verbose", action = 'store_true', default = False,  help="verbose output")
     parser.add_option("-j", "--justExpression", action = 'store_true', default = False,  help="verbose output")
 
@@ -47,15 +44,6 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
 
 
-#    if options.ref.upper()   in ["TRANSCRIPTS","EXONS","EXONIC"]:   REFTYPE="EXONIC"
-#    elif options.ref.upper() in ["INTRONS","INTRONIC"]:             REFTYPE="INTRONIC"
-#    elif options.ref.upper() in ["GENOME","GENOMIC","HG19","HG"]:        REFTYPE="HG19"
-#    elif options.ref.upper() in ["INTERGENIC"]:                     REFTYPE="INTERGENIC"
-#    elif options.ref.upper() in ["GENES"]:                          REFTYPE="GENES"
-#    else:                                                           REFTYPE=None
-
-#    if options.chooseSpecies.upper() in ["MONKEY","RHESUS"]:          SPECIES="RHESUS"
-#    else:                                                           SPECIES="HUMAN"
 
     if options.strandRule.upper() in ["MATCH","SAME"]:                          STRANDMATCH = "MATCH"
     elif options.strandRule.upper() in ["REVERSE","DIFFERENT","OPPOSITE"]:      STRANDMATCH = "OPPOSITE"

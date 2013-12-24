@@ -28,7 +28,11 @@ class MapLines:
         self.open = True
         
         myLine = self.handle.readline().split()
-        if len(myLine) == 0:    errorQuit(self.fileName+' is empty')
+        if len(myLine) == 0:
+            self.open = False
+            self.format = None
+            return
+            #errorQuit("Warning: "+self.fileName+' is empty')
         if myLine[0][0] == "@":
             while myLine[0][0] == "@": myLine = self.handle.readline().split()
 

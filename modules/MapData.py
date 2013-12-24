@@ -37,9 +37,9 @@ class MapData:
         if self.refType != "INTERGENIC":
                 
             
-            self.samOut      = open(self.prefix+'_vis.sam','w')
-            self.geneOut     = open(self.prefix+'_gene.cnts','w') 
-            self.spliceOut   = open(self.prefix+'_splice.cnts','w')
+            self.samOut      = open(self.prefix+'.vis','w')
+            self.geneOut     = open(self.prefix+'.genecnts','w') 
+            self.spliceOut   = open(self.prefix+'.splicecnts','w')
             self.process     = self.processGeneRead
             self.printResult = self.printGeneResult
         else:

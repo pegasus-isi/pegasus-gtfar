@@ -2,7 +2,6 @@
 
 ### HARD CODED PATHS ###
 source /export/uec-gs1/knowles/analysis/tade/gtfar_source/optparse
-source /export/uec-gs1/knowles/analysis/tade/gtfar_source/gtfar_setup.sh
 export PATH=$PATH:/export/uec-gs1/knowles/analysis/tade/gtfar_source
 
 
@@ -17,8 +16,6 @@ add_option strandRule -s 'None'   'A rule for stranded ness (None, Same or Oppos
 add_option output -o 'outputDir'   'output directory'
 add_option working -w 'workingDir'   'working directory'
 add_option mismatches -m 3           'The number of mismatches to allow per mapping'
-#add_flag showcommands -h 1 'Print all executed commands to standard out' 
-#add_flag verbose -v 0 'Verbosity' 
 
 parseargs $@
 
@@ -29,6 +26,8 @@ parseargs $@
 if [ -z $PROGRAM ]; then
     echo "An option is required - choose help"
 elif [ $PROGRAM == 'MAP' ] || [ $PROGRAM == 'map' ]; then 
+    source /export/uec-gs1/knowles/analysis/tade/gtfar_source/gtfar_setup.sh
+    MYHOME=$PWD
     make_directories  
     load_annotation
     load_reads
@@ -36,14 +35,28 @@ elif [ $PROGRAM == 'MAP' ] || [ $PROGRAM == 'map' ]; then
     cd $WORKING
     check_procs $READLIST   
     start_up_output  
-    map_and_parse $EXONS "EXONS" YES
-    map_and_parse $INTRONS "INTRONS" YES
-    novel_splice_search $GENES "SPLICE" YES
-    genomic_map $GENOME "GENOME" YES
-    combine_output $GENOME YES
+    perm_map $EXONS   "EXONS"       ;         feature_parse $EXONS   "EXONS"   
+    perm_map $INTRONS "INTRONS"     ;         feature_parse $INTRONS "INTRONS" 
+   
+    splice_find_and_conditional_map $GENES "SPLICE" 
+    
+    perm_genome_map $GENOME "GENOME"; genome_parse $GENOME "GENOME" 
+    
+    combine_output $GENOME $INIT_READS 
     make_bam_files 
-    cd ..
+    cd $MYHOME
     cp -R $WORKING/final_reads $OUTPUT/
     cp -R $WORKING/results $OUTPUT/
-fi 
+
+elif [ $PROGRAM == 'READS' ] || [ $PROGRAM == 'reads' ]; then
+    source /export/uec-gs1/knowles/analysis/tade/gtfar_source/gtfar_analysis_source.sh
+    check_dir $OUTPUT
+    make_read_lists
+    
+
+
+
+fi
+
+
 

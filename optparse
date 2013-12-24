@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 ## THIS IS THE SOURCE FOR THE PYTHON LIKE OPTIONS PARSER ## 
 
 ############### ARGUMENT, OPTION, AND FLAG PARSING ######################### 
@@ -201,6 +202,14 @@ function add_option {
 
 if [ $# == 0 ]; then echo 'ERROR: add_option requires at least one argument'; exit; fi 
 
+if [ $1 == 'required' ] || [ $1 == "REQUIRED" ]; then 
+    shift
+    local REQ='True'
+else
+    local REQ='False'
+fi
+
+
 if [ $1 == 'multi' ] || [ $1 == "MULTI" ]; then
     shift
     local MULTI='True'
@@ -249,7 +258,7 @@ OPT_LONG[$OPTS_ADDED]='--'$1
 
 
 
-hput '__'"$(echo $1 | tr "[:lower:]" "[:upper:]")" short $SHRT TYPE Optn DEFAULT $DEF MULTI $MULTI
+hput '__'"$(echo $1 | tr "[:lower:]" "[:upper:]")" short $SHRT TYPE Optn DEFAULT $DEF MULTI $MULTI REQ $REQ
 eval $(echo $1 | tr "[:lower:]" "[:upper:]")=$DEF
 
 if [ $# == 4 ]; then OPT_DES[$OPTS_ADDED]=$4 
@@ -371,6 +380,7 @@ hput() {
     eval "$1""$4"='$5'    
     eval "$1""$6"='$7'
     eval "$1""$8"='$9'    
+    eval "$1""${10}"='${11}'    
 }
 
 hget() {
@@ -382,6 +392,7 @@ hget() {
 
 
 function parseargs {
+
 
     ARG_MIN=0; ARG_MAX=100
 
@@ -419,8 +430,8 @@ function parseargs {
 		if [ -z != $CURRENT_OPTION ];
             # IF PREV ITEM WAS OPTION - THEN ARG WILL BE TRUE AND NEXT ITEM WILL BE ADDED #
 			then
+
 			VAR=$(echo $CURRENT_OPTION | sed 's/..\(.*\)/\1/g') 
-			#echo "UM" $VAR $CURRENT_OPTION
             if [ $(echo $1 | sed 's/\(.\).*/\1/g') == '-' ];
 				then 
 				echo 'ERROR: An argument is required for this option: '"$VAR" 
@@ -467,7 +478,9 @@ function parseargs {
 				else
                    # THERE IS NOT ANOTHER DASH - IT IS A SHORT FORM ITEM # 
 					CURRENT_OPTION=$(echo `hget $(echo '-'"$1" | sed 's/..\(.*\)/\1/g')`)
-					if [ -z "$CURRENT_OPTION" ]; then
+                   
+
+                    if [ -z "$CURRENT_OPTION" ]; then
                         ## MAKE SURE THE LONG FORM ITEM IS VALID ##
 						echo 'ERROR: The short form option: '"$1"' is undeclared'
 						echo '' 
@@ -516,4 +529,18 @@ function parseargs {
 		if [ $k -gt ${#ARG_NAMES[@]} ]; then break; fi 
 		eval ${ARG_NAMES[$k]}=${Argv[$k]}
 	done 
+
+    j=1
+    until [ $j -gt $OPTS_ADDED ];
+        do
+        TMP=${OPT_NAMES[$j]}
+        if [ ${OPT_DEF[$j]} == "${!TMP}" ] && [ `hget "__$TMP""REQ"` == 'True' ]; then
+            echo "The variable $TMP is required"
+            usage
+            exit
+        fi
+        let j+=1
+    done
+
+
 }

@@ -14,8 +14,8 @@ from math import fabs
 
 
 class SpliceRecord:
-    def __init__(self):
-        
+    def __init__(self,minViews=1):
+        self.minViews=minViews
         self.geneJumps = dd(lambda: dd(int))
         self.readLen  = 100
         self.validJxns = dd(list)
@@ -130,9 +130,9 @@ class SpliceRecord:
             splicePass = []; lastCand = spliceCands[0]; lastSpot = lastCand[0:2]; lastCnt=lastCand[2]
             for s in spliceCands[1::]:
                 if s[0:2] == lastSpot: lastCnt+=s[2]
-                elif lastCnt>1: splicePass.append(lastSpot)
+                elif lastCnt>self.minViews: splicePass.append(lastSpot)
                 lastCand=s; lastSpot=lastCand[0:2]; lastCnt=lastCand[2]
-            if lastCnt>1: splicePass.append(lastSpot)
+            if lastCnt>self.minViews: splicePass.append(lastSpot)
 
             self.validJxns[gene] = sorted(splicePass)
                             

@@ -20,7 +20,7 @@ from collections import defaultdict as dd
 ##########################################################################################################################################
 
 class GtfFile:
-    def __init__(self, fileHandle, prefix,readlen,mutationList=None,printKEY=True):
+    def __init__(self, fileHandle, prefix,readlen,filters,mutationList=None,printKEY=True):
       
         try:
             self.fName = open(fileHandle)
@@ -32,8 +32,9 @@ class GtfFile:
         
         self.index =0; self.genes = []; self.geneKey={}; self.seq = []
         
-        self.open = True; self.FIRSTPRINT=True; self.notes = None; self.mutFile = None; self.simReads = None; self.counter = 0
+        self.open = True; self.FIRSTPRINT=True; self.filters = None; self.notes = None; self.mutFile = None; self.simReads = None; self.counter = 0
 
+        if filters: self.filters = filters
         
         tmpLine=self.fName.readline().strip()
         while tmpLine[0]=="#":
@@ -76,6 +77,7 @@ class GtfFile:
         try:
             c=open(filePath)
         except IOError:
+            print filePath
             errorQuit("A valid path to chromosome fasta files was not provided")
         fChr = c.readline().strip().split()[0].split(">")[1]
         #if self.chr != c.readline().strip().split(">")[1]:
@@ -150,6 +152,10 @@ class GtfFile:
             self.exonPrint   =   open(self.prefix+'_exonSeqs.fa','w')
             self.intronPrint = open(self.prefix+'_intronSeqs.fa','w')
             self.keyFile     = open(self.prefix+'.key','w')
+            if self.filters:
+                for line in open(self.filters):
+                    self.exonPrint.write(line)
+        
         for gene in self.genes:
             self.printFeatures(gene)
 

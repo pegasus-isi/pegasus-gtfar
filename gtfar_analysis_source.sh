@@ -32,6 +32,20 @@ function count_tokens {
 #############################################################################################################################################################
 
 
+function make_read_lists {
+    if [ $(count_tokens $READS) == 1 ] && [ $READS == "reads.fq/fastq" ]; then
+            error_quit "Read Files Required"    
+        
+    else
+        for i in $READS; do 
+            awk 'NR%2==0 && NR%4!=0' $i | sort | uniq -c | sort -k1nr,1 > $OUTPUT/$(basename $i .fastq)".list" & 
+        done
+        wait
+    fi
+    }
+
+
+
 function check_valid_extension {
     TMP_FILE=$1; TMP_TYPE=$2; TMP_EXT="${TMP_FILE##*.}"
     if [ $TMP_TYPE == "READFILE" ]; then 
@@ -44,44 +58,6 @@ function check_input {
     if [ ! -f $1 ]; then
         error_quit "ERROR: File $1 not supplied"
     fi
-}
-
-function check_outputs {
-    tmpREFNAME=$2; tmpREADLIST=$3; tmpTYPE=$4
-    if [ $1 == "MAPPING" ]; then
-        for t in $(cat $tmpREADLIST); do
-            if [ ! -f $tmpREFNAME"_"$PARAM_PERMDATA"_"$(basename $t ".${t##*.}").mapping ] && [ ! -f $tmpREFNAME"_"$PARAM_PERMDATA"_"$(basename $t ".${t##*.}").sam ]; then echo "FALSE"; return; fi 
-        done
-    elif [ $1 == "MAPP" ]; then 
-        echo "HI"
-        echo $tmpREFNAME"_"$PARAM_PERMDATA"_"$tmpREADLIST
-        echo "BYE"
-        for t in $(cat $tmpREADLIST); do
-            echo $tmpREFNAME"_"$PARAM_PERMDATA"_"$(basename $t ".${t##*.}")",mapping"
-        done
-        exit
-    elif [ $1 == "SPLICEMAP" ]; then 
-        for t in $(cat $tmpREADLIST); do
-            PREF=$(basename $(basename $t ".${t##*.}") .genome)
-            if [ ! -s $REFNAME"_"$PARAM_CLIPDATA"_"$PREF.sam ]; then echo "FALSE"; return; fi 
-        done
-    elif [ $1 == "FEATUREPARSE" ]; then
-        for t in $(cat $tmpREADLIST); do
-            tmpPREF=$(echo $(basename $t ".${t##*.}") | awk -F_miss '{print $1}')"_"$tmpTYPE
-            if [ ! -s $tmpPREF".genecnts" ] || [ ! -s $tmpPREF".splicecnts" ] || [ ! -s $tmpPREF".vis" ] || [ ! -s $tmpPREF".stats" ]; then echo "FALSE"; return; fi 
-        done
-    elif [ $1 == "GENOMEPARSE" ]; then 
-        for t in $(cat $tmpREADLIST); do 
-            PREF=$(echo $(basename $i .fastq) | awk -F_miss '{print $1}')
-            if [ ! -s $PREF"_GENOME.stats" ] || [ ! -s $PREF"_GENOME.vis" ]; then echo "FALSE"; return; fi
-        done
-    elif [ $1 == "COMBINE" ]; then 
-        for t in $(cat $tmpREADLIST); do 
-            PREF=$(basename $t .fastq)
-            if [ ! -s results/$PREF".genecnts" ] || [ ! -s results/$PREF".splicecnts" ] || [ ! -s results/$PREF".stats" ] || [ ! -s results/$PREF"_visualize.sam" ]; then echo "FALSE"; return; fi 
-        done
-    fi    
-    echo "TRUE"
 }
 
 
@@ -149,7 +125,6 @@ function load_parameters {
         error_quit "ERROR: Read length is too long"
     fi
     PARAM_CLIPSUBS=0; if [ $MISMATCHES -gt 3 ]; then PARAM_CLIPSUBS=1; fi 
-    PARAM_PERMDATA="B_"$PARAM_SEEDNUM"_"$MISMATCHES; PARAM_CLIPDATA="A_1_"$PARAM_CLIPSUBS"_"$PARAM_CLIPLEN
 }
 
 
@@ -196,18 +171,44 @@ function update_reads {
 ################################################################################################################################################################
 ################################################################################################################################################################
 
+    
+
+
+
+################################################################################################################################################################
+################################################################################################################################################################
+################################################################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#############################################################################################################################################################
+#############################################################################################################################################################
+#############################################################################################################################################################
+
+
 # ------------------------------------------ ALIGNMENT/PARSING  ------------------------------------------ #
 
 
 
      
 function perm_map {
-    REF=$1; TYPE=$2; MYREF=$(load_ref_file $REF "UNGAPPED"); REFNAME=$(basename $REF ".${REF##*.}")
-    
+    REF=$1; TYPE=$2; TRUTH=$3; MYREF=$(load_ref_file $REF "UNGAPPED"); REFNAME=$(basename $REF ".${REF##*.}")
+    check_mapping_inputs $MYREF $READLIST 
     echo -n "RUNNING: perm $(basename $REF) $READLIST --seed $PARAM_SEEDTYPE -v $PARAM_SUBS -B --printNM -u -s > $REFNAME".log"....." 
-    if [ ! -z $3 ] && [ $3 == "SKIP" ] && [ $(check_outputs "MAPPING" $REFNAME $READLIST) == "TRUE" ]; then echo "SKIPPING (previously completed)"
-    else perm $MYREF $READLIST --seed $PARAM_SEEDTYPE -v $PARAM_SUBS -B --printNM -u  > $REFNAME".log"; pass_fail $? 
-    fi
+    if [ "$TRUTH" != "NO" ]; then perm $MYREF $READLIST --seed $PARAM_SEEDTYPE -v $PARAM_SUBS -B --printNM -u  > $REFNAME".log"  ; fi; pass_fail $? 
 }
 
 
@@ -216,77 +217,76 @@ function perm_map {
 function feature_parse {
     REF=$1; TYPE=$2; TRUTH=$3; REFNAME=$(basename $REF ".${REF##*.}")
     echo -n "Running: gtfar-parse {MAPFILES} --strandRule $STRANDRULE...."
-    if [ ! -z $3 ] && [ $3 == "SKIP" ] && [ $(check_outputs "FEATUREPARSE" $REFNAME $READLIST "EXONS") == "TRUE" ]; then echo "SKIPPING (previously completed)"
-    else
+
+    if [ "$TRUTH" != "NO" ]; then
         for i in $(cat $READLIST); do 
             READNAME=$(basename $i ".${i##*.}"); MAPDATA="B_"$PARAM_SEEDNUM"_"$MISMATCHES; MAPFILE=$REFNAME"_"$MAPDATA"_"$READNAME".mapping"; PREF=$(echo $READNAME | awk -F_miss '{print $1}')
             check_input $MAPFILE; echo -n "."
             parse_alignment.py $MAPFILE -p $PREF"_"$TYPE --strandRule $STRANDRULE &
             while [ $(jobs | wc -l) -gt $(nproc) ]; do sleep 50; done                                                     
         done
-        wait; pass_fail $?
     fi
+    wait; pass_fail $?
     update_reads $REFNAME
 }
 
 
-function splice_find_and_conditional_map {
-    REF=$1;TYPE=$2; MYREF=$(load_ref_file $REF "GAPPED");  REFNAME=$(basename $REF ".${REF##*.}")
+function conditional_splice_map {
+    TRUTH=$1
+    if [ -s SPLICE_CANDIDATES.fa ]; then 
+        if [ "$TRUTH" != "NO" ]; then 
+            perm_map SPLICE_CANDIDATES.fa "SPLICE" YES; feature_parse SPLICE_CANDIDATES.fa "SPLICE" YES
+        fi
+    else
+        for i in $(cat initial_reads.txt); do 
+            PREF=$(basename $i .fastq)
+            touch $PREF"_SPLICE.stats"; touch $PREF"_SPLICE.genecnts"; touch $PREF"_SPLICE.splicecnts"; touch $PREF"_SPLICE.vis"
+        done
+    fi
+}
 
-    if [ $LENGTH -gt 74 ]; then 
-        check_mapping_inputs $MYREF $READLIST    
-        echo -n "RUNNING: clipR $(basename $REF) $READLIST --seed $PARAM_CLIPSEED -v $PARAM_CLIPSUBS -e -s > $REFNAME"_clip.log.......""
-        if [ ! -z $3 ] && [ $3 == "SKIP" ] && [ $(check_outputs "SPLICEMAP" $REFNAME $READLIST) == "TRUE" ]; then echo "SKIPPING (previously completed)"
-        else clipR $MYREF $READLIST --seed $PARAM_CLIPSEED -v $PARAM_CLIPSUBS -e  --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader > $REFNAME"_clip.log"; pass_fail $?; fi 
-        echo -n "RUNNING: gtfar-splice-search {GAPFILES} > SPLICE_CANDIDATES.fa......"
-        if [ ! -z $3 ] && [ $3 == "SKIP" ] && [ -f SPLICE_CANDIDATES.fa ]; then echo "SKIPPING (previously completed)"
-        else categorize_and_annotate_novel_splice.py $REFNAME*_*.sam -k $KEY --gtf $GTF -g $CHRS > SPLICE_CANDIDATES.fa ;  pass_fail $?; fi 
-    fi 
-    
-    #echo $READLIST
-    if [ ! -s SPLICE_CANDIDATES.fa ]; then
-        echo -n "RUNNING: perm SPLICE_CANIDATES.fa $READLIST --seed $PARAM_SEEDTYPE -v $PARAM_SUBS -B --printNM -u -s > $REFNAME.log....." 
-        echo "SKIPPING (no splice candidates found)"
-        for i in $(cat $INIT_READS); do PREF=$(basename $i .fastq); touch $PREF"_SPLICE.stats"; touch $PREF"_SPLICE.genecnts"; touch $PREF"_SPLICE.splicecnts"; touch $PREF"_SPLICE.vis"; done
-    elif [ ! -z $3 ] && [ $3 == "SKIP" ] &&  [ $(check_outputs "MAPPING" SPLICE_CANDIDATES $READLIST) == "TRUE" ]; then echo "SKIPPING (previously completed)"
-    else    perm_map SPLICE_CANDIDATES.fa "SPLICE"; feature_parse SPLICE_CANDIDATES.fa "SPLICE"; fi 
-} 
+
+function splice_find {
+    REF=$1;TYPE=$2;TRUTH=$3; MYREF=$(load_ref_file $REF "GAPPED");  REFNAME=$(basename $REF ".${REF##*.}")
+    check_mapping_inputs $MYREF $READLIST    
+    echo -n "RUNNING: clipR $(basename $REF) $READLIST --seed $PARAM_CLIPSEED -v $PARAM_CLIPSUBS -e -s > $REFNAME"_clip.log.......""
+    if [ "$TRUTH" != "NO" ]; then clipR $MYREF $READLIST --seed $PARAM_CLIPSEED -v $PARAM_CLIPSUBS -e  --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader > $REFNAME"_clip.log"; fi; pass_fail $? 
+    echo -n "RUNNING: gtfar-splice-search {GAPFILES} > SPLICE_CANDIDATES.fa......"
+    if [ "$TRUTH" != "NO" ]; then categorize_and_annotate_novel_splice.py $REFNAME*_*.sam -k $KEY --gtf $GTF -g $CHRS > SPLICE_CANDIDATES.fa ; fi; pass_fail $? 
+}
+
 
 
 
 
 
 function perm_genome_map {
-    REF=$1; TYPE=$2; MYREF=$(load_ref_file $REF "UNGAPPED"); MYCLIPREF=$(load_ref_file $REF "GAPPED"); REFNAME=$(basename $REF ".${REF##*.}")
+    REF=$1; TYPE=$2; TRUTH=$3; MYREF=$(load_ref_file $REF "UNGAPPED"); MYCLIPREF=$(load_ref_file $REF "GAPPED"); REFNAME=$(basename $REF ".${REF##*.}")
     check_mapping_inputs $MYREF $READLIST 
     echo -n "RUNNING: perm $(basename $REF) $READLIST --seed $PARAM_SEEDTYPE -v $PARAM_SUBS -B --printNM -u -s > $REFNAME.log....." 
-    
-    if [ ! -z $3 ] && [ $3 == "SKIP" ] && [ $(check_outputs "MAPPING" $REFNAME $READLIST) == "TRUE" ]; then echo "SKIPPING (previously completed)"
-    else perm $MYREF $READLIST --seed $PARAM_SEEDTYPE -v $PARAM_SUBS -B --printNM -u -s --outputFormat sam > $REFNAME.log; pass_fail $?; fi
+    if [ "$TRUTH" != "NO" ]; then perm $MYREF $READLIST --seed $PARAM_SEEDTYPE -v $PARAM_SUBS -B --printNM -u -s --outputFormat sam > $REFNAME.log; fi; pass_fail $? 
     GENOMELIST=$READLIST; update_reads $REFNAME; 
     check_mapping_inputs $MYCLIPREF $READLIST
-
     echo -n "RUNNING: clipR $(basename $REF) $READLIST --seed $PARAM_CLIPSEED -v $PARAM_CLIPSUBS -B --printNM -u -s > $REFNAME.log...." 
-    if [ ! -z $3 ] && [ $3 == "SKIP" ] && [ $(check_outputs "SPLICEMAP" $REFNAME $READLIST) == "TRUE" ]; then echo "SKIPPING (previously completed)"
-    else clipR $MYCLIPREF $READLIST --anchorL $PARAM_CLIPLEN --seed $PARAM_CLIPSEED -v $PARAM_CLIPSUBS  --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader -u -s > $REFNAME".cliplog"; pass_fail $?; fi
+    if [ "$TRUTH" != "NO" ]; then clipR $MYCLIPREF $READLIST --anchorL $PARAM_CLIPLEN --seed $PARAM_CLIPSEED -v $PARAM_CLIPSUBS  --ignoreRepeatR 10 --ignoreDummyR 40 --noSamHeader -u -s > $REFNAME".cliplog"; fi; pass_fail $? 
     update_reads $REFNAME 
 }
 
 
 function genome_parse {
-    REF=$1; TYPE=$2;  MYREF=$(load_ref_file $REF "UNGAPPED"); MYCLIPREF=$(load_ref_file $REF "GAPPED"); REFNAME=$(basename $REF ".${REF##*.}")
+    REF=$1; TYPE=$2; TRUTH=$3; MYREF=$(load_ref_file $REF "UNGAPPED"); MYCLIPREF=$(load_ref_file $REF "GAPPED"); REFNAME=$(basename $REF ".${REF##*.}")
     echo -n "Running: gtfar-parse {GENOMEFILES}...."
-    if [ ! -z $3 ] && [ $3 == "SKIP" ] && [ $(check_outputs "GENOMEPARSE" $REFNAME $GENOMELIST "GENOME") == "TRUE" ]; then echo "SKIPPING (previously completed)"
-    else
+    if [ "$TRUTH" != "NO" ]; then
         for i in $(cat $GENOMELIST); do
-            MIDNAME=$(basename $i ".${i##*.}");  PREF=$(echo $(basename $i) | awk -F_miss '{print $1}')
-            F1=$REFNAME"_"$PARAM_PERMDATA"_"$MIDNAME.sam; F2=$REFNAME"_"$PARAM_CLIPDATA"_"$MIDNAME"_miss_"*sam 
+            MIDNAME=$(basename $i ".${i##*.}"); PERMDATA="B_"$PARAM_SEEDNUM"_"$MISMATCHES; CLIPDATA="A_1_"$PARAM_CLIPSUBS"_"$PARAM_CLIPLEN;  PREF=$(echo $(basename $i) | awk -F_miss '{print $1}')
+            F1=$REFNAME"_"$PERMDATA"_"$MIDNAME.sam; F2=$REFNAME"_"$CLIPDATA"_"$MIDNAME"_miss_"*sam 
             if [ $(count_tokens $F1 $F2) != 2 ]; then error_quit "WRONG FILE NUMBER"; fi 
             parse_genomic.py -p $PREF"_"$TYPE $F1 $F2 & 
         done
-        wait
-        pass_fail $?
     fi 
+    wait
+    pass_fail $?
+ 
 }
 
 
@@ -297,12 +297,11 @@ function genome_parse {
 
 
 function combine_output {
-    REF=$1; TMPREADS=$2; REFNAME=$(basename $REF ".${REF##*.}"); EXLOG=$(basename $EXONS ".${REF##*.}")".log"
+    LASTREF=$1; TRUTH=$2; REFNAME=$(basename $REF ".${REF##*.}"); EXLOG=$(basename $EXONS ".${REF##*.}")".log"
     echo -n "Running: gtfar-combineOutput {OUTPUTFILES}...."
-    if [ ! -z $3 ] && [ $3 == "SKIP" ] && [ $(check_outputs "COMBINE" $REFNAME $INIT_READS) == "TRUE" ]; then echo "SKIPPING (previously completed)"
-    else
-        for i in $(cat $TMPREADS); do 
-            SAMPLE=$(basename $i .fastq) 
+    if [ "$TRUTH" != "NO" ]; then  
+        for i in $(paste $READLIST); do 
+            SAMPLE=$(echo $(basename $i .fastq) | awk -F_miss '{print $1}')
             cp $i final_reads/$SAMPLE"_unmapped".fastq & 
             combine_gtfar_files.py EXPRESSION  -e $SAMPLE"_EXONS.genecnts"  -i $SAMPLE"_INTRONS.genecnts"  -s $SAMPLE"_SPLICE.genecnts"  > results/$SAMPLE".genecnts" & 
             combine_gtfar_files.py SPLICEDATA  -e $SAMPLE"_EXONS.splicecnts"  -i $SAMPLE"_INTRONS.splicecnts"  -s $SAMPLE"_SPLICE.splicecnts"  > results/$SAMPLE".splicecnts" & 
@@ -310,10 +309,10 @@ function combine_output {
             cat $SAMPLE"_GENOME.vis" $SAMPLE"_EXONS.vis" $SAMPLE"_INTRONS.vis" $SAMPLE"_SPLICE.vis" > results/$SAMPLE"_visualize.sam" & 
             while [ $(jobs | wc -l) -gt $(nproc) ]; do sleep 10; done                                                     
             echo -n "."
-        done
-        wait
-        pass_fail $? 
+        done 
     fi
+    wait 
+    pass_fail $? 
 }
 
 function make_bam_files {

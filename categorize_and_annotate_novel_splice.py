@@ -12,7 +12,7 @@ from math import fabs
 
 def process_files(args,spliceKey,gtfFile,genomePath,readlen):
 
-    spliceRecord = SpliceRecord()
+    spliceRecord = SpliceRecord(1)
     spliceRecord.addKey(spliceKey)
     spliceRecord.addGappedAlignmentFiles(args)
 

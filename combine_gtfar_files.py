@@ -78,17 +78,20 @@ def process_files(INSTRUCTIONS,exonFile,intronFile,spliceFile,genomeFile,logFile
                     print "|".join([p for p in data[0]])+"|"+s[1],cnts
     
     elif INSTRUCTIONS == "STATS":
-        FILES= [f for f in [exonFile,intronFile,spliceFile,genomeFile] if f!=None]
+        FILES= [f for f in [exonFile,intronFile,spliceFile,genomeFile] if f!=None]; LOGFOUND=False
         if logFile:
             for line in open(logFile):
                 line=line.split()
-                if len(line)>1 and line[1]=="Reads:,":
-                    KEPT=int(line[5].split(",")[0])
-                    ID=line[0].split("/")[len(line[0].split("/"))-1]
-                    if ID.split(".")[0] in FILES[0]:
-                        print "Initial-File:",ID,"Reads:",KEPT
-                        print ""
-                        break
+                if len(line)>1:
+                    for i in range(len(line)-1):
+                        if line[i] == "Kept#,":
+                            KEPT=int(line[i+1].split(",")[0])
+                            ID=line[0].split("/")[len(line[0].split("/"))-1]
+                            if ID.split(".")[0] in FILES[0]:
+                                print "Initial-File:",ID,"Reads:",KEPT
+                                print ""
+                                LOGFOUND=True
+                                break
         
         TOTAL_READS=0
         for f in FILES:
@@ -98,7 +101,7 @@ def process_files(INSTRUCTIONS,exonFile,intronFile,spliceFile,genomeFile,logFile
                     FNAME=lp[1]
                 elif lp[0]=="Total-Reads[total,uniq/repetitive/ambiguous]":
                     FREADS=int(lp[1]); TOTAL_READS+=int(lp[1])
-                    if logFile:
+                    if LOGFOUND:
                         print "Alignment-Step:",FNAME,"Alignment-Percentage:",int(lp[1])/float(KEPT)
                     else:
                         print "Alignment-Step:",FNAME
@@ -106,7 +109,7 @@ def process_files(INSTRUCTIONS,exonFile,intronFile,spliceFile,genomeFile,logFile
                 else:
                     print line.strip()
             print ""
-        if logFile:
+        if LOGFOUND:
             print "Total-Aligned-Reads:",TOTAL_READS,"Alignment-Percentage:",TOTAL_READS/float(KEPT)
         else:
             print "Total-Aligned-Reads:",TOTAL_READS

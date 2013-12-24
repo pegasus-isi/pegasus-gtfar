@@ -4,14 +4,44 @@
 import sys
 import os
 from collections import defaultdict as dd	
-from modules.SampleExpr import *
-from modules.GeneExpr import *
+import modules.SampleAnalysis #import *
+from modules.Utilities import *
 
 def median(mylist):
     return mylist[len(mylist)/2]
 
 def quartile(mylist):
     return mylist[3*(len(mylist) /4) ]
+
+
+def pearsonProcess(args):
+    GENE_CNTS=dd(lambda: [0,0])
+    k=0
+    sampleData = modules.SampleAnalysis.SampleData()
+    for f in args:
+        sampleData.addMember(modules.SampleAnalysis.Sample(f,"LOAD_GENE_CNTS"))
+        #samples.addMember(modules.SampleAnalysis.Sample(f,"LOAD_GENE_CNTS"))
+   
+    sampleData.mergeGenes()
+
+    sampleData.pairwiseCorrelation(0,1)
+
+
+    
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
 
 def process_files(args,EXPR,key,NORM):
 
@@ -80,12 +110,18 @@ if __name__ == '__main__':
     usage = "usage: ./%prog [options] data_file"
     parser = OptionParser(usage=usage)
 
+    parser.add_option("--twoFilePearson",  action = 'store_true', default = False, help="two file correlation")
     parser.add_option("-e", "--expr",  action = 'store_true', default = False, help="expression cnts")
     parser.add_option("-s", "--splice", action = 'store_true', default = False, help="splice cnts")
     parser.add_option("-k", "--key", action = 'store', default = None, help="phenotype key")
     parser.add_option("-n", "--norm", action = 'store', default = "MEAN", help="normalize")
 
     (options, args) = parser.parse_args()
+
+    if options.twoFilePearson:
+        if len(args) != 2:  errorQuit("Need two files for pearson check")
+        pearsonProcess(args)
+        sys.exit()
 
     if len(args)<2:
         print "WE NEED MORE FILES" 
