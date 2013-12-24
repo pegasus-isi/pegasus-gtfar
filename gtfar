@@ -41,7 +41,6 @@ elif [ $PROGRAM == 'MAP' ] || [ $PROGRAM == 'map' ]; then
     splice_find_and_conditional_map $GENES "SPLICE" 
     
     perm_genome_map $GENOME "GENOME"; genome_parse $GENOME "GENOME" 
-    
     combine_output $GENOME $INIT_READS 
     make_bam_files 
     cd $MYHOME

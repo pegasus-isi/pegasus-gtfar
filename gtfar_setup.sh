@@ -203,7 +203,6 @@ function update_reads {
      
 function perm_map {
     REF=$1; TYPE=$2; MYREF=$(load_ref_file $REF "UNGAPPED"); REFNAME=$(basename $REF ".${REF##*.}")
-    
     echo -n "RUNNING: perm $(basename $REF) $READLIST --seed $PARAM_SEEDTYPE -v $PARAM_SUBS -B --printNM -u -s > $REFNAME".log"....." 
     if [ ! -z $3 ] && [ $3 == "SKIP" ] && [ $(check_outputs "MAPPING" $REFNAME $READLIST) == "TRUE" ]; then echo "SKIPPING (previously completed)"
     else perm $MYREF $READLIST --seed $PARAM_SEEDTYPE -v $PARAM_SUBS -B --printNM -u  > $REFNAME".log"; pass_fail $? 
