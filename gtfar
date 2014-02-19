@@ -118,6 +118,7 @@ function map_filtered_reads {
 
 #--------------------------------------------------------------------------------------------------------------------------------------#
 
+VOLUME="LOUD"; #VOLUME=SILENT
 
 if [ -z $ARGUMENT ]; then
     echo "An argument is required - choose help"
@@ -132,61 +133,13 @@ elif [ $ARGUMENT == "map" ] || [ $ARGUMENT == "MAP" ]; then
 
 elif [ $ARGUMENT == "easyrun" ]; then 
     
-    if [ $OUTDIR == "NONE" ]; then gtfar_fail "ERROR: A output dir  is required for easyrun"; 
-    else mkdir -p $OUTDIR; fi 
+    if [ $OUTDIR == "NONE" ]; then gtfar_fail "ERROR: A output dir  is required for easyrun"; else mkdir -p $OUTDIR; fi 
     if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for easyrun"; fi
+    if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping portion of easyrun - create one using gtfar annotate"; else source $CONFIG; fi
 
-    VOLUME="LOUD"; VOLUME=SILEN; RETURNDIR=$PWD
 
     filter_reads 
     map_filtered_reads
-
-elif [ $ARGUMENT == "FOOB" ]; then 
-
-    shout "PROGRESS: FILTERING COMPLETE\n"
-    cd $RETURNDIR 
-    ### INITIAL MAPPING ###
-    whisper "PROGRESS: MAPPING BEGINS\n...";
-
-    
-    
-    READS=$OUTDIR/filterDir/reads*_full.fastq; 
-    MAPDIR=$OUTDIR/mapDir_full
-
-    cd $OUTDIR 
-
-    map_and_parse_reads mapDir_full "filterDir/reads*_full.fastq"   ; whisper "..";
-    
-    UNMAPPED="mapDir_full/reads*unmapped.fastq"
-    ## MAPPING THE TRIMMED READS 
-
-    for ((A=${#TRIMARRAY[@]}-1;A>=0;A--)); do 
-        LENGTH=${TRIMARRAY[$A]}
-        whisper "...."
-        # if we are at the first trimmed length (75) # 
-        if [ $(( $A+1 )) -eq ${#TRIMARRAY[@]} ]; then  
-            
-             
-            map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED
-            
-            map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq" 
-            
-            UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"
-
-
-        else
-            
-            map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED
-            
-            map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq"       
-            UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"
-        fi
-    done   
-    whisper "\nPROGRESS: MAPPING COMPLETE\n"
-
-    cat mapDir_*/*.vis > $PREFIX.vis 
-
-
     
 
 fi
