@@ -9,9 +9,9 @@ example: HG19=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/hu
 '''
 
 
-def runthrough(fName,genomePath,filters,prefix,readlen,mutationList):
+def runthrough(fName,genomePath,filters,prefix,readlen,gapcands,mutationList):
    
-    gtf = GtfFile(fName,prefix,readlen,filters,mutationList,printKEY=True)
+    gtf = GtfFile(fName,prefix,readlen,filters)
     while gtf.open:
         gtf.loadGenesOnChromosome()
         gtf.addFasta(genomePath+'/'+gtf.chr+'.fa') 
@@ -30,15 +30,16 @@ if __name__ == '__main__':
     parser.add_option("-l", "--readlen", default = 100, type='int', help="Expected Read Length")
     parser.add_option("-p", "--prefix", default = 'mygtf', type='string', help="Output Filename Prefix")
     parser.add_option("-c", "--chromosomes", default = None, type='string', help="Path to genome autosome fasta files")
-    parser.add_option("-f", "--filterseqs", default = None, type='string', help="Path to filter seqs (ribosomal/mitochondrial)")
+    parser.add_option("-f", "--filterseqs", default = "HUMAN", type='string', help="Organism for filters")
+    parser.add_option("-g", "--gapcands", default = None, type='string', help="File which lists possible gaps for annotation")
     parser.add_option("-m", "--mutationList", default = None, type='string', help="Path mutation list")
 
     (options, args) = parser.parse_args()
 
-if len(args)==1 and options.chromosomes!=None and options.filterseqs!=None:
+if len(args)==1 and options.chromosomes!=None:
     if options.chromosomes[-1]=="/": options.chromosomes=options.chromosomes[0:len(options.chromosomes)-1]
-    runthrough(args[0],options.chromosomes,options.filterseqs,options.prefix,options.readlen,options.mutationList)
+    runthrough(args[0],options.chromosomes,options.filterseqs,options.prefix,options.readlen,options.gapcands,options.mutationList)
 else:
     print "ANNOTATE AND CREATE SEQS/KEY"
-    print "USAGE: ./annotate_gtf.py file.gtf -c chromosome_path -f filter_seqs -m mitochondria -p PREFIXNAME -r READLENGTH -m Mutationlist" 
+    print "USAGE: ./annotate_gtf.py file.gtf -c chromosome_path -f filter_seqs -p PREFIXNAME -l READLENGTH -m Mutationlist" 
 

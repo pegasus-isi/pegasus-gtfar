@@ -2,30 +2,19 @@
 
 
 import sys
-#from modules.MapFile2 import *
-from modules.MapLine import *
-from modules.MapData import *
-from modules.ProgressBar import *
+from modules.MapRead import *
+#from modules.ProgressBar import *
 import os
 				
-def process_file(mapFile,prefix,strandSpecific,VERBOSE):
+def process_file(mapFile,strandSpecific,VERBOSE):
 
-    progressBar = ProgressBar(sys.stderr,"Parsing Alignment...",'.','Complete',100000,VERBOSE)
+    #progressBar = ProgressBar(sys.stderr,"Parsing Alignment...",'.','Complete',100000,VERBOSE)
 
-    mapLines = MapLines(mapFile)
+    mapReads = MapReads(mapFile,strandSpecific)
 
-
-    mapReads = MapRead(mapLines,strandSpecific)  
-    mapData  = MapData(prefix,mapLines.fileName)
-
-
-    while mapLines.open:
-        mapReads.loadRead()
-        mapData.process(mapReads)
-    mapData.printResult()
-
-
-    progressBar.complete()
+    while mapReads.fileOpen:
+        mapReads.getNextRead()
+        mapReads.printData()
 
 
 if __name__ == '__main__':
@@ -34,7 +23,6 @@ if __name__ == '__main__':
     usage = "usage: ./%prog [options] data_file"
     parser = OptionParser(usage=usage)
 
-    parser.add_option("-p", "--prefix", dest='prefix', default = None, type='string', help="   Prefix for OutPut")
     parser.add_option("-s", "--strandRule", default = "NA", type='string', help="Opposite,Match")
     parser.add_option("-v", "--verbose", action = 'store_true', default = False,  help="verbose output")
     parser.add_option("-j", "--justExpression", action = 'store_true', default = False,  help="verbose output")
@@ -51,8 +39,16 @@ if __name__ == '__main__':
 
 
 
-    if len(args)==1  and options.prefix != None:
-        process_file(args[0],options.prefix,STRANDMATCH,options.verbose)
+    if len(args)==1:
+        try:
+            fileType = args[0].split(".")[-1]
+            fileHandle = open(args[0])
+            mapReads = MapReads(fileHandle,fileType,STRANDMATCH)
+            while mapReads.fileOpen:
+                mapReads.getNextRead()
+                mapReads.printData()
+        except IOError:
+            sys.exit() 
 
     else:
         parser.print_help()

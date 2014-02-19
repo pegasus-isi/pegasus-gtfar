@@ -1,59 +1,193 @@
 #!/bin/bash
 
-### HARD CODED PATHS ###
-source /export/uec-gs1/knowles/analysis/tade/gtfar_source/optparse
-export PATH=$PATH:/export/uec-gs1/knowles/analysis/tade/gtfar_source
+# ISI COMMENT #1) WE HARDCODE OUR LOCAL PATH SO WE CAN CALL SCRIPTS IN OUR SRC DIR
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export PATH=$PATH:$DIR
+source $DIR/optparse 
+source $DIR/gtfar_util.sh
 
+# ISI COMMENT #2) OUR BASH PARSER (OPTPARSE) ALLOWS US TO DECLARE SOME COMMAND LINE OPTIONS
 
+add_title_version "Gtfar (RNA-seq Analysis Pipeline)" "0.0.5"
+add_example "Alignment Step" "map -r myreads.fastq"
+add_arg map "Run Alignment" 
+add_arg filter "filter reads" 
+add_arg easyrun "filter and map" 
 
-add_arg program 'annotation/filter-reads/map' 
-add_option annotation -a 'gc18' 'annotation - currently supported gc17'  
-add_option MULTI reads -r 'reads.fq/fastq'   'read folder or file in fq format'
-add_option length -l 100   'length of reads'
-add_option cliplength -c 25   'length of anchor for gapped alignment'
-add_option strandRule -s 'None'   'A rule for stranded ness (None, Same or Opposite' 
-add_option output -o 'outputDir'   'output directory'
-add_option working -w 'workingDir'   'working directory'
-add_option mismatches -m 3           'The number of mismatches to allow per mapping'
+add_option length -l  DEFAULT=100 TYPE=NUM INT_MIN=50 INT_MAX=128  INFO='length of reads'
+add_option MULTI=True INT_MIN=10 INT_MAX=150 trims INFO='trimmings' DEFAULT=50 
+add_option MULTI=True TYPE=File reads  INFO='reads or file in fastq or fastq.gz format'
+add_option config -c  DEFAULT='None' TYPE=File        INFO='Configuration File for Reference Data'
+
+add_option strandRule -s DEFAULT="UNSTRANDED" STR_OPTS=Unstranded,Same,Opposite  INFO='A rule for strandedness (None, Same or Opposite)'
+add_option mismatches -m DEFAULT=3 INT_MIN=0 INT_MAX=8    INFO='The number of mismatches to allow per mapping'
+add_option verbose DEFAULT="True" TYPE=bool  
+add_option trimUnmapped -z DEFAULT="False" TYPE=bool  
+add_option outdir -d DEFAULT='None'   INFO='working directory'
+add_option inputdir -i DEFAULT='None'   INFO='working directory'
+add_option prefix -p DEFAULT='None'   INFO='prefix'
+
 
 parseargs $@
+
+TRIMS="50 75"
+TRIMSTR=$(echo $TRIMS | awk '{$1=$1}1' OFS=",")
+TRIMARRAY=($TRIMS)
+
+##### THE OPTIONS PARSER WILL SUPPLY US WITH THE FOLLOWING VARIABLES ######
+
+# 1) $READS -> ONE OR MORE READ FILES [ FASTQ FORMAT IS REQUIRED ] 
+# 2) $LENGTH -> INTEGER READ LENGTH (Minimum 64, Maximum 128) (DEFAULT 100) 
+# 3) $STRANDRULE -> None, Same, or Opposite 
+# 4) $MISMATCHES -> 1,2,3,4,5,6,7 OR 8 mismatches  
+
+#### STEP 1 - VERIFY INPUT PARAMETERS ####
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #--------------------------------------------------------------------------------------------------------------------------------------#
 
 
 
-if [ -z $PROGRAM ]; then
-    echo "An option is required - choose help"
-elif [ $PROGRAM == 'MAP' ] || [ $PROGRAM == 'map' ]; then 
-    source /export/uec-gs1/knowles/analysis/tade/gtfar_source/gtfar_setup.sh
-    MYHOME=$PWD
-    make_directories  
-    load_annotation
-    load_reads
-    load_parameters
-    cd $WORKING
-    check_procs $READLIST   
-    start_up_output  
-    perm_map $EXONS   "EXONS"       ;         feature_parse $EXONS   "EXONS"   
-    perm_map $INTRONS "INTRONS"     ;         feature_parse $INTRONS "INTRONS" 
-   
-    splice_find_and_conditional_map $GENES "SPLICE" 
+function filter_reads { 
+	source $DIR/gtfar_filter_scripts.sh
+
+	printf "GTFAR-MODULE: FILTER\n"
+    if [ $(echo $READS | awk '{print NF}') -gt 1 ]; then echo "ERROR: FILTER MODULE USES A SINGLE READ FILE"; exit; fi 
+	count_and_split_reads $OUTDIR $READS
+}
+
+
+function map_filtered_reads {
+	source $DIR/gtfar_map_scripts.sh
+
+    if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping - create one using gtfar annotate"; else source $CONFIG; fi
+
+    READS=$OUTDIR/filterDir/reads*_full.fastq; 
+    MAPDIR=$OUTDIR/mapDir_full
+
+    cd $OUTDIR 
+    map_and_parse_reads mapDir_full "filterDir/reads*_full.fastq"; UNMAPPED="mapDir_full/reads*unmapped.fastq"
+
+    for ((A=${#TRIMARRAY[@]}-1;A>=0;A--)); do 
+        LENGTH=${TRIMARRAY[$A]}
+        # if we are at the first trimmed length (75) # 
+        if [ $(( $A+1 )) -eq ${#TRIMARRAY[@]} ]; then  
+            if [ $TRIMUNMAPPED == "TRUE" ]; then map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED; UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"; fi 
+            map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq" 
+        else
+            if [ $TRIMUNMAPPED == "TRUE" ]; then map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED; UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"; fi  
+            map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq"       
+        fi
+    done   
+    whisper "\nPROGRESS: MAPPING COMPLETE\n"
+
+    cat mapDir_*/*.vis > $PREFIX.vis 
+
+}
     
-    perm_genome_map $GENOME "GENOME"; genome_parse $GENOME "GENOME" 
-    combine_output $GENOME $INIT_READS 
-    make_bam_files 
-    cd $MYHOME
-    cp -R $WORKING/final_reads $OUTPUT/
-    cp -R $WORKING/results $OUTPUT/
 
-elif [ $PROGRAM == 'READS' ] || [ $PROGRAM == 'reads' ]; then
-    source /export/uec-gs1/knowles/analysis/tade/gtfar_source/gtfar_analysis_source.sh
-    check_dir $OUTPUT
-    make_read_lists
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#--------------------------------------------------------------------------------------------------------------------------------------#
+
+
+if [ -z $ARGUMENT ]; then
+    echo "An argument is required - choose help"
+elif [ $ARGUMENT == "filter" ]; then 
+    filter_reads
+
+
+
+elif [ $ARGUMENT == "map" ] || [ $ARGUMENT == "MAP" ]; then
+    map_filtered_reads
     
 
+elif [ $ARGUMENT == "easyrun" ]; then 
+    
+    if [ $OUTDIR == "NONE" ]; then gtfar_fail "ERROR: A output dir  is required for easyrun"; 
+    else mkdir -p $OUTDIR; fi 
+    if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for easyrun"; fi
 
+    VOLUME="LOUD"; VOLUME=SILEN; RETURNDIR=$PWD
+
+    filter_reads 
+    map_filtered_reads
+
+elif [ $ARGUMENT == "FOOB" ]; then 
+
+    shout "PROGRESS: FILTERING COMPLETE\n"
+    cd $RETURNDIR 
+    ### INITIAL MAPPING ###
+    whisper "PROGRESS: MAPPING BEGINS\n...";
+
+    
+    
+    READS=$OUTDIR/filterDir/reads*_full.fastq; 
+    MAPDIR=$OUTDIR/mapDir_full
+
+    cd $OUTDIR 
+
+    map_and_parse_reads mapDir_full "filterDir/reads*_full.fastq"   ; whisper "..";
+    
+    UNMAPPED="mapDir_full/reads*unmapped.fastq"
+    ## MAPPING THE TRIMMED READS 
+
+    for ((A=${#TRIMARRAY[@]}-1;A>=0;A--)); do 
+        LENGTH=${TRIMARRAY[$A]}
+        whisper "...."
+        # if we are at the first trimmed length (75) # 
+        if [ $(( $A+1 )) -eq ${#TRIMARRAY[@]} ]; then  
+            
+             
+            map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED
+            
+            map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq" 
+            
+            UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"
+
+
+        else
+            
+            map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED
+            
+            map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq"       
+            UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"
+        fi
+    done   
+    whisper "\nPROGRESS: MAPPING COMPLETE\n"
+
+    cat mapDir_*/*.vis > $PREFIX.vis 
+
+
+    
 
 fi
 

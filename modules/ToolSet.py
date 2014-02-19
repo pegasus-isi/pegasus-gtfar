@@ -14,6 +14,18 @@ from collections import defaultdict as dd
 ##########################################################################################################################################
 
 
+
+def fileGrab(args,loc):
+    try: return open(args[loc])
+    except IndexError:
+        if not sys.stdin.isatty(): return sys.stdin
+        else:                      raise 
+    #return FILE
+
+
+
+
+
 def fileExtension(fname):
     return fname.split(".")[len(fname.split("."))-1]
 
