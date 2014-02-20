@@ -90,32 +90,6 @@ class MapReads:
             errorQuit(".mapping or .sam extension required")
 
 
-            ### FIX THIS AND MAKE IT MORE CONCISE ###!!!!
-            #self.readID,self.readSeq,self.subs,self.qual  = self.rawLine[0],self.rawLine[1],self.rawLine[6],self.rawLine[8]
-            
-#        if self.format == "SAM":
-#            print "YO"
-#            cigarSpot = myLine[5].split("N"); self.refData = myLine[2].split("|")
-#            if len(cigarSpot) > 1 and len(self.refData)>1:
-#                self.style = 'gapFeature'
-#                self.seqlen = len(myLine[9]); self.rawLine = myLine; self.next = self.nextGappedLine; self.next()
-                #print myLine 
-
-#            elif len(self.refData) == 1:
-#                self.rName,self.samStrand,self.fName,self.fPos,self.cigar,self.read,self.qual,self.subs = myLine[0],myLine[1],myLine[2],int(myLine[3]),myLine[5],myLine[9],myLine[10],int(myLine[11].split(":")[-1])
-#                self.geneID,self.refStrand,self.chr,self.seqLen = None,"+",self.fName,len(self.read)-1
-#                self.fLocs = cigarToLoc(int(self.fPos),self.cigar)
-#                self.next = self.nextGenomeLine
-
-     
- #           else:
- #               self.rName,self.samStrand,self.fName,self.fPos,self.blank,self.cigar,self.blank,self.blank,self.blank,self.read,self.qual,self.subs,self.blank = myLine
- #               self.fPos = int(self.fPos)-1; self.subs= int(self.subs.split(":")[-1]); self.refData = self.fName.split("|")
- #               self.geneID,self.refStrand,self.chr = self.refData[0],self.refData[2],self.refData[3]
- #               self.seqLen = len(self.read) - 1 
- #               self.fLocs = cigarToLoc(int(self.fPos),self.cigar)
- #               self.next = self.nextSamLine
-
         
 ##############################################################################################################
 ############################################   READ RELOCATION  ##############################################
@@ -152,7 +126,6 @@ class MapReads:
     
 
     def getSamGenomeRead(self):
-        #print "\t".join(self.rawLine)
         if len(self.rawLine)==12: self.readID,self.readSeq,self.subs,self.qual,self.genomeData=self.rawLine[0],self.rawLine[9],int(self.rawLine[11].split(":")[-1]),self.rawLine[10],[]
         elif len(self.rawLine)==13: self.readID,self.readSeq,self.subs,self.qual,self.genomeData=self.rawLine[0],self.rawLine[9],0,self.rawLine[10],[]
         else:
@@ -164,6 +137,7 @@ class MapReads:
             if len(self.rawLine)==0:
                 self.fileOpen=False
                 break
+
     def printGenomeData(self):
 
         GENE_UNIQUE="0.0,0.0"
@@ -211,7 +185,6 @@ class MapReads:
             if len(self.rawLine)==0:
                 self.fileOpen=False
                 break
-        #self.mapType = "UNIQUE"
         if len(self.mapData)>1: self.disambiguateMaps()
        
 
@@ -226,21 +199,24 @@ class MapReads:
         if len(set([m[1] for m in self.mapData]))==1:             GENOME_UNIQUE=str(1.0)+",0.0"
         else:                                                     GENOME_UNIQUE="0.0,"+str(1.0/len(self.mapData))
 
+        
+
         for m in self.mapData:
+            self.readPrint, self.qualPrint = self.readSeq,self.qual
 
             ### FIX SMALL SPLICING OFFSETS ###
             if len(m[1])>2:
                 if m[1][1]-m[1][0]<self.minOVERLAP:
                     if m[2]=="+":
-                        self.readSeq,self.qual=self.readSeq[(m[1][1]-m[1][0])+1::],self.qual[(m[1][1]-m[1][0])+1::]
+                        self.readPrint,self.qualPrint=self.readPrint[(m[1][1]-m[1][0])+1::],self.qualPrint[(m[1][1]-m[1][0])+1::]
                     else:
-                        self.readSeq,self.qual=self.readSeq[0:len(self.readSeq)-(m[1][1]-m[1][0]+1)],self.qual[0:len(self.readSeq)-(m[1][1]-m[1][0]+1)]
+                        self.readPrint,self.qualPrint=self.readPrint[0:len(self.readPrint)-(m[1][1]-m[1][0]+1)],self.qualPrint[0:len(self.readPrint)-(m[1][1]-m[1][0]+1)]
                     m = (m[0],m[1][2::],m[2],m[3],m[4])
                 if m[1][-1]-m[1][-2]<self.minOVERLAP:
                     if m[2]=="+":
-                        self.readSeq,self.qual=self.readSeq[0:len(self.readSeq)-(m[1][-1]-m[1][-2]+1)],self.qual[0:len(self.readSeq)-(m[1][-1]-m[1][-2]+1)]
+                        self.readPrint,self.qualPrint=self.readPrint[0:len(self.readPrint)-(m[1][-1]-m[1][-2]+1)],self.qualPrint[0:len(self.readPrint)-(m[1][-1]-m[1][-2]+1)]
                     else:
-                        self.readSeq,self.qual=self.readSeq[(m[1][-1]-m[1][-2])+1::],self.qual[(m[1][-1]-m[1][-2])+1::]
+                        self.readPrint,self.qualPrint=self.readPrint[(m[1][-1]-m[1][-2])+1::],self.qualPrint[(m[1][-1]-m[1][-2])+1::]
                     m=(m[0],m[1][0:len(m[1])-2],m[2],m[3],m[4])
             
 
@@ -284,10 +260,12 @@ class MapReads:
                 sys.exit()
 
 
-            
+
+
+
             cigar="".join([str(m[1][i]-m[1][i-1]+1)+"M" if i%2==1 else str(m[1][i]-m[1][i-1]-1)+"N" for i in xrange(1,len(m[1]))])
             
-            samStartData= [self.readID,self.samStrand[m[2]],m[0][3],m[1][0],'255',cigar,"*",0,0,self.readSeq,self.qual,'NM:i:'+str(self.subs)]
+            samStartData= [self.readID,self.samStrand[m[2]],m[0][3],m[1][0],'255',cigar,"*",0,0,self.readPrint,self.qualPrint,'NM:i:'+str(self.subs)]
 
  
 
@@ -322,12 +300,13 @@ class MapReads:
         elif "KJXN" in mapCodes: self.mapData=[m for m in self.mapData if m[0][-1]=="KJXN"]
         if len(self.mapData)==1: return 
         ### 3) Merge Multi-Genes ###
+
         if len(set([m[1] for m in self.mapData]))==1 and len(set([m[0][3] for m in self.mapData]))==1:
             self.mapData=[([",".join(list(set([self.mapData[i][0][j] for i in range(len(self.mapData))]))) for j in range(len(self.mapData[0][0]))], self.mapData[0][1],self.mapData[0][2],self.mapData[0][3],self.mapData[0][4])]
             if len(self.mapData)==1: return
 
-        ### 4) Merge Mutlti-Spots --- ###
-        
+        ### 4) Merge Multi-Spots --- ###
+       
         if len(set([tuple(m[0]) for m in self.mapData])) == 1:
             if len(set([(m[1][1:len(m[1])-1]) for m in self.mapData])) == 1:
                 tmp_starts=(max([m[1][0] for m in self.mapData]),min([m[1][0] for m in self.mapData])); tmp_ends=(max([m[1][-1] for m in self.mapData]),min([m[1][-1] for m in self.mapData]))
@@ -335,7 +314,7 @@ class MapReads:
                     tmp_offset = tmp_starts[0]-tmp_starts[1]
                     if tmp_offset*2 < len(self.readSeq)/2.0:
                         self.mapData = [(self.mapData[0][0],(tmp_starts[0],)+self.mapData[0][1][1:len(self.mapData[0][1])-1]+(tmp_ends[1],),self.mapData[0][2],self.mapData[0][3],self.mapData[0][4])]
-                        self.qual = self.readSeq[tmp_offset:len(self.readSeq)-tmp_offset],self.qual[tmp_offset:len(self.readSeq)-tmp_offset]
+                        self.readSeq,self.qual = self.readSeq[tmp_offset:len(self.readSeq)],self.qual[tmp_offset:len(self.readSeq)]
             else:
                 if len(set([m[1][-1] for m in self.mapData])) == 1:
                     tmpLocs=[]; k=-1;
@@ -370,6 +349,10 @@ class MapReads:
                         else:                         self.readSeq=self.readSeq[trimDist::]; self.qual=self.qual[trimDist::]
                         return
             
-                        
-                
+            if len(self.mapData)==1: return
+                             
+        ### 5) SELECT LARGEST CONTIGIOUS SPOTS ###
+        seqRuns = []
+        seqRuns = [max([m[1][i+1]-(m[1][i])+1 for i in range(0,len(m[1]),2)]) for m in self.mapData]
+        self.mapData = [self.mapData[i] for i in range(len(self.mapData)) if seqRuns[i] == max(seqRuns)]
 
