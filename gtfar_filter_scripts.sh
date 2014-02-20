@@ -52,7 +52,7 @@ function count_and_split_reads {
         pre_filter_fastq.py "x"${NUMS[$k]} -t $TRIMSTR -p reads"$k" & k=$(( $k + 1 ))
     done 
     wait
-    cat reads*_reject.fastq > ../reads.reject.fastq 
+    #cat reads*_reject.fastq > ../reads.reject.fastq 
     cat reads*.stats | sort -k1n,1 | awk '{if ($1==L) {A+=$2;B+=$3} else {if (NR>1) print L,A,B;L=$1;A=$2;B=$3}} END{print L,A,B}' > ../adaptor.stats 
 	printf "Success\n" 
     cd ../../

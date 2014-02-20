@@ -70,6 +70,8 @@ function filter_reads {
 	printf "GTFAR-MODULE: FILTER\n"
     if [ $(echo $READS | awk '{print NF}') -gt 1 ]; then echo "ERROR: FILTER MODULE USES A SINGLE READ FILE"; exit; fi 
 	count_and_split_reads $OUTDIR $READS
+    cat $OUTDIR/reads*reject.fastq > $OUTDIR/$PREFIX"_reject".fastq
+    cp $OUTDIR/adaptor.stats > $OUTDIR/$PREFIX"_adaptor".stats
 }
 
 
@@ -88,16 +90,16 @@ function map_filtered_reads {
         LENGTH=${TRIMARRAY[$A]}
         # if we are at the first trimmed length (75) # 
         if [ $(( $A+1 )) -eq ${#TRIMARRAY[@]} ]; then  
-            if [ $TRIMUNMAPPED == "TRUE" ]; then map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED; UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"; fi 
+            if [ $TRIMUNMAPPED == "True" ]; then map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED; UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"; fi 
             map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq" 
         else
-            if [ $TRIMUNMAPPED == "TRUE" ]; then map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED; UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"; fi  
+            if [ $TRIMUNMAPPED == "True" ]; then map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED; UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"; fi  
             map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq"       
         fi
     done   
     whisper "\nPROGRESS: MAPPING COMPLETE\n"
-
     cat mapDir_*/*.vis > $PREFIX.vis 
+    cd ..
 
 }
     
@@ -131,7 +133,8 @@ elif [ $ARGUMENT == "map" ] || [ $ARGUMENT == "MAP" ]; then
     map_filtered_reads
     
 
-elif [ $ARGUMENT == "easyrun" ]; then 
+elif [ $ARGUMENT == "easyrun" ]; then
+
     
     if [ $OUTDIR == "NONE" ]; then gtfar_fail "ERROR: A output dir  is required for easyrun"; else mkdir -p $OUTDIR; fi 
     if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for easyrun"; fi
