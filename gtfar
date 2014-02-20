@@ -96,7 +96,7 @@ function map_filtered_reads {
         fi
     done   
     whisper "\nPROGRESS: MAPPING COMPLETE\n"
-    cat mapDir_*/*.vis > $PREFIX.vis
+    cat mapDir_*/*.vis > $PREFIX.sam
             
     if [ $TRIMUNMAPPED == "True" ]; then
         cat mapDir_trim"$LENGTH"/*unmapped.fastq mapDir_trim*/*unmapped.fastq > $PREFIX.unmapped.fastq
