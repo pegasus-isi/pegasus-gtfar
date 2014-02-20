@@ -69,9 +69,7 @@ function filter_reads {
 
 	printf "GTFAR-MODULE: FILTER\n"
     if [ $(echo $READS | awk '{print NF}') -gt 1 ]; then echo "ERROR: FILTER MODULE USES A SINGLE READ FILE"; exit; fi 
-	count_and_split_reads $OUTDIR $READS
-    cat $OUTDIR/reads*reject.fastq > $OUTDIR/$PREFIX"_reject".fastq
-    cp $OUTDIR/adaptor.stats > $OUTDIR/$PREFIX"_adaptor".stats
+	count_and_split_reads $OUTDIR $READS $PREFIX
 }
 
 
@@ -98,7 +96,15 @@ function map_filtered_reads {
         fi
     done   
     whisper "\nPROGRESS: MAPPING COMPLETE\n"
-    cat mapDir_*/*.vis > $PREFIX.vis 
+    cat mapDir_*/*.vis > $PREFIX.vis
+            
+    if [ $TRIMUNMAPPED == "True" ]; then
+        cat mapDir_trim"$LENGTH"/*unmapped.fastq mapDir_trim*/*unmapped.fastq > $PREFIX.unmapped.fastq
+    else
+        #cat mapDir_full/*unmapped.fastq mapDir_filter*/*unmapped.fastq > $PREFIX.unmapped.fastq
+        cat mapDir_full/*unmapped.fastq  > $PREFIX.unmapped.fastq
+    fi
+
     cd ..
 
 }
@@ -125,11 +131,13 @@ VOLUME="LOUD"; #VOLUME=SILENT
 if [ -z $ARGUMENT ]; then
     echo "An argument is required - choose help"
 elif [ $ARGUMENT == "filter" ]; then 
+    if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for filter"; fi
     filter_reads
 
 
 
 elif [ $ARGUMENT == "map" ] || [ $ARGUMENT == "MAP" ]; then
+    if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for easyrun"; fi
     map_filtered_reads
     
 
