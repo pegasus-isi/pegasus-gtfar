@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     parser.add_option("-s", "--strandRule", default = "NA", type='string', help="Opposite,Match")
     parser.add_option("-v", "--verbose", action = 'store_true', default = False,  help="verbose output")
-    parser.add_option("-j", "--justExpression", action = 'store_true', default = False,  help="verbose output")
+    parser.add_option("-t", "--tag", default = 'gtfar', type='string',  help="tag data")
 
 
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
         try:
             fileType = args[0].split(".")[-1]
             fileHandle = open(args[0])
-            mapReads = MapReads(fileHandle,fileType,STRANDMATCH)
+            mapReads = MapReads(fileHandle,fileType,STRANDMATCH,options.tag)
             while mapReads.fileOpen:
                 mapReads.getNextRead()
                 mapReads.printData()

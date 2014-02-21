@@ -11,7 +11,7 @@ source $DIR/gtfar_util.sh
 
 
 function map_and_parse_reads { 
-    MAPDIR=$1; READS=$2
+    MAPDIR=$1; READS=$2; TAG=$3
     mkdir -p $MAPDIR 
    
 
@@ -34,17 +34,26 @@ function map_and_parse_reads {
     cd ..
 }
 
-
-function map_and_parse {
-    #cd feature_map
-    terminal_talk "Mapping reads to features..."
-    if [ -f FEATURES.log ] && [ $SKIP == "TRUE" ]; then terminal_talk "SKIPPING\n"
-    else perm $myFEATURES feature_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH > FEATURES.log; check_progress $?; terminal_talk "Success\n"; fi 
-    terminal_talk  "Parsing read alignments.."
-    for i in *.mapping; do if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --strandRule $STRANDRULE > "$i".vis & fi done
-    wait
-    check_progress $?
+function clip_and_parse_reads {
+    CLIPDIR=$1; READS=$2
+    mkdir -p $CLIPDIR 
+    ls
+    for f in $READS; do 
+        echo $f
+    done
 }
+
+
+
+#function map_and_parse {
+#    terminal_talk "Mapping reads to features..."
+#    if [ -f FEATURES.log ] && [ $SKIP == "TRUE" ]; then terminal_talk "SKIPPING\n"
+#    else perm $myFEATURES feature_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH > FEATURES.log; check_progress $?; terminal_talk "Success\n"; fi 
+#    terminal_talk  "Parsing read alignments.."
+#    for i in *.mapping; do if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --strandRule $STRANDRULE > "$i".vis & fi done
+#    wait
+#    check_progress $?
+#}
 
 
 
@@ -101,7 +110,7 @@ function map_and_parse_reads_to_features {
     elif [ $valid_read_files == 0 ]; then terminal_talk "NO READS\n"; 
     else perm $myFEATURES val_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH > FEATURES.log; check_progress $?; terminal_talk "Success\n"; fi 
     terminal_talk  "Parsing read alignments.."
-    for i in *.mapping; do if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --strandRule $STRANDRULE > "$i".vis & fi done
+    for i in *.mapping; do if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --strandRule $STRANDRULE --tag $TAG > "$i".vis & fi done
     wait
     check_progress $?
     terminal_talk ".Sucess\n"
@@ -119,7 +128,7 @@ function map_and_parse_reads_to_genome {
     else perm $myGENOME val_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH --noSamHeader --outputFormat sam > GENOME.log; check_progress $?; terminal_talk "Success\n"; fi 
     
     terminal_talk "Parsing read alignments.."
-    for i in *.sam; do if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i  > "$i".vis & fi done
+    for i in *.sam; do if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --tag $TAG  > "$i".vis & fi done
     wait
     check_progress $?
     terminal_talk ".Sucess\n"
@@ -134,7 +143,7 @@ function map_and_parse_reads_to_splices {
     elif [ $valid_read_files == 0 ]; then NOREADSZ=5; 
     else perm $mySPLICES val_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH > SPLICE.log; check_progress $?; terminal_talk "Success\nParsing read alignments.."; fi 
     
-    for i in *.mapping; do  if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --strandRule $STRANDRULE > "$i".vis & fi done
+    for i in *.mapping; do  if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --strandRule $STRANDRULE --tag $TAG > "$i".vis & fi done
     wait
     check_progress $?
     terminal_talk "..Sucess\n"

@@ -23,7 +23,8 @@ add_option config -c  DEFAULT='None' TYPE=File        INFO='Configuration File f
 add_option strandRule -s DEFAULT="UNSTRANDED" STR_OPTS=Unstranded,Same,Opposite  INFO='A rule for strandedness (None, Same or Opposite)'
 add_option mismatches -m DEFAULT=3 INT_MIN=0 INT_MAX=8    INFO='The number of mismatches to allow per mapping'
 add_option verbose DEFAULT="True" TYPE=bool  
-add_option trimUnmapped -z DEFAULT="False" TYPE=bool  
+add_option trimUnmapped -y DEFAULT="False" TYPE=bool  
+add_option mapFiltered  -z DEFAULT="False" TYPE=bool  
 add_option outdir -d DEFAULT='None'   INFO='working directory'
 add_option inputdir -i DEFAULT='None'   INFO='working directory'
 add_option prefix -p DEFAULT='None'   INFO='prefix'
@@ -72,49 +73,50 @@ function filter_reads {
 	count_and_split_reads $OUTDIR $READS $PREFIX
 }
 
+function clip_map_unmapped_reads {
 
-function map_filtered_reads {
 	source $DIR/gtfar_map_scripts.sh
-
+    
     if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping - create one using gtfar annotate"; else source $CONFIG; fi
-
-    READS=$OUTDIR/filterDir/reads*_full.fastq; 
-    MAPDIR=$OUTDIR/mapDir_full
+    
+    READS=mapDir_full/reads*unmapped.fastq
 
     cd $OUTDIR 
-    map_and_parse_reads mapDir_full "filterDir/reads*_full.fastq"; UNMAPPED="mapDir_full/reads*unmapped.fastq"
-
-    for ((A=${#TRIMARRAY[@]}-1;A>=0;A--)); do 
-        LENGTH=${TRIMARRAY[$A]}
-        # if we are at the first trimmed length (75) # 
-        if [ $(( $A+1 )) -eq ${#TRIMARRAY[@]} ]; then  
-            if [ $TRIMUNMAPPED == "True" ]; then map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED; UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"; fi 
-            map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq" 
-        else
-            if [ $TRIMUNMAPPED == "True" ]; then map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED; UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"; fi  
-            map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq"       
-        fi
-    done   
-    whisper "\nPROGRESS: MAPPING COMPLETE\n"
-    cat mapDir_*/*.vis > $PREFIX.sam
-            
-    if [ $TRIMUNMAPPED == "True" ]; then
-        cat mapDir_trim"$LENGTH"/*unmapped.fastq mapDir_trim*/*unmapped.fastq > $PREFIX.unmapped.fastq
-    else
-        #cat mapDir_full/*unmapped.fastq mapDir_filter*/*unmapped.fastq > $PREFIX.unmapped.fastq
-        cat mapDir_full/*unmapped.fastq  > $PREFIX.unmapped.fastq
-    fi
-
+    clip_and_parse_reads clipDir "$READS"
+    ls 
     cd ..
 
 }
+
+
+function iterative_map_filtered_reads {
+	source $DIR/gtfar_map_scripts.sh
+    MAPFILTERED="True"
+    if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping - create one using gtfar annotate"; else source $CONFIG; fi
+
+    READS=$OUTDIR/filterDir/reads*_full.fastq; MAPDIR=$OUTDIR/mapDir_full
+
+    cd $OUTDIR 
+    map_and_parse_reads mapDir_full "filterDir/reads*_full.fastq" "FULL"; UNMAPPED="mapDir_full/reads*unmapped.fastq"
+
+    for ((A=${#TRIMARRAY[@]}-1;A>=0;A--)); do 
+        LENGTH=${TRIMARRAY[$A]}
+        if [ $(( $A+1 )) -eq ${#TRIMARRAY[@]} ]; then  
+            if [ $TRIMUNMAPPED == "True" ]; then map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED "TRIM"$LENGTH; UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"; fi 
+            if [ $MAPFILTERED == "True" ]; then map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq" "FILTER"$LENGTH; fi 
+        else
+            if [ $TRIMUNMAPPED == "True" ]; then map_and_parse_reads mapDir_trim"$LENGTH" $UNMAPPED "TRIM"$LENGTH; UNMAPPED="mapDir_trim"$LENGTH"/reads*unmapped.fastq"; fi  
+            if [ $MAPFILTERED  == "True" ]; then map_and_parse_reads mapDir_filter"$LENGTH" "filterDir/reads*_"$LENGTH".fastq" "FILTER"$LENGTH; fi        
+        fi
+    done   
+    cat mapDir_*/*.vis > $PREFIX.sam
+            
+    if [ $TRIMUNMAPPED == "True" ]; then cat mapDir_trim"$LENGTH"/*unmapped.fastq mapDir_trim*/*unmapped.fastq > $PREFIX.unmapped.fastq
+    else                            cat mapDir_full/*unmapped.fastq  > $PREFIX.unmapped.fastq; fi
+
+    cd ..
+}
     
-
-
-
-
-
-
 
 
 
@@ -138,8 +140,10 @@ elif [ $ARGUMENT == "filter" ]; then
 
 elif [ $ARGUMENT == "map" ] || [ $ARGUMENT == "MAP" ]; then
     if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for easyrun"; fi
-    map_filtered_reads
+    iterative_map_filtered_reads
     
+elif [ $ARGUMENT == "splicesearch" ]; then 
+    clip_map_unmapped_reads 
 
 elif [ $ARGUMENT == "easyrun" ]; then
 
@@ -150,7 +154,7 @@ elif [ $ARGUMENT == "easyrun" ]; then
 
 
     filter_reads 
-    map_filtered_reads
+    iterative_map_filtered_reads
     
 
 fi

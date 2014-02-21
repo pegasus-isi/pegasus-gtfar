@@ -25,7 +25,7 @@ from math import fabs
 
 class MapReads:
 
-    def __init__(self,fileHandle,fileType,strandSpecific):
+    def __init__(self,fileHandle,fileType,strandSpecific,tag):
  
         if strandSpecific == "OPPOSITE":    self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): False,("-","-"): False}
         elif strandSpecific == "MATCH":         self.strandKey = {("+","-"): False,("-","+"): False,("+","+"): True,("-","-"): True}
@@ -35,16 +35,11 @@ class MapReads:
         self.samStrand = {'0':'+','16':'-','+':'0','-':'16'}
 
 
-        self.handle = fileHandle; self.gapped = False
+        self.handle, self.tag= fileHandle, tag
 
         self.minOVERLAP=5
 
-
-        #try:                self.handle = open(self.fileName)
-        #except IOError:     errorQuit('ERROR: File '+self.fileName+' does not exist')
         
-        self.open = True
-
         self.fileOpen = True
         
 
@@ -54,7 +49,6 @@ class MapReads:
         myLine=self.rawLine
         self.samHeader=[]
         if len(self.rawLine) == 0:
-            self.open = False
             self.fileOpen = False
             self.format = None
             return
@@ -152,7 +146,7 @@ class MapReads:
             else:
                 CLASS="CL:i:INTERGENIC:JXN="+str(g[5][1])+","+str(g[5][2])
             samStartData= [self.readID,g[0],g[1],g[2],g[3],g[4],"*",0,0,self.readSeq,self.qual,'NM:i:'+str(self.subs)]
-            samStartData.extend(['GT:i:'+GENOME_UNIQUE,'TT:i:'+GENE_UNIQUE,CLASS,'GN:i:None','AN:i:None','FM:i:INTERGENIC','SN:i:True'])
+            samStartData.extend(['GT:i:'+GENOME_UNIQUE,'TT:i:'+GENE_UNIQUE,CLASS,'GN:i:None','AN:i:None','FM:i:INTERGENIC','SN:i:True','RT:i:'+self.tag])
             print "\t".join([str(s) for s in samStartData])
 
 
@@ -266,11 +260,8 @@ class MapReads:
             cigar="".join([str(m[1][i]-m[1][i-1]+1)+"M" if i%2==1 else str(m[1][i]-m[1][i-1]-1)+"N" for i in xrange(1,len(m[1]))])
             
             samStartData= [self.readID,self.samStrand[m[2]],m[0][3],m[1][0],'255',cigar,"*",0,0,self.readPrint,self.qualPrint,'NM:i:'+str(self.subs)]
-
  
-
-            #samStartData.extend(['GT:i:'+GENOME_UNIQUE,'SP:i:'+SPLICESTR,'TT:i:'+GENE_UNIQUE,'CL:i:'+m[0][5],'GN:i:'+m[0][0],'AN:i:'+m[0][1],'FM:i:'+m[0][2],'SN:i:'+str(m[3])])
-            samStartData.extend(['GT:i:'+GENOME_UNIQUE,'TT:i:'+GENE_UNIQUE,'CL:i:'+m[0][5],'GN:i:'+m[0][0],'AN:i:'+m[0][1],'FM:i:'+m[0][2],'SN:i:'+str(m[3])])
+            samStartData.extend(['GT:i:'+GENOME_UNIQUE,'TT:i:'+GENE_UNIQUE,'CL:i:'+m[0][5],'GN:i:'+m[0][0],'AN:i:'+m[0][1],'FM:i:'+m[0][2],'SN:i:'+str(m[3]),'RT:i:'+self.tag])
             
             print "\t".join([str(s) for s in samStartData])
 
