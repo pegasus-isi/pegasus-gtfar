@@ -15,9 +15,9 @@ function map_and_parse_reads {
     mkdir -p $MAPDIR 
    
 
-    setup_seeds
-    setup_reads
-    setup_refs
+    setup_perm_seeds
+    setup_perm_reads
+    setup_perm_refs
     SKIP="TRUE"
     SKIP="FALSE"
     cd $MAPDIR 
@@ -35,30 +35,45 @@ function map_and_parse_reads {
 }
 
 function clip_and_parse_reads {
-    CLIPDIR=$1; READS=$2
-    mkdir -p $CLIPDIR 
+    CLIPDIR=$1; READS=$2; SEED="F1"
+    setup_clip_seed
+    setup_clip_reads $CLIPDIR $READS
+    setup_clip_refs
+    cd $CLIPDIR
+    clipR $myGENES gene_reads.txt --seed $SEED --anchorL $anchor -e -v $MISMATCHES -s -u --noSamHeader --ignoreDummyR 40 --ignoreRepeatR 15 > clip.log &
+    wait
     ls
-    for f in $READS; do 
-        echo $f
-    done
+    cd ..
+
 }
 
 
-
-#function map_and_parse {
-#    terminal_talk "Mapping reads to features..."
-#    if [ -f FEATURES.log ] && [ $SKIP == "TRUE" ]; then terminal_talk "SKIPPING\n"
-#    else perm $myFEATURES feature_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH > FEATURES.log; check_progress $?; terminal_talk "Success\n"; fi 
-#    terminal_talk  "Parsing read alignments.."
-#    for i in *.mapping; do if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --strandRule $STRANDRULE > "$i".vis & fi done
-#    wait
-#    check_progress $?
-#}
+function setup_clip_seed {
+    SEED="F1"; MISMATCHES=1;
+    if [ $LENGTH>=100 ]; then anchor=35
+    elif [ $LENGTH==75 ]; then anchor=25
+    else echo "UNSUPPORTED LEN"; fi 
+}
 
 
+function setup_clip_reads {
+    CLIPDIR=$1; READS=$2
+    mkdir -p $CLIPDIR 
+    rm -f $CLIPDIR/gene_reads.txt; rm -f $CLIPDIR/genome_reads.txt
+    for f in $READS; do 
+        if [ ! -e $f ]; then echo "ERROR: FASTQ FILES NOT SUPPLIED" $f; exit; fi 
+        rEXT=${f##*.} ; FNAME=$(readlink -m $f); FLINK=$CLIPDIR/$(basename $FNAME)
+        if [ $rEXT != "fastq" ]; then echo "ERROR: FASTQ FILES NEEDED"; exit; fi 
+        ln -fns $FNAME $FLINK; 
+        printf $(basename $FNAME)"\n" >> $CLIPDIR/gene_reads.txt  
+        printf $(basename $FNAME "."$rEXT)"_miss_GENES.fastq\n" >> $CLIPDIR/genome_reads.txt
+    
+    done
+}
 
+    
 
-function setup_reads {
+function setup_perm_reads {
     if [ $MAPDIR == "NONE" ]; then echo "ERROR: NEED AN OUTPUT DIRECTORY"; exit; fi 
    
      
@@ -74,7 +89,22 @@ function setup_reads {
     done
 }
 
-function setup_refs {
+function setup_clip_refs {
+    GENE_IDX="GENES_"$SEED"_"$LENGTH; GENOME_IDX="GENOME_"$SEED"_"$LENGTH
+
+    if [ ! -z ${!GENE_IDX} ] && [ -f ${!GENE_IDX} ]; then GENES=${!GENE_IDX};
+    elif [ -f $GENE_REF ]; then GENES=$GENE_REF
+    else echo "INVALID REFS SUPPLIED"; exit; fi 
+    if [ ! -z ${!GENOME_IDX} ]; then GENOME=${!GENOME_DIX}; else GENOME=$GENOME_REF; fi
+    
+    GENES_EXT=${GENES##*.}; GENOME_EXT=${GENOME##*.};
+    ln -fns $GENES $CLIPDIR"/GENES."$GENES_EXT; myGENES="GENES."$GENES_EXT
+    if [ ! -z $GENOME ]; then  ln -fns $GENOME $CLIPDIR/"GENOME."$GENOME_EXT; myGENOME="GENOME."$GENOME_EXT; fi
+}
+
+
+
+function setup_perm_refs {
     if [ $MAPDIR == "NONE" ]; then echo "ERROR: NEED AN OUTPUT DIRECTORY"; exit; fi 
         
     F_IDX="FEATURES_"$SEED"_"$LENGTH; G_IDX="GENOME_"$SEED"_"$LENGTH; S_IDX="SPLICE_"$SEED"_"$LENGTH
@@ -94,7 +124,7 @@ function setup_refs {
 
 }
 
-function setup_seeds {
+function setup_perm_seeds {
     if [ $LENGTH -gt 64 ]; then  SEEDSCR=$(( ($MISMATCHES+1)/2 )); else SEEDSCR=$MISMATCHES; fi; SEED="F"$SEEDSCR
     
    }
@@ -231,14 +261,6 @@ function token_cnt { echo $#
 
 
 
-function combine_vis_files {
-
-for i in $(cat reads/read_index.table); do 
-    RNAME=$(echo $i | awk -F\=== '{print $1}')
-    RFULL=$(echo $i | awk -F\=== '{print $2}')
-    cat $RNAME*.vis > $RFULL.sam 
-done
-}
 
 
 #########################################################################################################################################################################

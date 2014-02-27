@@ -17,7 +17,7 @@ add_arg easyrun "filter and map"
 
 add_option length -l  DEFAULT=100 TYPE=NUM INT_MIN=50 INT_MAX=128  INFO='length of reads'
 add_option MULTI=True INT_MIN=10 INT_MAX=150 trims INFO='trimmings' DEFAULT=50 
-add_option MULTI=True TYPE=File reads  INFO='reads or file in fastq or fastq.gz format'
+add_option MULTI=True TYPE=File -r reads  DEFAULT="None" INFO='reads or file in fastq or fastq.gz format'
 add_option config -c  DEFAULT='None' TYPE=File        INFO='Configuration File for Reference Data'
 
 add_option strandRule -s DEFAULT="UNSTRANDED" STR_OPTS=Unstranded,Same,Opposite  INFO='A rule for strandedness (None, Same or Opposite)'
@@ -65,37 +65,33 @@ TRIMARRAY=($TRIMS)
 
 
 
-function filter_reads { 
-	source $DIR/gtfar_filter_scripts.sh
+function option_filter { 
+    if [ $READS == "NONE" ]; then 
+        printf "READS NEEDED FOR OPTION FILTER"; exit ; fi 
+    source $DIR/gtfar_filter_scripts.sh
 
 	printf "GTFAR-MODULE: FILTER\n"
     if [ $(echo $READS | awk '{print NF}') -gt 1 ]; then echo "ERROR: FILTER MODULE USES A SINGLE READ FILE"; exit; fi 
 	count_and_split_reads $OUTDIR $READS $PREFIX
 }
 
-function clip_map_unmapped_reads {
+function option_spliceMap  {
 
 	source $DIR/gtfar_map_scripts.sh
-    
     if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping - create one using gtfar annotate"; else source $CONFIG; fi
-    
     READS=mapDir_full/reads*unmapped.fastq
-
     cd $OUTDIR 
     clip_and_parse_reads clipDir "$READS"
-    ls 
     cd ..
 
 }
 
 
-function iterative_map_filtered_reads {
+function option_iterativeMap {
 	source $DIR/gtfar_map_scripts.sh
     MAPFILTERED="True"
     if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping - create one using gtfar annotate"; else source $CONFIG; fi
-
     READS=$OUTDIR/filterDir/reads*_full.fastq; MAPDIR=$OUTDIR/mapDir_full
-
     cd $OUTDIR 
     map_and_parse_reads mapDir_full "filterDir/reads*_full.fastq" "FULL"; UNMAPPED="mapDir_full/reads*unmapped.fastq"
 
@@ -134,16 +130,16 @@ if [ -z $ARGUMENT ]; then
     echo "An argument is required - choose help"
 elif [ $ARGUMENT == "filter" ]; then 
     if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for filter"; fi
-    filter_reads
+    option_filter
 
 
 
 elif [ $ARGUMENT == "map" ] || [ $ARGUMENT == "MAP" ]; then
     if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for easyrun"; fi
-    iterative_map_filtered_reads
+    option_iterativeMap
     
 elif [ $ARGUMENT == "splicesearch" ]; then 
-    clip_map_unmapped_reads 
+    option_spliceMap 
 
 elif [ $ARGUMENT == "easyrun" ]; then
 
@@ -153,8 +149,8 @@ elif [ $ARGUMENT == "easyrun" ]; then
     if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping portion of easyrun - create one using gtfar annotate"; else source $CONFIG; fi
 
 
-    filter_reads 
-    iterative_map_filtered_reads
+    option_filter 
+    option_iterativeMap
     
 
 fi
