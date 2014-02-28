@@ -264,13 +264,24 @@ class MapReads:
 
             cigar="".join([str(m[1][i]-m[1][i-1]+1)+"M" if i%2==1 else str(m[1][i]-m[1][i-1]-1)+"N" for i in xrange(1,len(m[1]))])
             
-            if (m[0][4]==m[2]) != m[3]:
+            samStrand=self.samStrand[m[2]]
+            if m[2]=="-":
                 self.readPrint = reverse_complement(self.readPrint)
                 self.qualPrint = self.qualPrint[::-1]
+            
+            
+
+
+            if (m[0][4]==m[2]) != m[3]:
+                if samStrand == '0': samStrand='16'
+                elif samStrand == '16': samStrand='0'
+                else:
+                    print "WTF"
+                    sys.exit()
 
 
 
-            samStartData= [self.readID,self.samStrand[m[2]],m[0][3],m[1][0],'255',cigar,"*",0,0,self.readPrint,self.qualPrint,'NM:i:'+str(self.subs),GENOME_UNIQUE,FEATURE_UNIQUE]
+            samStartData= [self.readID,samStrand,m[0][3],m[1][0],'255',cigar,"*",0,0,self.readPrint,self.qualPrint,'NM:i:'+str(self.subs),GENOME_UNIQUE,FEATURE_UNIQUE]
             samStartData.extend(['CL:i:'+m[0][5],'GN:i:'+m[0][0],'AN:i:'+m[0][1],'FM:i:'+m[0][2],'SN:i:'+str(m[3]),'RT:i:'+self.tag])
 
             #samStartData.extend(['GT:i:'+GENOME_UNIQUE,'TT:i:'+GENE_UNIQUE,'CL:i:'+m[0][5],'GN:i:'+m[0][0],'AN:i:'+m[0][1],'FM:i:'+m[0][2],'SN:i:'+str(m[3]),'RT:i:'+self.tag])
