@@ -2,8 +2,6 @@
 
 import sys
 import os
-print "HI"
-os.getcwd()
 from modules.GtfFile  import *
 '''
 This program requires a gencode annotation file (gtf) and a path to the chr fasta files referenced in the gtf file
@@ -24,8 +22,6 @@ def runthrough(fName,genomePath,filters,prefix,readlen,gapcands,mutationList):
     
 
 if __name__ == '__main__':
-
-
 
     from optparse import OptionParser
     usage = "usage: ./%prog [options] data_file"
@@ -51,10 +47,18 @@ elif options.chromosomes == None:
     parser.print_help()
 else:
     if options.chromosomes[-1]=="/": options.chromosomes=options.chromosomes[0:len(options.chromosomes)-1]
-    if options.snpcands != None:
-        print "COOL"
-    elif options.snpcands == None:
+    if options.snpcands == None:
         runthrough(args[0],options.chromosomes,options.filterseqs,options.prefix,options.readlen,options.gapcands,options.mutationList)
+    elif options.snpcands != None:
+        gtf = GtfFile(args[0],options.prefix,options.readlen,options.filterseqs)
+        gtf.addCandidates(options.snpcands,"SNPS")
+        while gtf.open:
+            gtf.loadGenesOnChromosome()
+            gtf.addFasta(options.chromosomes+'/'+gtf.chr+'.fa') 
+            gtf.printCandidatesOnChromosome()
+            gtf.startNextChromosome()
+
+
     else:
         print "ANNOTATE AND CREATE SEQS/KEY"
         print "USAGE: ./annotate_gtf.py file.gtf -c chromosome_path -f filter_seqs -p PREFIXNAME -l READLENGTH -m Mutationlist" 

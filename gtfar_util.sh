@@ -8,6 +8,47 @@ export PATH=$PATH:$DIR
 
 ############################################################################################################################################################
 
+function start_command_section {
+    cCOMMAND=$1
+    printf " BEGIN: $cCOMMAND\n" >> $LOGFILE
+    if [ $VERBOSE == "TRUE" ]; then printf " BEGIN: $cCOMMAND\n"; fi 
+    
+}
+
+function end_command_section {
+    cCOMMAND=$1; cRESULT=$2
+    if [ $cRESULT == 0 ]; then 
+        printf " COMPLETED: $cCOMMAND\n" >> $LOGFILE
+        if [ $VERBOSE == "TRUE" ]; then printf " COMPLETED: $cCOMMAND\n"; fi 
+    else
+        printf " FAILED: $cCOMMAND\n" >> $LOGFILE
+        printf " FAILED: $cCOMMAND\n"; exit
+    fi
+
+}
+
+
+function gtfar_command {
+    cCOMMAND=$1
+    cOUTPUT=$2
+
+    if [ -z $cOUTPUT ]; then cOUTPUT=/dev/null ; fi
+    printf "  COMMAND: $cCOMMAND > $cOUTPUT ... " >> $LOGFILE
+    if [ $VERBOSE == "TRUE" ]; then printf "  COMMAND: $cCOMMAND > $cOUTPUT ... "; fi 
+    $cCOMMAND > $cOUTPUT 
+    if [ $? == 0 ]; 
+        then printf "RESULT: Sucess\n" >> $LOGFILE
+            if [ $VERBOSE == "TRUE" ]; then printf "RESULT: Sucess\n"; fi 
+    
+    else
+        printf "RESULT: Failure\n" >> $LOGFILE
+            if [ $VERBOSE == "TRUE" ]; then printf "RESULT: Failure\n"; exit; 
+            else printf "  COMMAND: $cCOMMAND > $cOUTPUT ... RESULT: Failure\n"; exit; fi 
+
+    fi
+}
+
+
 
 
 

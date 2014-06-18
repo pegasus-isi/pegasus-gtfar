@@ -3,8 +3,10 @@
 
 import os
 import sys
+#from modules.fastq.FastqFile import *
 import modules.ToolSet as gtTools 
-from modules.FastqFilter import FastqReads
+#from modules.FastqFilter import FastqReads
+from modules.SamFile import SamFile
 				
                 
 if __name__ == '__main__':
@@ -20,23 +22,15 @@ if __name__ == '__main__':
     parser.add_option("-p", "--prefix", default = 'foo', type='string', help="Output Filename Prefix")
     parser.add_option("-s", "--strictness", default = 1, type='int', help="Output Filename Prefix")
     #parser.add_option("-m", "--multiple", default = 25, type='int', help="Trimming Multiple")
-    parser.add_option("--threePrimeAdaptors",default ="AGATCGGAAGAGCACACGT,GTATGCCGTCTTCTGCTTG",type='string',help='three prime adaptor seqs')
-    parser.add_option("--fivePrimeAdaptors",default ="ACACTCTTTCCCTA,CACGACGCTCTTCCGATCA",type='string',help='five prime adaptor seqs')
-    parser.add_option("--filterSeqs",default='',type='string',help="corrupt sequences")
 
     (options, args) = parser.parse_args()
 
     try:                FILE=gtTools.fileGrab(args,0)
-    except IndexError:  
+    except IndexError:
         parser.print_help()
         sys.exit()
-    reads = FastqReads(FILE,options.readlen,options.prefix) 
-    reads.addTrimLengths(options.trimLengths)    
-    reads.addAdaptors(options.threePrimeAdaptors,options.fivePrimeAdaptors,options.strictness)
-    
-    while reads.fileOpen:
-        reads.adaptorFilter()
-        reads.nextRead()
-    reads.printSummaryStats()
-    
 
+    data  =  SamFile(FILE,options.prefix)
+    while data.fileOpen:
+        data.getSamReadData()
+    data.printResults()

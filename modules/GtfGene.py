@@ -4,6 +4,7 @@
 import sys
 from random import randrange
 from random import choice
+from random import random
 from collections import defaultdict as dd
 
 ##########################################################################################################################################
@@ -25,7 +26,7 @@ class GtfGene:
         else:
             self.name, self.chr, self.start, self.end, self.strand, self.type, self.status,self.hugo = line.geneID, line.chr, line.start,line.end,line.strand,line.geneType,line.geneStatus,line.hugoName 
             self.readlen = readlen; self.length = self.end-self.start+1
-            
+            self.rnaFragments = [] 
             self.transcripts = []
             self.EXONS = set([])
             self.seq = []
@@ -288,9 +289,94 @@ class GtfGene:
     def seqDist(jxnList):
         return sum([(x[1]-x[0])+1 for x in jxnList])
 
+    def linearAmplifyFrags(self,amplify_list=[10]):
+        for frag in self.rnaFragments:
+            frag[0]*=choice(amplify_list)
 
-
-
-
+    def exponentialAmplifyFragments(self,amplify_list=[2,3,3,4]):
+        for frag in self.rnaFragments:
+            frag[0] *= 2**(choice(amplify_list))
+    
+    def sonicateFrags(self,sonicationMean):
+        self.sonicated_rna = [] 
+        sonicationTotal = sonicationMean * 2 
+        stepSize = 10 
+        stepRate = 1.0 / (sonicationTotal / float(stepSize)) 
         
+        for frag in self.rnaFragments:
+            
+            for j in range(frag[0]):
+                i = stepSize
+                sonicationSpots = [0]
+                while i + stepSize < frag[-1]:
+                    rndm = random()
+                    if rndm < stepRate: 
+                        sonicationSpots.append(randrange(i-stepSize,i)-(sum(sonicationSpots)))
+                    i+=stepSize
+                
+                if len(sonicationSpots)>1:
+                    fragSpots = [f for f in frag[2]]
+                    newFrags = []
+                    
+                    for s in sonicationSpots[1::]:
+                        tmpSpots = []
+                        tmpDist  = 0 
+                        while tmpDist + (fragSpots[0][1] - fragSpots[0][0]) +1 < s:
+                            tmpSpots.append(fragSpots[0])
+                            tmpDist += (fragSpots[0][1] - fragSpots[0][0]) + 1
+                            fragSpots = fragSpots[1::]
+                        breakPoint = fragSpots[0][0] + (s-tmpDist) - 1
+                        tmpSpots.append((fragSpots[0][0],breakPoint))
+                        if breakPoint == fragSpots[0][1]:
+                            fragSpots = fragSpots[1::]
+                        else:
+                            fragSpots[0] = ((breakPoint+1,fragSpots[0][1]))
+
+                        newFrags.append(tmpSpots)
+                    newFrags.append(fragSpots)
+                    for n in newFrags:
+                        self.sonicated_rna.append([1,frag[1],n,sum([(x[1]-x[0]) for x in n])+len(n)])
+                else:
+                    self.sonicated_rna.append([1,frag[1],frag[2],frag[3]])
+        self.rnaFragments = self.sonicated_rna
+
+
+    def fragmentRNA(self,fragLen,tranFrags,preMRNA):
+        self.rnaFragments,tranData = [],[]
+        tranCnt = len(self.transcripts)
+        for t in self.transcripts:
+            exonSrt = sorted(t[1])
+            exonDists = [(x[1]-x[0])+1 for x in exonSrt]
+            tranData.append((t[0],exonSrt,exonDists,sum(exonDists)))               
+        
+        while len(self.rnaFragments) < tranFrags:            
+            n=0
+            sampleName,sampleExons,sampleDists,sampleLen = tranData[randrange(tranCnt)]
+            sampleLoc = randrange(sampleLen)
+            sampleSeqLen = sampleLen - sampleLoc 
+            if sampleSeqLen > fragLen: sampleSeqLen = fragLen
+
+            while sum(sampleDists[0:n]) < sampleLoc: n+=1
+
+            sampleCoords = [(sampleExons[n-1][0]+(sampleLoc-sum(sampleDists[0:n-1])),sampleExons[n-1][1])]
+            sampleSpan   = sampleCoords[0][1] - sampleCoords[0][0] + 1
+
+            while sampleSpan < sampleSeqLen:
+                sampleSpan += sampleDists[n]
+                sampleCoords.append(sampleExons[n])
+                n+=1            
+            if sampleSeqLen < sampleSpan:
+                sampleCoords[-1] = (sampleCoords[-1][0], sampleCoords[-1][1] - (sampleSpan - sampleSeqLen))
+            self.rnaFragments.append([1,sampleName,sampleCoords,sampleSeqLen])
+        
+        while len(self.rnaFragments) < preMRNA + tranFrags:
+            sampleLoc = randrange(self.start,self.end)
+            if (self.end - sampleLoc) + 1 <= fragLen:
+                self.rnaFragments.append([1,"preMRNA",[(sampleLoc,self.end)],(self.end-sampleLoc)+1])
+            else:
+                self.rnaFragments.append([1,"preMRNA",[(sampleLoc,(sampleLoc+fragLen)-1)],fragLen])
+
+    
+    
+
 ###########################################################################################################################################

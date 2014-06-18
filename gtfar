@@ -14,10 +14,12 @@ add_title_version "Gtfar (RNA-seq Analysis Pipeline)" "0.0.5"
 add_example "Alignment Step" "map -r myreads.fastq"
 add_arg map "Run Alignment" 
 add_arg filter "filter reads" 
+add_arg annotate "annotate and index a reference" 
+add_arg simulate "annotate and index a reference" 
 add_arg easyrun "filter and map" 
 
 add_option length -l  DEFAULT=100 TYPE=NUM INT_MIN=50 INT_MAX=128  INFO='length of reads'
-add_option MULTI=True INT_MIN=10 INT_MAX=150 trims INFO='trimmings' DEFAULT=50 
+add_option MULTI=True INT_MIN=10 INT_MAX=150 trims INFO='trimmings' DEFAULT='None'
 add_option MULTI=True TYPE=File -r reads  DEFAULT="None" INFO='reads or file in fastq or fastq.gz format'
 add_option config -c  DEFAULT='None' TYPE=File        INFO='Configuration File for Reference Data'
 
@@ -29,13 +31,12 @@ add_option mapFiltered  -z DEFAULT="False" TYPE=bool
 add_option outdir -d DEFAULT='None'   INFO='working directory'
 add_option inputdir -i DEFAULT='None'   INFO='working directory'
 add_option prefix -p DEFAULT='None'   INFO='prefix'
+add_option genome -g DEFAULT='None'   INFO='path to genomic chrs'
+add_option gtf -x DEFAULT='None'   INFO='gtf file'
+add_option key -k DEFAULT='None'   INFO='simulation key file'
 
 
 parseargs $@
-
-TRIMS="50 75"
-TRIMSTR=$(echo $TRIMS | awk '{$1=$1}1' OFS=",")
-TRIMARRAY=($TRIMS)
 
 ##### THE OPTIONS PARSER WILL SUPPLY US WITH THE FOLLOWING VARIABLES ######
 
@@ -68,7 +69,8 @@ TRIMARRAY=($TRIMS)
 
 function option_filter { 
     if [ $READS == "NONE" ]; then 
-        printf "READS NEEDED FOR OPTION FILTER"; exit ; fi 
+        printf "READS NEEDED FOR OPTION FILTER\n"; 
+        exit ; fi 
     source $DIR/gtfar_filter_scripts.sh
 
 	printf "GTFAR-MODULE: FILTER\n"
@@ -90,12 +92,11 @@ function option_spliceMap  {
 
 function option_iterativeMap {
 	source $DIR/gtfar_map_scripts.sh
-    MAPFILTERED="True"
+    #MAPFILTERED="True"
     if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping - create one using gtfar annotate"; else source $CONFIG; fi
     READS=$OUTDIR/filterDir/reads*_full.fastq; MAPDIR=$OUTDIR/mapDir_full
     cd $OUTDIR 
     map_and_parse_reads mapDir_full "filterDir/reads*_full.fastq" "FULL"; UNMAPPED="mapDir_full/reads*unmapped.fastq"
-
     for ((A=${#TRIMARRAY[@]}-1;A>=0;A--)); do 
         LENGTH=${TRIMARRAY[$A]}
         if [ $(( $A+1 )) -eq ${#TRIMARRAY[@]} ]; then  
@@ -114,6 +115,118 @@ function option_iterativeMap {
     cd ..
 }
     
+
+function option_annotate {
+    mkdir -p $OUTDIR; mkdir -p $OUTDIR/refs; mkdir -p $OUTDIR/indexes; rm -rf $OUTDIR/links; mkdir -p $OUTDIR/links; 
+    myGTF=$(readlink -f $GTF) 
+    myGENOME=$(readlink -f $GENOME)
+    
+    cd $OUTDIR; rm -f $PREFIX.config; rm -f $PREFIX.log; 
+    LOGFILE=$PREFIX.log 
+
+    start_command_section "Genome Annotation"
+  
+    gtfar_command "annotate_gtf.py $myGTF -c $myGENOME -p refs/$PREFIX -l $LENGTH" foo.txt  
+   
+    end_command_section "Genome Annotation" $?
+
+    printf 'CONFIG_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\n' >> $PREFIX.config
+    printf 'FEATURE_REF=$CONFIG_DIR/refs/'$PREFIX'_features.fa\n' >>$PREFIX.config
+    printf 'GENOME_REF=$CONFIG_DIR/refs/'$PREFIX'_chrs.fa\n' >>$PREFIX.config
+    printf 'SPLICE_REF=$CONFIG_DIR/refs/'$PREFIX'_jxnCands.fa\n' >>$PREFIX.config
+    printf 'GENE_REF=$CONFIG_DIR/refs/'$PREFIX'_geneSeqs.fa\n\n' >>$PREFIX.config
+    
+    
+    ln -s $PWD/refs/${PREFIX}_features.fa links/FEATURES.fa
+    ln -s $PWD/refs/$PREFIX'_chrs.fa' links/GENOME.fa
+    ln -s $PWD/refs/$PREFIX'_jxnCands.fa' links/SPLICES.fa
+    ln -s $PWD/refs/$PREFIX'_geneSeqs.fa' links/GENES.fa
+
+    
+    start_command_section "Creating Indexes"
+    gtfar_command "perm links/FEATURES.fa $LENGTH --readFormat fastq --seed F2 -s indexes/${PREFIX}_features_F2_$LENGTH.index" 
+    gtfar_command "perm links/GENOME.fa $LENGTH --readFormat fastq --seed F2 -s indexes/${PREFIX}_chrs_F2_$LENGTH.index"
+    gtfar_command "perm links/SPLICES.fa $LENGTH --readFormat fastq --seed F2 -s indexes/${PREFIX}_jxnCands_F2_$LENGTH.index"
+    gtfar_command "perm links/GENES.fa $LENGTH --readFormat fastq --seed F1 -s indexes/${PREFIX}_geneSeqs_F2_$LENGTH.index"
+  
+    printf 'FEATURES_F2_100=$CONFIG_DIR/indexes/'$PREFIX'_features_F2_100.index\n' >>$PREFIX.config
+    printf 'GENOME_F2_100=$CONFIG_DIR/indexes/'$PREFIX'_chrs_F2_100.index\n' >> $PREFIX.config
+    printf 'SPLICE_F2_100=$CONFIG_DIR/indexes/'$PREFIX'_jxnCands_F2_100.index\n' >> $PREFIX.config 
+    printf 'GENE_F2_100=$CONFIG_DIR/indexes/'$PREFIX'_geneSeqs_F2_100.index\n' >> $PREFIX.config 
+
+    end_command_section "Creating Indexes" $?
+
+    #if [ $LENGTH -gt 99 ]; then 
+    #fi
+    
+    ls
+    
+    cd ..
+}
+
+
+
+function option_simulate {
+    #mkdir -p $OUTDIR;
+    myGTF=$(readlink -f $GTF) 
+    myGENOME=$(readlink -f $GENOME)
+    myCONFIG=$(readlink -f $CONFIG)
+    myKEY=$(readlink -f $KEY)
+    
+    #cd $OUTDIR
+    #LOGFILE=$PREFIX.log 
+
+#    start_command_section "Read Simulation"
+   
+    simulate_gtf_reads.py $myGTF --genome $myGENOME --config $myCONFIG --key $myKEY -p $PREFIX -l $LENGTH
+    #gtfar_command "simulate_gtf_reads.py $myGTF -c $myGENOME -p refs/$PREFIX -l $LENGTH" 
+   
+#    end_command_section "Read Annotation" $?
+
+    #cd ..
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -137,10 +250,33 @@ elif [ $ARGUMENT == "filter" ]; then
 
 elif [ $ARGUMENT == "map" ] || [ $ARGUMENT == "MAP" ]; then
     if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for easyrun"; fi
+    if [ $OUTDIR == "NONE" ]; then gtfar_fail "ERROR: A output dir  is required for easyrun"; else mkdir -p $OUTDIR; fi 
     option_iterativeMap
     
 elif [ $ARGUMENT == "splicesearch" ]; then 
     option_spliceMap 
+
+elif [ $ARGUMENT == "annotate" ]; then
+    if [ $PREFIX == "NONE" ] || [ $OUTDIR == "NONE" ]; then
+        gtfar_fail "ERROR: Annotation requires an output directory (-d) an output prefix (-p) \nEXAMPLE: ./gtfar annotation -d mydir -p myref -g genomic_chrs/ --gtf myfile.gtf "; fi 
+    if [ $GENOME == "NONE" ] || [ $GTF == "NONE" ] ; then
+        gtfar_fail "ERROR: Annotation requires a valid path to genome (--genome) and gtf file (--gtf) \nEXAMPLE: ./gtfar annotation -d mydir -p myref -g genomic_chrs/ --gtf myfile.gtf "; fi 
+    option_annotate    
+
+elif [ $ARGUMENT == "simulate" ]; then
+    #if [ $PREFIX == "NONE" ] || [ $OUTDIR == "NONE" ]; then
+    #    gtfar_fail "ERROR: Simulation requires an output directory (-d) an output prefix (-p) \nEXAMPLE: ./gtfar annotation -d mydir -p myref -g genomic_chrs/ --gtf myfile.gtf "; fi 
+    if [ $GENOME == "NONE" ] || [ $GTF == "NONE" ] ; then
+        gtfar_fail "ERROR: Simulation requires a valid path to genome (--genome) and gtf file (--gtf) \nEXAMPLE: ./gtfar annotation -d mydir -p myref -g genomic_chrs/ --gtf myfile.gtf "; fi 
+    option_simulate
+
+
+
+
+
+
+
+
 
 elif [ $ARGUMENT == "easyrun" ]; then
 
@@ -148,11 +284,11 @@ elif [ $ARGUMENT == "easyrun" ]; then
     if [ $OUTDIR == "NONE" ]; then gtfar_fail "ERROR: A output dir  is required for easyrun"; else mkdir -p $OUTDIR; fi 
     if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for easyrun"; fi
     if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping portion of easyrun - create one using gtfar annotate"; else source $CONFIG; fi
-
+    if [ $READS  == "NONE" ]; then gtfar_fail "ERROR: A read file is needed for easyrun"; fi
 
     option_filter 
     option_iterativeMap
-    
+     
 
 fi
 

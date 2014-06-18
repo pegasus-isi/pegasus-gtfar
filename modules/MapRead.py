@@ -26,10 +26,13 @@ from math import fabs
 class MapReads:
 
     def __init__(self,fileHandle,fileType,strandSpecific,tag):
- 
-        if strandSpecific == "OPPOSITE":    self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): False,("-","-"): False}
-        elif strandSpecific == "MATCH":         self.strandKey = {("+","-"): False,("-","+"): False,("+","+"): True,("-","-"): True}
-        else:                               self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): True,("-","-"): True}
+
+
+        self.mapMax = 50
+
+        if strandSpecific == "OPPOSITE":    self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): False,("-","-"): False,("+","."): True, ("-","."): True}
+        elif strandSpecific == "MATCH":         self.strandKey = {("+","-"): False,("-","+"): False,("+","+"): True,("-","-"): True,("+","."): True,("-","."): True}
+        else:                               self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): True,("-","-"): True,("+","."): True,("-","."): True}
 
     
         self.samStrand = {'0':'+','16':'-','+':'0','-':'16'}
@@ -75,7 +78,7 @@ class MapReads:
             if len(self.rawLine[2].split(":")[0].split("|"))==6:
                 self.getNextRead = self.getSamFeatureRead
                 self.printData   = self.printFeatureData
-            elif self.rawLine[2][0:3]=="chr":
+            elif len(self.rawLine[2].split(":")[0].split("|"))==1:
                 if len(self.rawLine[5].split("M"))==2 and len(self.samHeader)>1:
                     for h in self.samHeader: print h
                 self.getNextRead = self.getSamGenomeRead
@@ -179,33 +182,14 @@ class MapReads:
             if len(self.rawLine)==0:
                 self.fileOpen=False
                 break
-        self.genomeUNIQUE,self.featureUNIQUE=self.disambiguateMaps()
-       
+        self.disambiguateMaps()
+        self.loadOutputStrings()
 
-
-    def printFeatureData(self):
-        
-
-
-#        if len(set([tuple(m[0][0:3]) for m in self.mapData]))==1: GENE_UNIQUE=str(1.0/len(self.mapData))+",0.0"
- #       else:                                                     GENE_UNIQUE="0.0"+str(1.0/len(self.mapData))
-        
-  #      if len(set([m[1] for m in self.mapData]))==1:             GENOME_UNIQUE=str(1.0)+",0.0"
-   #     else:                                                     GENOME_UNIQUE="0.0,"+str(1.0/len(self.mapData))
-        #if len(self.mapData)==1:                                  GENOME_UNIQUE=str(1.0)+",0.0"
-        #else:                                                     GENOME_UNIQUE="0.0,"+str(1.0/len(self.mapData))
-
-
-        GENOME_UNIQUE = 'GT:i:'+",".join([str(s) for s in self.genomeUNIQUE])
-        FEATURE_UNIQUE = 'TT:i:'+",".join([str(s) for s in self.featureUNIQUE])
-
-        
-
-        
+    def loadOutputStrings(self):
+      
+        tmpOutput=[]
         for m in self.mapData:
             self.readPrint, self.qualPrint = self.readSeq,self.qual
-
-            ### FIX SMALL SPLICING OFFSETS ###
             if len(m[1])>2:
                 if m[1][1]-m[1][0]<self.minOVERLAP:
                     if m[2]=="+":
@@ -220,8 +204,6 @@ class MapReads:
                         self.readPrint,self.qualPrint=self.readPrint[(m[1][-1]-m[1][-2])+1::],self.qualPrint[(m[1][-1]-m[1][-2])+1::]
                     m=(m[0],m[1][0:len(m[1])-2],m[2],m[3],m[4])
             
-
-
             
             if m[0][5]=="EXON":
                 m[0][5]="EXON:COORDS="+"-".join([str(s) for s in m[4][0]])
@@ -233,8 +215,6 @@ class MapReads:
                 elif m[1][0] <= m[4][1][1] and m[1][1] >= m[4][2][0]:   m[0][5]="IJXN:INT-EX="+"-".join([str(m[4][1][1]),str(m[4][2][0])])
                 else:
                     print "WTF"
-                    print m
-                    print ""
                     sys.exit()
 
             elif len(m[1])>2:   m[0][5]=m[0][5]+":JXN="+"-".join([str(m[1][i-1])+','+str(m[1][i]) for i in range(2,len(m[1])-1,2)])
@@ -246,32 +226,24 @@ class MapReads:
                     pair = m[4][i]
                     if m[1][0] >= pair[0] and m[1][1] <= pair[1]:
                         EDGE=True
-                        if i == 0:  m[0][5]="EXON:END="+str(pair[1])
-                        elif i == len(m[4])-1: m[0][5]="EXON:START="+str(pair[0])
-                        else:   m[0][5]="EXON:COORDS="+"-".join([str(s) for s in pair])
+                        m[0][5]="EXON:COORDS="+"-".join([str(s) for s in pair])
+                       # else:   m[0][5]="EXON:COORDS="+"-".join([str(s) for s in pair])
                         break
                 if not EDGE:
                     print m,self.readID
                     print "WTF EXON HUH"
                     sys.exit()
             elif m[0][5] != "FILTER":
-                print m
                 print "UNKNOWN THING",m[0][5]
                 sys.exit()
 
 
-
-
             cigar="".join([str(m[1][i]-m[1][i-1]+1)+"M" if i%2==1 else str(m[1][i]-m[1][i-1]-1)+"N" for i in xrange(1,len(m[1]))])
-            
             samStrand=self.samStrand[m[2]]
             if m[2]=="-":
                 self.readPrint = reverse_complement(self.readPrint)
                 self.qualPrint = self.qualPrint[::-1]
             
-            
-
-
             if (m[0][4]==m[2]) != m[3]:
                 if samStrand == '0': samStrand='16'
                 elif samStrand == '16': samStrand='0'
@@ -279,16 +251,49 @@ class MapReads:
                     print "WTF"
                     sys.exit()
 
-
-
-            samStartData= [self.readID,samStrand,m[0][3],m[1][0],'255',cigar,"*",0,0,self.readPrint,self.qualPrint,'NM:i:'+str(self.subs),GENOME_UNIQUE,FEATURE_UNIQUE]
-            samStartData.extend(['CL:i:'+m[0][5],'GN:i:'+m[0][0],'AN:i:'+m[0][1],'FM:i:'+m[0][2],'SN:i:'+str(m[3]),'RT:i:'+self.tag])
-
-            #samStartData.extend(['GT:i:'+GENOME_UNIQUE,'TT:i:'+GENE_UNIQUE,'CL:i:'+m[0][5],'GN:i:'+m[0][0],'AN:i:'+m[0][1],'FM:i:'+m[0][2],'SN:i:'+str(m[3]),'RT:i:'+self.tag])
             
-            print "\t".join([str(s) for s in samStartData])
+            startOutput = [self.readID,samStrand,m[0][3],m[1][0],'255',cigar,"*",0,0,self.readPrint,self.qualPrint,'NM:i:'+str(self.subs)]
+            endOutput   = ['CL:i:'+m[0][5],'GN:i:'+m[0][0],'AN:i:'+m[0][1],'FM:i:'+m[0][2],'SN:i:'+str(m[3]),'RT:i:'+self.tag]
+            tmpOutput.append([startOutput,endOutput])
+        if len(tmpOutput) == 1:
+            uniqOutput = tmpOutput
+        else:
+            tmpOutput.sort()
+            uniqOutput = [tmpOutput[0]]
+            for i in range(1,len(tmpOutput)):
+                if tmpOutput[i][0]!=uniqOutput[-1][0] or tmpOutput[i][1][1:3] != tmpOutput[-1][1][1:3]:
+                    uniqOutput.append(tmpOutput[i])
+
+        if len(uniqOutput) == 1:
+            self.outputStrings = [uniqOutput[0][0]+["GT:i:1.0,0","TT:i:1.0,0"]+uniqOutput[0][1]]
+        else:
+            self.outputStrings = []
+            genomicDict = dd(int); featureDict = dd(int)
+            for s in uniqOutput:
+                genomicDict[(s[0][2],s[0][3])]+=1
+                featureDict[(s[1][1],s[1][2])]+=1 
+            for s in uniqOutput:
+                gCnt = genomicDict[(s[0][2],s[0][3])]; fCnt = featureDict[(s[1][1],s[1][2])]
+                if gCnt == 1 and fCnt == 1:
+                    self.outputStrings.append(s[0]+["GT:i:0,1.0","TT:i:0,1.0"]+s[1])
+                elif gCnt == len(uniqOutput):
+                    self.outputStrings.append(s[0]+["GT:i:"+str(1.0/len(uniqOutput))+",0","TT:i:0,"+str(1.0/fCnt)]+s[1])
+                elif fCnt == len(uniqOutput):
+                    self.outputStrings.append(s[0]+["GT:i:1.0,"+str(1.0/gCnt)   , "TT:i:"+str(1.0/len(uniqOutput))+",0"]+s[1])
+                else:
+                    self.outputStrings.append(s[0]+["GT:i:1.0,"+str(1.0/gCnt)   , "TT:i:0,"+str(1.0/fCnt)]+s[1])
+                    
 
 
+
+            
+
+
+    def printFeatureData(self):
+        
+        if len(self.outputStrings) < self.mapMax:
+            for S in self.outputStrings:
+                print "\t".join([str(s) for s in S])
 
                 
 
@@ -307,7 +312,7 @@ class MapReads:
         # MapData[4] = Feature Location on Genome ( for example the start and stop position of the exon )
 
 
-        if len(self.mapData)==1: return (1.0,0),(1.0,0)
+        if len(self.mapData)==1: return 
         #0) REMOVE DUPLICATES
             
         #a) sort data and remove elements which are not identical to previous
@@ -315,7 +320,7 @@ class MapReads:
 
         self.mapData.sort()
         self.mapData = self.mapData[0:1]+[self.mapData[i] for i in range(1,len(self.mapData)) if self.mapData[i]!=self.mapData[i-1]];
-        if len(self.mapData)==1: return (1.0,0),(1.0,0)
+        if len(self.mapData)==1: return 
         
         
         #1) CHECK FOR MULTI SENSE 
@@ -323,7 +328,7 @@ class MapReads:
         
         if len(set([m[3] for m in self.mapData]))>1:
             self.mapData=[m for m in self.mapData if m[3]]
-            if len(self.mapData)==1: return (1.0,0),(1.0,0)
+            if len(self.mapData)==1: return 
         
         
         #2) Prioritize Mapping Features ( Filter is preferential to Exonic Alignment which is preferential to intergenic, etc)
@@ -342,36 +347,13 @@ class MapReads:
         
         
         
-        if len(self.mapData)==1: return (1.0,0),(1.0,0)
+        if len(self.mapData)==1: return 
         
         
         
         
         ### 3) Merge Multi-Genes ###
         
-        
-        
-        
-        if len(set([m[1] for m in self.mapData]))==10000000 and len(set([m[0][3] for m in self.mapData]))==1:
-
-            print self.mapData[0][1],self.mapData[1][1]
-            print self.mapData[0][3],self.mapData[1][3]
-            print len(self.mapData)
-
-            ### NOTE IN THIS CASE DO WE NOT WANT TO JOIN UP THE MAPDATA ### --- I THINK THIS IS TRUE -- WE STILL NEED TO PRINT MULTIPLE LINES !!!!!!!!! ####
-
-
-
-            #self.mapData=[([",".join(list(set([self.mapData[i][0][j] for i in range(len(self.mapData))]))) for j in range(len(self.mapData[0][0]))], self.mapData[0][1],self.mapData[0][2],self.mapData[0][3],self.mapData[0][4])]
-            print "HI"
-            print len(self.mapData)
-            print "DUDE",self.mapData[0][0]
-            print ""
-            if len(self.mapData)==1: return (1.0,0),(1.0,0)
-            #if len(self.mapData)==1: return ('1.0','0'),('1.0','0')
-
-        ### 4) Merge Multi-Spots --- ###
-       
         
         if len(set([tuple(m[0]) for m in self.mapData])) == 1 and len(set([m[1] for m in self.mapData]))>1:
             # If all mapping locations have the same feature data #
@@ -413,35 +395,6 @@ class MapReads:
                         
                         if self.mapData[0][2] == "+": self.readSeq=self.readSeq[0:len(self.readSeq)-trimDist]; self.qual=self.qual[0:len(self.qual)-trimDist]
                         else:                         self.readSeq=self.readSeq[trimDist::]; self.qual=self.qual[trimDist::]
-            
-        if len(self.mapData)==1: return (1.0,0),(1.0,0)
-                             
-        ### 5) IF STILL AMBIGUOUS THAN SELECT LARGEST CONTIGIOUS SPOTS ###
-#        seqRuns = []
-#        seqRuns = [max([m[1][i+1]-(m[1][i])+1 for i in range(0,len(m[1]),2)]) for m in self.mapData]
-#        self.mapData = [self.mapData[i] for i in range(len(self.mapData)) if seqRuns[i] == max(seqRuns)]
-
-        if len(self.mapData)==1:
-            return (1.0,0),(1.0,0)
-        
-        elif len(set([m[1] for m in self.mapData]))==1 and len(set([m[0][3] for m in self.mapData]))==1:
-
-            ### NOTE IN THIS CASE DO WE NOT WANT TO JOIN UP THE MAPDATA ### --- I THINK THIS IS TRUE -- WE STILL NEED TO PRINT MULTIPLE LINES !!!!!!!!! ####
-
-            self.multiGenes=[",".join(list(set([self.mapData[i][0][j] for i in range(len(self.mapData))]))) for j in range(2)]
-            return ((1.0/len(self.mapData)),0),(0,1.0)
-
-        elif len(set([tuple(m[0][0:3]) for m in self.mapData]))==1:
-            
-            return (0,1),(1.0/len(self.mapData),0)
-            
-        else:
-            self.multiGenes=[",".join(list(set([self.mapData[i][0][j] for i in range(len(self.mapData))]))) for j in range(2)]
-            return (0,1),(0,1)
-            #print "SHIT"
-            #print self.readID
-            #print self.mapData
-            #sys.exit()
-
-            #if len(self.mapData)==1: return ('1.0','0'),('1.0','0')
+       
+        return
 

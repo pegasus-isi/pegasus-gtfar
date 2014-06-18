@@ -135,10 +135,14 @@ function setup_perm_seeds {
 function map_and_parse_reads_to_features {
     
     terminal_talk "Mapping reads to features..."
-    valid_read_files=$(validate_reads feature_reads.txt val_reads.txt)  
+    valid_read_files=$(validate_reads feature_reads.txt val_reads.txt)
+    
+    
+    
     if [ -f FEATURES.log ] && [ $SKIP == "TRUE" ]; then terminal_talk "SKIPPING\n"
     elif [ $valid_read_files == 0 ]; then terminal_talk "NO READS\n"; 
-    else perm $myFEATURES val_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH > FEATURES.log; check_progress $?; terminal_talk "Success\n"; fi 
+    else perm $myFEATURES val_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH > FEATURES.log; check_progress $?; 
+        terminal_talk "Success\n"; fi 
     terminal_talk  "Parsing read alignments.."
     for i in *.mapping; do if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --strandRule $STRANDRULE --tag $TAG > "$i".vis & fi done
     wait
@@ -156,7 +160,6 @@ function map_and_parse_reads_to_genome {
     if [ -f GENOME.log ] && [ $SKIP == "TRUE" ]; then terminal_talk "SKIPPING\n"
     elif [ $valid_read_files == 0 ]; then terminal_talk "NO READS\n"; 
     else perm $myGENOME val_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH --noSamHeader --outputFormat sam > GENOME.log; check_progress $?; terminal_talk "Success\n"; fi 
-    
     terminal_talk "Parsing read alignments.."
     for i in *.sam; do if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --tag $TAG  > "$i".vis & fi done
     wait

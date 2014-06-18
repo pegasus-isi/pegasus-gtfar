@@ -27,12 +27,13 @@ class FastqReads:
         #self.null_read = ("@DG3_NULL_READ","".join(["N" for i in range(rlen)]),"+","".join(["I" for i in range(rlen)]))
         firstLine=self.fileHandle.readline().split()
         
-        if len(firstLine)==4 and firstLine[2]=="+":
+        if len(firstLine)==4 and firstLine[2][0]=="+":
             self.linesPerRead=1
             self.fileOpen = True
             self.nextRead = self.singleLineRead
             self.name,self.seq,self.plus,self.qual=firstLine
-            if len(self.seq) < self.readLen: self.dataFailure("Supplied read is shorter than length parameter")
+            if len(self.seq) < self.readLen: 
+                self.dataFailure("Supplied read is shorter ("+str(len(self.seq))+") than length ("+str(self.readLen)+") parameter")
                 
         else:
             self.dataFailure(self,"no multi line yet")
@@ -42,21 +43,17 @@ class FastqReads:
     def addTrimLengths(self,trimString):
         
         
-        try:  trims = sorted([int(s) for s in trimString.split(",")])    
+        try:  trims = sorted([int(s) for s in trimString.split(",") if int(s) < self.readLen and int(s)>=50])
         except ValueError:  self.dataFailure("Trim lengths supplied contain non-integer value")
-        if trims[-1] > self.readLen: self.dataFailure("Trim lengths supplied contain value exceeding read length") 
-        for t in trims:    self.writeTable[t] = open(self.prefix+"_"+str(t)+".fastq","w")
+        if len(trims)>0:
+            if trims[-1] >= self.readLen: self.dataFailure("Trim lengths supplied contain value equal to or exceeding read length") 
+            for t in trims:    self.writeTable[t] = open(self.prefix+"_"+str(t)+".fastq","w")
         
         
-        
-        
-        self.trimHash  = {} 
+        self.trimHash  = {}
         trims.append(self.readLen)
         for i in range(len(trims)-1):   self.trimHash.update([(j,trims[i]) for j in range(trims[i],trims[i+1])])
-        
-        #print [(i,self.trims[0]) for i in range(self.trims[j],self.trims[j+1])]+
-        #print self.trimHash
-
+       
 
 
 
@@ -81,8 +78,6 @@ class FastqReads:
         try: self.name,self.seq,self.plus,self.qual=self.fileHandle.readline().split()
         except ValueError:
             self.fileOpen = False 
-            #for t in self.writeTable:
-            #    self.writeTable[t].write("%s\n%s\n%s\n%s\n" % (self.null_read))
         self.cnt +=1
         
 
@@ -148,7 +143,7 @@ class FastqReads:
             
     def dataFailure(self,msg="FOO"):
         sys.stderr.write(msg+"\n")
-        sys.exit()
+        sys.exit(2)
 
 
 
