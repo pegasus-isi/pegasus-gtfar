@@ -73,7 +73,7 @@ class SamFile:
         ### GENE FAM IS INFO LIKE: protein_coding ###
         self.subcnts[subs]+=1
         self.typeData[readType]+=1
-        if sense:
+        if sense == "True":
             idx=0
             self.senseData[0]+=1
         else:
