@@ -42,7 +42,7 @@ setup(
     version='0.1',
     author='Pegasus Team',
     author_email='pegasus@isi.edu',
-    description='Pegasus REST API',
+    description='ISI & Keck School collaboration to implement a Pegasus workflow with a GUI for the GTFAR workflow.',
     long_description=read('README.md'),
     license='Apache2',
     url='https://github.com/pegasus-isi/pegasus-gtfar',
