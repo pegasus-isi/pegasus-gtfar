@@ -67,6 +67,7 @@ setup(
     install_requires=[
         'argparse==1.2.1',
         'Flask==0.10.1',
+        'WTForms==2.0.1',
         'Flask-Cache==0.13.1',
         'Flask-SQLAlchemy==1.0',
         'Werkzeug==0.9.6',
