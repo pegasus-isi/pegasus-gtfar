@@ -47,6 +47,7 @@ setup(
     license='Apache2',
     url='https://github.com/pegasus-isi/pegasus-gtfar',
     classifiers=[
+        'Topic :: Distributed Computing',
         'Topic :: Internet :: WWW/HTTP :: Application',
         'Topic :: Scientific/Engineering :: Bio-informatics',
         'License :: OSI Approved :: Apache Software License',
