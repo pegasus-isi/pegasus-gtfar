@@ -60,6 +60,7 @@ setup(
     ],
     packages=find_packages(),
     zip_safe=True,
+    scripts=['bin/option-filter.sh'],
     entry_points={
         'console_scripts': [
             'pegasus-gtfar-server = pegasus.gtfar.server:main'
