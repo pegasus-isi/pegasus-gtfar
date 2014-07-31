@@ -17,7 +17,6 @@
 __author__ = 'Rajiv Mayani'
 
 import sys
-
 import argparse
 
 from pegasus.gtfar.dax.dax import GTFAR
@@ -52,8 +51,8 @@ def main():
     # parser.add_argument('-t', '--trims', type=str, default=None, help='Trimmings')
     # config        c           --config         NONE         File(s)                           None              Configuration File for Reference Data
 
-    #parser.add_argument('-m', '--mismatches', type=int, default=3, help='The number of mismatches to allow per mapping')
-    #verbose        v          --verbose         TRUE            bool                  True or False
+    # parser.add_argument('-m', '--mismatches', type=int, default=3, help='The number of mismatches to allow per mapping')
+    # verbose        v          --verbose         TRUE            bool                  True or False
 
     #outdir        d           --outdir         NONE          String                           None                                  working directory
     #inputdir        i         --inputdir         NONE          String                           None                                  working directory
