@@ -13,3 +13,17 @@
 # limitations under the License.
 
 __author__ = 'Rajiv Mayani'
+
+__VERSION__ = 0.1
+
+from flask import Flask
+from flask.ext.cache import Cache
+from flask.ext.sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+
+# Load configuration defaults
+app.config.from_object('pegasus.gtfar.defaults')
+
+db = SQLAlchemy(app)
+cache = Cache(app)
