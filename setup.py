@@ -64,6 +64,7 @@ setup(
     scripts=[
         'bin/gtfar-server',
         'bin/gtfar-dax-generator',
+        'bin/gtfar-email',
         'bin/option-filter.sh'
     ],
     install_requires=[
