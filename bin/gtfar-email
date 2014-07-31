@@ -107,8 +107,7 @@ def main():
     parser.add_argument('-u', '--url', required=True, help='Link to the results of the workflow')
 
     args = parser.parse_args(sys.argv[1:])
-    print args
-    return
+
     try:
         validate_env_var('PEGASUS_SUBMIT_DIR')
         validate_env_var('PEGASUS_EVENT')
