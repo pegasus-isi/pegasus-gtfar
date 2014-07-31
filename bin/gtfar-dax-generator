@@ -49,7 +49,7 @@ def main():
 
     # parser.add_argument('-c', '--cores', default=None, help='Number of cores')
 
-    #parser.add_argument('-t', '--trims', type=str, default=None, help='Trimmings')
+    # parser.add_argument('-t', '--trims', type=str, default=None, help='Trimmings')
     # config        c           --config         NONE         File(s)                           None              Configuration File for Reference Data
 
     #parser.add_argument('-m', '--mismatches', type=int, default=3, help='The number of mismatches to allow per mapping')
