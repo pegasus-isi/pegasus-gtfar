@@ -17,6 +17,7 @@
 __author__ = 'Rajiv Mayani'
 
 import sys
+
 import argparse
 
 from pegasus.gtfar.dax.dax import GTFAR
@@ -63,13 +64,17 @@ def main():
 
     gtfar = GTFAR(**args)
 
-    if gtfar.validate() is True:
+    validation_results = gtfar.validate()
+    if validation_results is True:
         gtfar.annotate()
         gtfar.option_filter()
         gtfar.iterative_map()
         gtfar.write_dax()
     else:
-        print 'Errors'
+        for field, error in validation_results.iteritems():
+            print >> sys.stderr, error
+
+        sys.exit(3)
 
 
 if __name__ == '__main__':
