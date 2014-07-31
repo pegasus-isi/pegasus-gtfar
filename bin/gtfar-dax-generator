@@ -44,6 +44,7 @@ def main():
 
     # Pegasus
     parser.add_argument('-d', '--dax', default=None, help='GTF file')
+    parser.add_argument('-e', '--email', default=None, help='Send Email notification on workflow completion')
 
     # parser.add_argument('-c', '--cores', default=None, help='Number of cores')
 
