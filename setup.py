@@ -60,12 +60,7 @@ setup(
     ],
     packages=find_packages(),
     zip_safe=True,
-    scripts=['bin/option-filter.sh'],
-    entry_points={
-        'console_scripts': [
-            'pegasus-gtfar-server = pegasus.gtfar.server:main'
-        ]
-    },
+    scripts=['bin/gtfar-dax-generator', 'bin/option-filter.sh'],
     install_requires=[
         'enum34==1.0',
         'argparse==1.2.1',

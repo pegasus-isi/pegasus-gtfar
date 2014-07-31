@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+
+# Copyright 2007-2014 University Of Southern California
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+__author__ = 'Rajiv Mayani'
+
+import sys
+import argparse
+
+from pegasus.gtfar.dax.dax import GTFAR
+
+
+def main():
+    parser = argparse.ArgumentParser(description='GTFAR')
+
+    # Reference
+    parser.add_argument('-g', '--genome', default=None, required=True, help='Path to genomic chromosomes')
+    parser.add_argument('-x', '--gtf', default=None, required=True, help='GTF file')
+
+    # Input
+    parser.add_argument('-p', '--prefix', type=int, default=None, required=True, help='Prefix')
+    parser.add_argument('-r', '--reads', default=None, required=True, help='Reads file in fastq or fastq.gz format')
+    parser.add_argument('-l', '--length', type=int, default=100, dest='read_length', help='Length of reads')
+
+    # Options
+    parser.add_argument('-m', '--mismatches', type=int, default=3, help='The number of mismatches to allow per mapping')
+    parser.add_argument('-y', '--trimunmapped', default=False, dest='is_trim_unmapped', action='store_true')
+    parser.add_argument('-z', '--mapfiltered', default=False, dest='is_map_filtered', action='store_true')
+    parser.add_argument('-s', '--strandrule', default='Unstranded', dest='strand_rule',
+                        choices=('Unstranded', 'Same', 'Opposite'),
+                        help='A rule for strandedness (None, Same or Opposite)')
+
+    # Pegasus
+    parser.add_argument('-d', '--dax', default=None, help='GTF file')
+
+    # parser.add_argument('-c', '--cores', default=None, help='Number of cores')
+
+    #parser.add_argument('-t', '--trims', type=str, default=None, help='Trimmings')
+    # config        c           --config         NONE         File(s)                           None              Configuration File for Reference Data
+
+    #parser.add_argument('-m', '--mismatches', type=int, default=3, help='The number of mismatches to allow per mapping')
+    #verbose        v          --verbose         TRUE            bool                  True or False
+
+    #outdir        d           --outdir         NONE          String                           None                                  working directory
+    #inputdir        i         --inputdir         NONE          String                           None                                  working directory
+    #parser.add_argument('-k', '--key', default=None, help='Simulation key file')
+
+    args = parser.parse_args(sys.argv[1:])
+    args = vars(args)
+
+    gtfar = GTFAR(**args)
+
+    if gtfar.validate() is True:
+        gtfar.annotate()
+        gtfar.option_filter()
+        gtfar.iterative_map()
+        gtfar.write_dax()
+    else:
+        print 'Errors'
+
+
+if __name__ == '__main__':
+    main()
