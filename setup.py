@@ -59,7 +59,6 @@ setup(
         'Intended Audience :: Science/Research',
         'Operating System :: Unix'
     ],
-    namespace_packages=['pegasus'],
     packages=find_packages(),
     zip_safe=True,
     scripts=[
