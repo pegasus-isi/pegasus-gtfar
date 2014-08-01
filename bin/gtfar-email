@@ -74,7 +74,7 @@ def get_email_message(uid, url):
 def send_email(sender, to, subject, uid, url):
     message = MIMEMultipart('alternative')
     message['From'] = sender
-    message['To'] = to
+    message['To'] = ','.join(to)
     message['Subject'] = subject
 
     txt, html = get_email_message(uid, url)
@@ -87,7 +87,7 @@ def send_email(sender, to, subject, uid, url):
     message.attach(html_part)
 
     try:
-        send_using_smtp(sender, to.split(','), message)
+        send_using_smtp(sender, to, message)
     except Exception, e1:
         try:
             message = str(message)
