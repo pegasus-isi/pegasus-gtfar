@@ -23,8 +23,9 @@
  */
 requirejs.config({
 
-    "baseURL" : "js",
+    //"baseURL" : "js",
     "paths" : {
+        js : "/js",
         angular : "//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.18/angular",
         uiRouter : "//cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.10/angular-ui-router",
         bootstrapUI : "//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.0/ui-bootstrap-tpls",
