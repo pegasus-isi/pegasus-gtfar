@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright 2007-2014 University Of Southern California
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~  http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing,
+  ~  software distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+
+<div class="col-md-8">
+    <h1>Create a New Workflow</h1>
+    <form id="runForm" class="form-horizontal" role="form" enctype="multipart/form-data" method="post" action="">
+        <div class="form-group">
+            <label for="inputRunName" class="col-md-2">Workflow Name</label>
+            <div class="col-md-6">
+                <input type="text" class="form-control" id="inputRunName" placeholder="Workflow Name" ng-model="runName">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="exampleInputEmail1" class="col-md-2">Email Address</label>
+            <div class="col-md-6">
+                <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter email" ng-model="email">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="inputReadLength" class="col-md-2">Read Length (50-128)</label>
+            <div class="col-md-1">
+                <input type="text" class="form-control" id="inputReadLength" ng-model="readLength">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="inputMismatches" class="col-md-2">Mismatches Allowed (0-8)</label>
+            <div class="col-md-1">
+                <input type="text" class="form-control" id="inputMismatches" ng-model="mismatches">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="inputStrandRule" class="col-md-2">Strand Rule </label>
+            <div class="col-md-4">
+                <select class="form-control" id="inputStrandRule" ng-model="strandRule" ng-options="option.rule for option in strandRuleOptions"></select>
+            </div>
+        </div>
+        <div class="checkbox">
+            <label><input type="checkbox" ng-model="trimUnmapped">&nbsp Trim Unmapped</label>
+        </div>
+        <div class="checkbox">
+            <label><input type="checkbox" ng-model="mapFiltered">&nbsp Map Filtered</label>
+        </div>
+        <br/>
+        <div class="form-group">
+            <label for="inputFile" class="col-md-2">File input</label>
+            <!-- Use onChange instead of ng-change because the people who write Angular don't think they should support file uploading-->
+            <input type="file" name="file" id="inputFile"><!--onchange="angular.element(this).scope().uploadFile()"-->
+            <div class="col-md-2"></div>
+            <p class="help-block col-md-10">Make sure it is under 5 GB.</p>
+        </div>
+        <div class="col-md-7"></div>
+        <button type="submit" class="btn btn-default col-md-1" ng-click="addRun()">Submit</button>
+    </form>
+</div>

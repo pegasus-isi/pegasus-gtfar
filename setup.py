@@ -72,6 +72,7 @@ setup(
         'WTForms==2.0.1',
         'Flask-Cache==0.13.1',
         'Flask-SQLAlchemy==1.0',
+        'Flask-Restless==0.13.1',
         'Werkzeug==0.9.6',
         'Jinja2==2.7.3',
         'SQLAlchemy==0.9.6',
