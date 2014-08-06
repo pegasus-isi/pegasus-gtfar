@@ -13,3 +13,7 @@
 # limitations under the License.
 
 __author__ = 'Rajiv Mayani'
+
+import pkgutil
+__path__ = pkgutil.extend_path(__path__, __name__)
+

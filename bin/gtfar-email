@@ -1,0 +1,130 @@
+#!/usr/bin/env python
+
+# Copyright 2007-2014 University Of Southern California
+#
+# Licensed under the Apache License, Version 2.0 (the 'License');
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an 'AS IS' BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+__author__ = 'Rajiv Mayani'
+
+import os
+import sys
+import smtplib
+import argparse
+
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+from jinja2 import Environment, PackageLoader
+
+
+def validate_env_var(key):
+    if not key in os.environ:
+        raise RuntimeError(key + ' is not defined in the current environment')
+
+
+def send_using_smtp(sender, recipient, message):
+    server = smtplib.SMTP('localhost')
+    server.sendmail(sender, recipient, message)
+    server.quit()
+
+
+def send_using_sendmail(message):
+    p = os.popen('/usr/sbin/sendmail -t', 'w')
+    p.write(message)
+    rc = p.close()
+
+    if rc is not None and rc >> 8:
+        raise RuntimeError('Sendmail exit status: %d' % (rc >> 8))
+
+
+def get_email_message(uid, url):
+    env = Environment(loader=PackageLoader('pegasus.gtfar', 'templates'))
+
+    wf_id = os.environ['PEGASUS_JOBID']
+    event = os.environ['PEGASUS_EVENT']
+    submit_dir = os.environ['PEGASUS_SUBMIT_DIR']
+    iso_timestamp = os.environ['PEGASUS_EVENT_TIMESTAMP_ISO']
+
+    def get_template_str(template):
+        template = env.get_template(template)
+
+        return template.render(uid=uid,
+                               url=url,
+                               wf_id=wf_id,
+                               event=event,
+                               submit_dir=submit_dir,
+                               iso_timestamp=iso_timestamp)
+
+    text_message = get_template_str('email/gtfar-email.txt')
+    html_message = get_template_str('email/gtfar-email.html')
+
+    return text_message, html_message
+
+
+def send_email(sender, to, subject, uid, url):
+    message = MIMEMultipart('alternative')
+    message['From'] = sender
+    message['To'] = ','.join(to)
+    message['Subject'] = subject
+
+    txt, html = get_email_message(uid, url)
+    txt_part = MIMEText(txt, 'plain')
+    html_part = MIMEText(html, 'html')
+
+    # IMPORTANT:
+    # Attach message parts in order of preference i.e. from the least to the most preferred
+    message.attach(txt_part)
+    message.attach(html_part)
+
+    try:
+        send_using_smtp(sender, to, message)
+    except Exception, e1:
+        try:
+            message = str(message)
+            send_using_sendmail(message)
+        except Exception, e2:
+            print >> sys.stderr, 'Unable to send email:\n', e1, '\n', e2
+            sys.exit(4)
+
+
+def main():
+    parser = argparse.ArgumentParser(description='GTFAR Email notification utility')
+
+    parser.add_argument('-i', '--id', required=True, help='Workflow run ID')
+    parser.add_argument('-f', '--from', required=True, dest='sender', help='Email address of the sender')
+    parser.add_argument('-t', '--to', required=True, nargs='+', help='Recipient(s) Email address separated by spaces')
+    parser.add_argument('-s', '--subject', required=True, help='Subject for the Email')
+    parser.add_argument('-u', '--url', required=True, help='Link to the results of the workflow')
+
+    args = parser.parse_args(sys.argv[1:])
+
+    try:
+        validate_env_var('PEGASUS_SUBMIT_DIR')
+        validate_env_var('PEGASUS_EVENT')
+        validate_env_var('PEGASUS_EVENT_TIMESTAMP_ISO')
+        validate_env_var('PEGASUS_JOBID')
+    except RuntimeError, err:
+        print >> sys.stderr, err
+        sys.exit(3)
+
+    sender = args.sender
+    to = args.to
+    subject = args.subject
+    uid = args.id
+    url = args.url
+
+    send_email(sender, to, subject, uid, url)
+
+
+if __name__ == '__main__':
+    main()

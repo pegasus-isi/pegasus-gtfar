@@ -53,6 +53,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
+        'Programming Language :: Python',
         'Framework :: Flask',
         'Intended Audience :: Education',
         'Intended Audience :: Science/Research',
@@ -60,11 +61,12 @@ setup(
     ],
     packages=find_packages(),
     zip_safe=True,
-    entry_points={
-        'console_scripts': [
-            'pegasus-gtfar-server = pegasus.gtfar.server:main'
-        ]
-    },
+    scripts=[
+        'bin/gtfar-server',
+        'bin/gtfar-dax-generator',
+        'bin/gtfar-email',
+        'bin/option-filter.sh'
+    ],
     install_requires=[
         'enum34==1.0',
         'argparse==1.2.1',

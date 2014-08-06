@@ -14,10 +14,9 @@
 
 __author__ = 'Rajiv Mayani'
 
-
-def main():
-    print 'Main'
+from pegasus.gtfar import app
 
 
-if __name__ == '__main__':
-    main()
+@app.template_filter('ljust')
+def left_justify_text(s, width=80, fill_char=' '):
+    return s.ljust(width, fill_char)

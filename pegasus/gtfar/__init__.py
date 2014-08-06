@@ -14,6 +14,7 @@
 
 __author__ = 'Rajiv Mayani'
 
+__VERSION__ = 0.1
 
 import sys
 import os
@@ -67,6 +68,10 @@ db.create_all()
 
 apiManager = APIManager(app, flask_sqlalchemy_db = db)
 apiManager.create_api(Run, methods = ["GET", "POST", "DELETE", "PUT"])
+
+
+
+
 
 
 
