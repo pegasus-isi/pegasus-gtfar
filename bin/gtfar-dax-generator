@@ -30,7 +30,7 @@ def main():
     parser.add_argument('-x', '--gtf', default=None, required=True, help='GTF file')
 
     # Input
-    parser.add_argument('-p', '--prefix', type=int, default=None, required=True, help='Prefix')
+    parser.add_argument('-p', '--prefix', default=None, required=True, help='Prefix')
     parser.add_argument('-r', '--reads', default=None, required=True, help='Reads file in fastq or fastq.gz format')
     parser.add_argument('-l', '--length', type=int, default=100, dest='read_length', help='Length of reads')
 
@@ -43,20 +43,12 @@ def main():
                         help='A rule for strandedness (None, Same or Opposite)')
 
     # Pegasus
+    parser.add_argument('-b', '--base-dir', default=None, required=True, help='Workflow run directory')
     parser.add_argument('-d', '--dax', default=None, help='GTF file')
     parser.add_argument('-e', '--email', default=None, help='Send Email notification on workflow completion')
 
     # parser.add_argument('-c', '--cores', default=None, help='Number of cores')
-
-    # parser.add_argument('-t', '--trims', type=str, default=None, help='Trimmings')
-    # config        c           --config         NONE         File(s)                           None              Configuration File for Reference Data
-
-    # parser.add_argument('-m', '--mismatches', type=int, default=3, help='The number of mismatches to allow per mapping')
     # verbose        v          --verbose         TRUE            bool                  True or False
-
-    #outdir        d           --outdir         NONE          String                           None                                  working directory
-    #inputdir        i         --inputdir         NONE          String                           None                                  working directory
-    #parser.add_argument('-k', '--key', default=None, help='Simulation key file')
 
     args = parser.parse_args(sys.argv[1:])
     args = vars(args)
