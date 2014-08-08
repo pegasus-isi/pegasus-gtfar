@@ -16,6 +16,7 @@ __author__ = 'Rajiv Mayani'
 
 import os
 import sys
+import mmh3
 
 from Pegasus.DAX3 import ADAG, Dependency, Job, File, Link, Executable, PFN
 
@@ -238,7 +239,8 @@ class IterativeMapMixin(object):
         perm.invoke('all', '%sstate_update.py %r %r %r %r')
 
         # Input files
-        index = File('%s_%s_F%d_%d.index' % (self._prefix, index_type, self._seed, self._read_length))
+        hash_v = self._get_index_hash(self._read_length)
+        index = File('h%d_%s_F%d_%d.index' % (hash_v, index_type, self._seed, self._read_length))
         reads = File('mapDir_%s/%s_reads.txt' % (tag, map_to.lower()))
 
         for i in self._range():
@@ -383,6 +385,10 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         else:
             # Invalid extension
             pass
+
+    def _get_index_hash(self, read_length):
+        hash_k = '%s-%s-%d' % (self._gtf, self._genome, read_length)
+        return mmh3.hash(hash_k, read_length)
 
     @staticmethod
     def __get_filename_parts(filename):

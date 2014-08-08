@@ -69,6 +69,7 @@ setup(
     ],
     install_requires=[
         'enum34==1.0',
+        'mmh3==2.3',
         'argparse==1.2.1',
         'Flask==0.10.1',
         'WTForms==2.0.1',
