@@ -189,18 +189,19 @@ class IterativeMapMixin(object):
         if self._is_trim_unmapped:
             cat = UNIXUtils.cat([2], '%s.unmapped.fastq')
         else:
-            cat = UNIXUtils.cat([3], '%s.unmapped.fastq')
+            cat = UNIXUtils.cat(['reads%d_full_unmapped.fastq' % i for i in self._range()], '%s.unmapped.fastq')
 
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
 
     def _map_and_parse_reads(self, files_pattern, tag):
-        # Arg1: mapDir_%(tag)s mapDir_full
-        # Arg2: files_pattern  filterDir/reads[0-n]_full.fastq
         self._setup_perm_seeds()
 
         self._map_and_parse_reads_to_features(tag)
         self._map_and_parse_reads_to_genome(tag)
+
+        if self._splice:
+            self._map_and_parse_reads_to_genome(tag)
 
     def _setup_perm_seeds(self):
         self._seed = self._mismatches
@@ -319,11 +320,13 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         self._mismatches = mismatches
         self._is_trim_unmapped = is_trim_unmapped
         self._is_map_filtered = is_map_filtered
+        self._splice = splice
         self._strand_rule = strand_rule
 
         # Pegasus
         self._base_dir = base_dir
         self._dax = sys.stdout if dax is None else '%s.dax' % (dax)
+        self._url = url
         self._email = email
 
         def get_range():
@@ -335,6 +338,9 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
 
         self._state_update = '%sstate_update.py %%r %%r %%r %%r' % '/bin/dir'
         self._email_script = '%sgtfar-email %%r %%r %%r %%r' % '/bin/dir'
+
+        self._seed = None
+        self._vis_files = []
 
     def validate(self):
         errors = {}
