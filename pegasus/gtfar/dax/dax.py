@@ -148,16 +148,14 @@ class FilterMixin(object):
 
         for i in self._range():
             reads_i = File('reads%d_full.fastq' % i)
-            unmapped_i = File('reads%d_full_unmapped.fastq' % i)
             rejects_i = File('reads%d_reject.fastq' % i)
             adaptor_stats_i = File('reads%d.stats' % i)
 
             for t in self._trims:
-                reads_i_t =  File('reads%d_%d.fastq' % (i, t))
+                reads_i_t = File('reads%d_%d.fastq' % (i, t))
                 option_filter.uses(reads_i_t, link=Link.OUTPUT, transfer=False, register=False)
 
             option_filter.uses(reads_i, link=Link.OUTPUT, transfer=False, register=False)
-            option_filter.uses(unmapped_i, link=Link.OUTPUT, transfer=False, register=False)
             option_filter.uses(rejects_i, link=Link.OUTPUT, transfer=False, register=False)
             option_filter.uses(adaptor_stats_i, link=Link.OUTPUT, transfer=False, register=False)
 
