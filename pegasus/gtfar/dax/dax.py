@@ -212,8 +212,7 @@ class IterativeMapMixin(object):
 
         for i in self._range():
             mapping_file = 'FEATURES_B_%d_%d_reads%d_full.mapping' % (self._seed, self._mismatches, i)
-            fastq_out = 'reads%d_full_miss_FEATURES.fastq' % i
-            self._parse_alignment(mapping_file, fastq_out, tag)
+            self._parse_alignment(mapping_file, tag)
 
     def _map_and_parse_reads_to_genome(self, tag):
         self._perm('chrs', 'GENOME', tag, output_sam=True)
@@ -221,8 +220,7 @@ class IterativeMapMixin(object):
         for i in self._range():
             sam_file = 'GENOME_B_%d_%d_reads%d_full_miss_FEATURES_miss_GENOME.mapping' % (
                 self._seed, self._mismatches, i)
-            fastq_out = 'reads%d_full_miss_FEATURES_miss_GENOME.fastq' % i
-            self._parse_alignment(sam_file, fastq_out, tag)
+            self._parse_alignment(sam_file, tag)
 
     def _map_and_parse_reads_to_splices(self, tag):
         self._perm('jxnCands', 'SPLICES', tag)
@@ -230,8 +228,7 @@ class IterativeMapMixin(object):
         for i in self._range():
             mapping_file = 'SPLICES_B_%d_%d_reads%d_full_miss_FEATURES_miss_GENOME.mapping' % (
                 self._seed, self._mismatches, i)
-            fastq_out = 'reads%d_full_unmapped.fastq' % i
-            self._parse_alignment(mapping_file, fastq_out, tag)
+            self._parse_alignment(mapping_file, tag)
 
     def _perm(self, index_type, map_to, tag, output_sam=False):
         perm = Job(name='perm')
@@ -244,10 +241,12 @@ class IterativeMapMixin(object):
 
         for i in self._range():
             # Output files
-            sam = File('%s_B_%d_%d_reads%d_full_miss_FEATURES.sam' % (map_to.upper(), self._seed, self._mismatches, i))
+            sam_mapping = File('%s_B_%d_%d_reads%d_full_miss_FEATURES.sam' % (map_to.upper(), self._seed, self._mismatches, i))
+            fastq_out = File('a%d' % i)
 
             # Uses
-            perm.uses(sam, link=Link.OUTPUT, transfer=False, register=False)
+            perm.uses(sam_mapping, link=Link.OUTPUT, transfer=False, register=False)
+            perm.uses(fastq_out, link=Link.OUTPUT, transfer=False, register=False)
 
         # Output files
         log = File('%s.log' % map_to.upper())
@@ -268,7 +267,7 @@ class IterativeMapMixin(object):
 
         self.adag.addJob(perm)
 
-    def _parse_alignment(self, input_file, fastq_out, tag):
+    def _parse_alignment(self, input_file, tag):
         parse_alignment = Job(name='parse_alignment')
         parse_alignment.invoke('all', '%sstate_update.py %r %r %r %r')
 
@@ -276,7 +275,7 @@ class IterativeMapMixin(object):
         input_file = File(input_file)
 
         # Output files
-        fastq_out = File(fastq_out)
+
         vis = File('mapDir_%s/%s.vis' % (tag, input_file.name))
 
         self._vis_files.append(vis.name)
@@ -287,7 +286,6 @@ class IterativeMapMixin(object):
 
         # Uses
         parse_alignment.uses(input_file, link=Link.INPUT)
-        parse_alignment.uses(fastq_out, link=Link.OUTPUT, transfer=False, register=False)
         parse_alignment.uses(vis, link=Link.OUTPUT, transfer=False, register=False)
 
         self.adag.addJob(parse_alignment)
