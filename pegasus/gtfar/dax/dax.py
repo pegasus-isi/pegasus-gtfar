@@ -137,8 +137,8 @@ class FilterMixin(object):
         reads = File(self._reads)
 
         # Outputs
-        rejects = File('%s.reject.fastq' % self._prefix)
-        adaptor_stats = File('%s.adaptor.stats' % self._prefix)
+        rejects = File('filterDir/%s.reject.fastq' % self._prefix)
+        adaptor_stats = File('filterDir/%s.adaptor.stats' % self._prefix)
 
         # Arguments
         option_filter.addArguments(self._prefix, reads, '%d' % self._read_length)
@@ -147,12 +147,12 @@ class FilterMixin(object):
         option_filter.uses(reads, link=Link.INPUT)
 
         for i in self._range():
-            reads_i = File('reads%d_full.fastq' % i)
-            rejects_i = File('reads%d_reject.fastq' % i)
-            adaptor_stats_i = File('reads%d.stats' % i)
+            reads_i = File('filterDir/reads%d_full.fastq' % i)
+            rejects_i = File('filterDir/reads%d_reject.fastq' % i)
+            adaptor_stats_i = File('filterDir/reads%d.stats' % i)
 
             for t in self._trims:
-                reads_i_t = File('reads%d_%d.fastq' % (i, t))
+                reads_i_t = File('filterDir/reads%d_%d.fastq' % (i, t))
                 option_filter.uses(reads_i_t, link=Link.OUTPUT, transfer=False, register=False)
 
             option_filter.uses(reads_i, link=Link.OUTPUT, transfer=False, register=False)
