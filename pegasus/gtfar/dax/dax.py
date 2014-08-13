@@ -59,21 +59,23 @@ class AnnotateMixin(object):
         self._features_index(read_length)
         self._chrs_index(read_length)
         self._splices_index(read_length)
-        self._genes_index(read_length)
+        #self._genes_index(read_length)
 
     def _annotate_gtf(self, read_length):
         annotate_gtf = Job(name='annotate_gtf')
         annotate_gtf.invoke('all', '%sstate_update.py %r %r %r %r')
+
+        prefix = self._get_index_hash(read_length, exclude_genome=True)
 
         # Inputs
         gtf = File(self._gtf)
         genome = File(self._genome)
 
         # Outputs
-        features = File('%s_features.fa' % self._prefix)
-        chrs = File('%s_chrs.fa' % self._prefix)
-        splices = File('%s_jxnCands.fa' % self._prefix)
-        genes = File('%s_geneSeqs.fa' % self._prefix)
+        features = File('h%s_features.fa' % prefix)
+        chrs = File('h%s_chrs.fa' % prefix)
+        splices = File('h%s_jxnCands.fa' % prefix)
+        genes = File('h%s_geneSeqs.fa' % prefix)
 
         # Arguments
         annotate_gtf.addArguments(gtf, '-c', genome, '-p', self._prefix, '-l %d' % read_length)
@@ -104,8 +106,10 @@ class AnnotateMixin(object):
         perm_index = Job(name='perm')
         perm_index.invoke('all', '%sstate_update.py %r %r %r %r')
 
+        prefix = self._get_index_hash(read_length, exclude_genome=True)
+
         # Input files
-        fa_input = File('%s_%s.fa' % (self._prefix, index_type))
+        fa_input = File('h%s_%s.fa' % (prefix, index_type))
 
         # Output files
         hash_v = self._get_index_hash(read_length)
@@ -217,7 +221,7 @@ class IterativeMapMixin(object):
         reads = os.path.basename(reads)
         for i in self._range():
             reads_i = os.path.splitext(reads)[0] % i
-            mapping_file = 'FEATURES_B_%d_%d_%s.mapping' % (self._seed, self._mismatches, reads_i)
+            mapping_file = 'mapDir_%s/FEATURES_B_%d_%d_%s.mapping' % (tag, self._seed, self._mismatches, reads_i)
             self._parse_alignment(mapping_file, tag)
 
     def _map_and_parse_reads_to_genome(self, reads, tag):
@@ -226,7 +230,7 @@ class IterativeMapMixin(object):
         reads = os.path.basename(reads)
         for i in self._range():
             reads_i = os.path.splitext(reads)[0] % i
-            sam_file = 'mapDir_%s/GENOME_B_%d_%d_%s.mapping' % (tag, self._seed, self._mismatches, reads_i)
+            sam_file = 'mapDir_%s/GENOME_B_%d_%d_%s.sam' % (tag, self._seed, self._mismatches, reads_i)
             self._parse_alignment(sam_file, tag)
 
     def _map_and_parse_reads_to_splices(self, reads, tag):
@@ -235,7 +239,7 @@ class IterativeMapMixin(object):
         reads = os.path.basename(reads)
         for i in self._range():
             reads_i = os.path.splitext(reads)[0] % i
-            mapping_file = 'SPLICES_B_%d_%d_%s.mapping' % (self._seed, self._mismatches, reads_i)
+            mapping_file = 'mapDir_%s/SPLICES_B_%d_%d_%s.mapping' % (tag, self._seed, self._mismatches, reads_i)
             self._parse_alignment(mapping_file, tag)
 
     def _perm(self, index_type, map_to, reads, tag, output_sam=False):
@@ -289,7 +293,7 @@ class IterativeMapMixin(object):
 
         # Output files
 
-        vis = File('mapDir_%s/%s.vis' % (tag, input_file.name))
+        vis = File('%s.vis' % input_file.name)
 
         self._vis_files.append(vis.name)
 
@@ -339,7 +343,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         self._email = email
 
         def get_range():
-            return range(0, 2)
+            return range(0, 1)
 
         self._range = get_range
 
@@ -401,7 +405,12 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
             # Invalid extension
             pass
 
-    def _get_index_hash(self, read_length):
+    def _get_index_hash(self, read_length, exclude_genome=False):
+        t = (self._gtf, self._genome, read_length)
+
+        if exclude_genome:
+            t = (self._gtf, read_length)
+
         hash_k = '%s-%s-%d' % (self._gtf, self._genome, read_length)
         return mmh3.hash(hash_k, read_length)
 
