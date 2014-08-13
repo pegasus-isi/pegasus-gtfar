@@ -192,14 +192,18 @@ class IterativeMapMixin(object):
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
 
-    def _map_and_parse_reads(self, files_pattern, tag):
+    def _map_and_parse_reads(self, reads, tag):
         self._setup_perm_seeds()
 
-        self._map_and_parse_reads_to_features(tag)
-        self._map_and_parse_reads_to_genome(tag)
+        self._map_and_parse_reads_to_features(reads, tag)
+
+        path, file_name, ext = GTFAR._get_filename_parts(reads)
+        reads = 'mapDir_%s/%s_miss_FEATURES%s' % (tag, file_name, ext)
+        self._map_and_parse_reads_to_genome(reads, tag)
 
         if self._splice:
-            self._map_and_parse_reads_to_genome(tag)
+            reads = '%s_miss_GENOME%s' % os.path.splitext(reads)
+            self._map_and_parse_reads_to_splices(reads, tag)
 
     def _setup_perm_seeds(self):
         self._seed = self._mismatches
@@ -207,52 +211,61 @@ class IterativeMapMixin(object):
         if self._read_length > 64:
             self._seed = (self._mismatches + 1) / 2
 
-    def _map_and_parse_reads_to_features(self, tag):
-        self._perm('features', 'FEATURES', tag)
+    def _map_and_parse_reads_to_features(self, reads, tag):
+        self._perm('features', 'FEATURES', reads, tag)
 
+        reads = os.path.basename(reads)
         for i in self._range():
-            mapping_file = 'FEATURES_B_%d_%d_reads%d_full.mapping' % (self._seed, self._mismatches, i)
+            reads_i = os.path.splitext(reads)[0] % i
+            mapping_file = 'FEATURES_B_%d_%d_%s.mapping' % (self._seed, self._mismatches, reads_i)
             self._parse_alignment(mapping_file, tag)
 
-    def _map_and_parse_reads_to_genome(self, tag):
-        self._perm('chrs', 'GENOME', tag, output_sam=True)
+    def _map_and_parse_reads_to_genome(self, reads, tag):
+        self._perm('chrs', 'GENOME', reads, tag, output_sam=True)
 
+        reads = os.path.basename(reads)
         for i in self._range():
-            sam_file = 'GENOME_B_%d_%d_reads%d_full_miss_FEATURES_miss_GENOME.mapping' % (
-                self._seed, self._mismatches, i)
+            reads_i = os.path.splitext(reads)[0] % i
+            sam_file = 'mapDir_%s/GENOME_B_%d_%d_%s.mapping' % (tag, self._seed, self._mismatches, reads_i)
             self._parse_alignment(sam_file, tag)
 
-    def _map_and_parse_reads_to_splices(self, tag):
-        self._perm('jxnCands', 'SPLICES', tag)
+    def _map_and_parse_reads_to_splices(self, reads, tag):
+        self._perm('jxnCands', 'SPLICES', reads, tag)
 
+        reads = os.path.basename(reads)
         for i in self._range():
-            mapping_file = 'SPLICES_B_%d_%d_reads%d_full_miss_FEATURES_miss_GENOME.mapping' % (
-                self._seed, self._mismatches, i)
+            reads_i = os.path.splitext(reads)[0] % i
+            mapping_file = 'SPLICES_B_%d_%d_%s.mapping' % (self._seed, self._mismatches, reads_i)
             self._parse_alignment(mapping_file, tag)
 
-    def _perm(self, index_type, map_to, tag, output_sam=False):
+    def _perm(self, index_type, map_to, reads, tag, output_sam=False):
         perm = Job(name='perm')
         perm.invoke('all', '%sstate_update.py %r %r %r %r')
 
         # Input files
         hash_v = self._get_index_hash(self._read_length)
         index = File('h%d_%s_F%d_%d.index' % (hash_v, index_type, self._seed, self._read_length))
-        reads = File('mapDir_%s/%s_reads.txt' % (tag, map_to.lower()))
+        reads_txt = File('mapDir_%s/%s_reads.txt' % (tag, map_to.lower()))
 
         for i in self._range():
+            # Input files
+            reads_i = File(reads % i)
+
             # Output files
-            sam_mapping = File('%s_B_%d_%d_reads%d_full_miss_FEATURES.sam' % (map_to.upper(), self._seed, self._mismatches, i))
-            fastq_out = File('a%d' % i)
+            file_type = 'sam' if output_sam else 'mapping'
+            path, file_name, ext = GTFAR._get_filename_parts(reads_i.name)
+            sam_mapping = 'mapDir_%s/%s_B_%d_%d_%s.%s' % (
+            tag, map_to.upper(), self._seed, self._mismatches, file_name, file_type)
 
             # Uses
+            perm.uses(reads_i, link=Link.INPUT)
             perm.uses(sam_mapping, link=Link.OUTPUT, transfer=False, register=False)
-            perm.uses(fastq_out, link=Link.OUTPUT, transfer=False, register=False)
 
         # Output files
-        log = File('%s.log' % map_to.upper())
+        log = File('mapDir_%s/%s.log' % (tag, map_to.upper()))
 
         # Arguments
-        perm.addArguments(index, reads, '--seed F%d' % self._seed, '-v %d' % self._mismatches, '-B', '--printNM')
+        perm.addArguments(index, reads_txt, '--seed F%d' % self._seed, '-v %d' % self._mismatches, '-B', '--printNM')
         perm.addArguments('-u', '-s', '-T %d' % self._read_length)
 
         if output_sam:
@@ -262,7 +275,7 @@ class IterativeMapMixin(object):
 
         # Uses
         perm.uses(index, link=Link.INPUT)
-        perm.uses(reads, link=Link.INPUT)
+        perm.uses(reads_txt, link=Link.INPUT)
         perm.uses(log, link=Link.OUTPUT, transfer=False, register=False)
 
         self.adag.addJob(perm)
@@ -316,7 +329,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         self._mismatches = mismatches
         self._is_trim_unmapped = is_trim_unmapped
         self._is_map_filtered = is_map_filtered
-        self._splice = splice
+        self._splice = True
         self._strand_rule = strand_rule
 
         # Pegasus
@@ -393,7 +406,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         return mmh3.hash(hash_k, read_length)
 
     @staticmethod
-    def __get_filename_parts(filename):
+    def _get_filename_parts(filename):
         path = os.path.dirname(filename)
         file_name, ext = os.path.splitext(filename)
         file_name = os.path.basename(file_name)
