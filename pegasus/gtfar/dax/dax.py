@@ -372,7 +372,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         try:
             self._read_length = int(self._read_length)
 
-            if not 50 <= self._read_length <= 128:
+            if not 36 <= self._read_length <= 128:
                 errors['length'] = 'Read length must be between 50 and 128 (inclusive)'
 
         except TypeError:
