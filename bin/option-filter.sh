@@ -52,13 +52,10 @@ function count_and_split_reads {
     myEXT=${READS##*.}
     FILENAME=$(echo $READS | awk -F\. '{print $1}')
 
-    mkdir filterDir
-
     if [ $myEXT = gz ]; then
         myREADS=$(basename $READS ".$myEXT"); fEXT=${myREADS##*.}
         if [ $fEXT = fastq ] || [ $fEXT == fq ]; then
-            ln -fns $(readlink -m $READS) filterDir/READS.init
-            cd filterDir
+            ln -fns $(readlink -m $READS) READS.init
             zcat READS.init | awk '{if (NR%4==0) printf $1"\n"; else printf $1" "}' > READS.tmp
         else
             echo "NEED FASTQ FILE OR FASTQ.GZ"
@@ -66,8 +63,7 @@ function count_and_split_reads {
         fi
 
     elif [ $myEXT == fastq ] || [ $myEXT == fq ]; then
-        ln -fns $(readlink -m $READS) filterDir/READS.init
-        cd filterDir
+        ln -fns $(readlink -m $READS) READS.init
         cat READS.init | awk '{if (NR%4==0) printf $1"\n"; else printf $1" "}' > READS.tmp
 
     else
