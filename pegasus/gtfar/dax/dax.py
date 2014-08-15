@@ -413,12 +413,14 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
             pass
 
     def _get_index_hash(self, read_length, exclude_genome=False):
+        hash_k = '%s-%s-%d'
         t = (self._gtf, self._genome, read_length)
 
         if exclude_genome:
+            hash_k = '%s-%d'
             t = (self._gtf, read_length)
 
-        hash_k = '%s-%s-%d' % (self._gtf, self._genome, read_length)
+        hash_k = hash_k % t
         return mmh3.hash(hash_k, read_length)
 
     @staticmethod
