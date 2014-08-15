@@ -59,7 +59,7 @@ setup(
         'Intended Audience :: Science/Research',
         'Operating System :: Unix'
     ],
-    packages=find_packages(),
+    packages=find_packages(exclude=['pegasus.tests']),
     zip_safe=True,
     scripts=[
         'bin/gtfar-server',
