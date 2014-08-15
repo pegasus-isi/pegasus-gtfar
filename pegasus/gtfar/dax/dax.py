@@ -71,6 +71,12 @@ class AnnotateMixin(object):
         gtf = File(self._gtf)
         genome = File(self._genome)
 
+        for i in range(1, 23):
+            chr_i = File('chr%d.fa' % i)
+
+            # Uses
+            annotate_gtf.uses(chr_i, link=Link.INPUT)
+
         # Outputs
         features = File('h%s_features.fa' % prefix)
         chrs = File('h%s_chrs.fa' % prefix)
@@ -78,7 +84,7 @@ class AnnotateMixin(object):
         genes = File('h%s_geneSeqs.fa' % prefix)
 
         # Arguments
-        annotate_gtf.addArguments(gtf, '-c', genome, '-p', self._prefix, '-l %d' % read_length)
+        annotate_gtf.addArguments(gtf, '-c .', '-p', self._prefix, '-l %d' % read_length)
 
         # Uses
         annotate_gtf.uses(gtf, link=Link.INPUT)
