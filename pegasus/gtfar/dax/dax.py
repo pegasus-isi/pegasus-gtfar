@@ -277,12 +277,10 @@ class IterativeMapMixin(object):
 
         # Arguments
         perm.addArguments(index, reads_txt, '--seed F%d' % self._seed, '-v %d' % self._mismatches, '-B', '--printNM')
-        perm.addArguments('-u', '-s', '-T %d' % self._read_length)
+        perm.addArguments('-u', '-s', '-T %d' % self._read_length, '--log', log)
 
         if output_sam:
             perm.addArguments('--noSamHeader', '--outputFormat', 'sam')
-
-        perm.setStdout(log)
 
         # Uses
         perm.uses(index, link=Link.INPUT)
