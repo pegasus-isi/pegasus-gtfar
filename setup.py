@@ -67,7 +67,7 @@ setup(
         'pegasus': ['tests/*'],
         'pegasus.gtfar': ['static/tests/*']
     },
-    zip_safe=True,
+    zip_safe=False,
     scripts=[
         'bin/gtfar-server',
         'bin/gtfar-dax-generator',
