@@ -60,6 +60,13 @@ setup(
         'Operating System :: Unix'
     ],
     packages=find_packages(exclude=['pegasus.tests']),
+    package_data={
+        'pegasus.gtfar': find_package_data('pegasus/gtfar')
+    },
+    exclude_package_data={
+        'pegasus': ['tests/*'],
+        'pegasus.gtfar': ['static/tests/*']
+    },
     zip_safe=True,
     scripts=[
         'bin/gtfar-server',
