@@ -118,7 +118,7 @@ class AnnotateMixin(object):
         fa_input = File('h%s_%s.fa' % (prefix, index_type))
 
         # Output files
-        hash_v = self._get_index_hash(read_length)
+        hash_v = self._get_index_hash(read_length, seed)
         index = File('h%d_%s_%s_%s.index' % (hash_v, index_type, seed, read_length))
 
         # Arguments
@@ -253,7 +253,7 @@ class IterativeMapMixin(object):
         perm.invoke('all', '%sstate_update.py %r %r %r %r')
 
         # Input files
-        hash_v = self._get_index_hash(self._read_length)
+        hash_v = self._get_index_hash(self._read_length, 'F%d' % self._seed)
         index = File('h%d_%s_F%d_%d.index' % (hash_v, index_type, self._seed, self._read_length))
         reads_txt = File('%s_%s_reads.txt' % (tag, map_to.lower()))
 
@@ -410,9 +410,9 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
             # Invalid extension
             pass
 
-    def _get_index_hash(self, read_length, exclude_genome=False):
-        hash_k = '%s-%s-%d'
-        t = (self._gtf, self._genome, read_length)
+    def _get_index_hash(self, read_length, seed=None, exclude_genome=False):
+        hash_k = '%s-%s-%d-%s'
+        t = (self._gtf, self._genome, read_length, seed)
 
         if exclude_genome:
             hash_k = '%s-%d'
