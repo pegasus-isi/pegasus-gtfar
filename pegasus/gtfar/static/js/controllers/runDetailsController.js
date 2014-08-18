@@ -21,10 +21,10 @@ define([],
 function() {
     "use strict"
 
-    var runDetailsController = function($scope) {
-        console.log("hello");
+    var runDetailsController = function($scope, $state, $stateParams, $window) {
+        console.log($stateParams);
     };
 
     // Return the array so the dependecy injections are accounted for
-    return ["$scope", runDetailsController];
+    return ["$scope", "$state", "$stateParams", runDetailsController];
 });

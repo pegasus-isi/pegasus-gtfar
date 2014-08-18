@@ -13,29 +13,13 @@
   ~  See the License for the specific language governing permissions and
   ~  limitations under the License.
   -->
-<div class="centerContent col-md-8">
+<div class="jumbotron">
     <button class="btn btn-default btn-sm" ng-click="createRun()">Create New Run</button>
-    <button class="btn btn-primary btn-sm">
-        <i class="fa fa-refresh" ng-click="refresh()">&nbsp Refresh</i>
+    <button class="btn btn-primary btn-sm" ng-click="refresh()">
+        <i class="fa fa-refresh" >&nbsp Refresh</i>
     </button>
-
+    <br/>
     <div class="gridStyle hideScrollX" ng-grid="runsGrid"></div>
+    <br/>
+    <button class="col-md-offset-11 btn btn-danger btn-sm" ng-click="deleteSelected()">Delete Selected</button>
 </div>
-<!--table id="runsTable">
-    <thead>
-        <tr>
-            <th>Run ID</th>
-            <th>Filename</th>
-            <th>Job</th>
-            <th>Created On</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr ng-repeat="run in runs">
-            <td><a ng-href="#/{{run.rid}}">{{run.rid}}</a></td>
-            <td >{{run.filename}}</td> <!--TODO: make this a link to download the file-->
-            <!--td>{{run.job_name}}</td>
-            <td>{{run.created}}</td>
-        </tr>
-    </tbody>
-</table-->

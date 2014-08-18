@@ -20,11 +20,22 @@
 
 }
 
-
 .ngRow {
     border: 1px solid rgb(212,212,212);
 }
 
 .hideScrollX * {
     overflow : hidden;
+}
+
+.red {
+    color : red;
+}
+
+.green {
+    color : green;
+}
+
+.blue {
+    color : blue;
 }

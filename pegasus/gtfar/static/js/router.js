@@ -51,8 +51,8 @@ function(runsController, runDetailsController, runCreationController){
                 controller: "runsController"
 
             })
-            .state('runs.details', {
-                url: "/runs/details",
+            .state('runDetails', {
+                url: "/runs/details/{id:[^/]*}",
                 templateUrl: "partials/runDetails.html",
                 controller: "runDetailsController"
             })
@@ -79,7 +79,7 @@ function(runsController, runDetailsController, runCreationController){
 
     return {
         getFullConstructor : getFullConstructor,
-        getMinimalConstructor : getMinimalConstructor
+        getName : getMinimalConstructor
     }
 
 

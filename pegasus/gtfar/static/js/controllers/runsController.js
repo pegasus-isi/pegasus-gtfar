@@ -40,8 +40,34 @@ function() {
             return (exitCode == 0) ? "bg-success" : (exitCode == -1)  ? "bg-info" : "bg-danger";
         };
 
+        $scope.getExitCodeIcon = function(status) {
+            return (status == 0) ? "green fa fa-check-circle" : (status == -1) ? "blue fa fa-exclamation-circle" : "red fa fa-exclamation-triangle";
+        };
+
         $scope.createRun = function() {
             $state.go('createRun');
+        };
+
+        $scope.deleteSelected = function() {
+            var selected = $scope.runsGrid.selectedItems;
+            var deleteTotal = $scope.runsGrid.selectedItems.length;
+            var deleteCount = 0;
+            for(var i = 0; i < deleteTotal; i++) {
+                $http.delete($window.apiLinks.runs + "/" + selected[i].id)
+                    .success(function () {
+                        // No specifications aside from the then clause
+                    }).error(function () {
+                        // TODO: display an error popup
+                        deleteCount++;
+
+                    })
+                    .then(function() {
+                        deleteCount++;
+                        if(deleteCount == deleteTotal) {
+                            getRuns();
+                        }
+                    })
+            }
         }
 
         $scope.runsGrid = {
@@ -52,14 +78,12 @@ function() {
             selectWithCheckboxOnly : true,
             showFilter : true,
             columnDefs : [
-                {field : "name", displayName : "Name"},
+                {field : "name", displayName : "Name", cellTemplate: "<a class='gridCenter' ui-sref='runDetails({id : row.getProperty(\"id\")})'><div class='ngCellText'>{{row.getProperty(col.field)}}</div></a>"},
+                {field : "status", displayName : "Status", width : 60, cellTemplate: "<i class='ngCellText' ng-class='getExitCodeIcon(row.getProperty(col.field))'></i>"},
                 {field : "filename", displayName : "File"},
                 {field : "created", displayName : "Created On"}
             ],
-            rowTemplate : '<div style="height: 100%" ng-class="getbgColor(row.getProperty(\'exitcode\'))"><div ng-style="{ \'cursor\': row.cursor }" ng-repeat="col in renderedColumns" ng-class="col.colIndex()" class="ngCell ">' +
-                '<div class="ngVerticalBar" ng-style="{height: rowHeight}" ng-class="{ ngVerticalBarVisible: !$last }"> </div>' +
-                '<div ng-cell></div>' +
-                '</div></div>'
+            selectedItems : []
         }
 
     };

@@ -48,6 +48,11 @@ function(angular) {
             // readAsArrayBuffer would never give any contents so I'm using readAsBinaryString
             reader.readAsBinaryString(file);
         };
+
+        $scope.cancel = function() {
+            $state.go('runs');
+        };
+
         $scope.addRun = function() {
 
             // TODO: Figure out where to add validation checks for all the inputs
@@ -110,7 +115,7 @@ function(angular) {
 
     return {
         getFullConstructor : getFullConstructor,
-        getMinimalConstructor : getMinimalConstructor
+        getName : getMinimalConstructor
     };
 
 });

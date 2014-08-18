@@ -16,8 +16,8 @@
   -->
 
 
-<div class="col-md-8">
-    <h1>Create a New Workflow</h1>
+<div class="jumbotron container">
+    <h3>Create a New Workflow</h3><br/>
     <form id="runForm" class="form-horizontal" role="form" enctype="multipart/form-data" method="post" action="">
         <div class="form-group">
             <label for="inputRunName" class="col-md-2">Workflow Name</label>
@@ -61,9 +61,11 @@
             <!-- Use onChange instead of ng-change because the people who write Angular don't think they should support file uploading-->
             <input type="file" name="file" id="inputFile"><!--onchange="angular.element(this).scope().uploadFile()"-->
             <div class="col-md-2"></div>
-            <p class="help-block col-md-10">Make sure it is under 5 GB.</p>
+            <p class="help-block col-md-10"><small>Make sure it is under 5 GB.</small></p>
         </div>
-        <div class="col-md-7"></div>
-        <button type="submit" class="btn btn-default col-md-1" ng-click="addRun()">Submit</button>
+        <div class="form-group">
+            <button type="submit" class="btn btn-default col-md-offset-6 button-sm" ng-click="addRun()">Submit</button>
+            <button class="btn btn-default button-sm" ng-click="cancel()">Cancel</button>
+        </div>
     </form>
 </div>
