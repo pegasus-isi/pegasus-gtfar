@@ -59,24 +59,32 @@ class AnnotateMixin(object):
         self._features_index(read_length)
         self._chrs_index(read_length)
         self._splices_index(read_length)
-        self._genes_index(read_length)
+        # self._genes_index(read_length)
 
     def _annotate_gtf(self, read_length):
         annotate_gtf = Job(name='annotate_gtf')
         annotate_gtf.invoke('all', '%sstate_update.py %r %r %r %r')
 
+        prefix = self._get_index_hash(read_length, exclude_genome=True)
+
         # Inputs
         gtf = File(self._gtf)
         genome = File(self._genome)
 
+        for i in range(1, 23):
+            chr_i = File('chr%d.fa' % i)
+
+            # Uses
+            annotate_gtf.uses(chr_i, link=Link.INPUT)
+
         # Outputs
-        features = File('%s_features.fa' % self._prefix)
-        chrs = File('%s_chrs.fa' % self._prefix)
-        splices = File('%s_jxnCands.fa' % self._prefix)
-        genes = File('%s_geneSeqs.fa' % self._prefix)
+        features = File('h%s_features.fa' % prefix)
+        chrs = File('h%s_chrs.fa' % prefix)
+        splices = File('h%s_jxnCands.fa' % prefix)
+        genes = File('h%s_geneSeqs.fa' % prefix)
 
         # Arguments
-        annotate_gtf.addArguments(gtf, '-c', genome, '-p', self._prefix, '-l %d' % read_length)
+        annotate_gtf.addArguments(gtf, '-c .', '-p', self._prefix, '-l %d' % read_length)
 
         # Uses
         annotate_gtf.uses(gtf, link=Link.INPUT)
@@ -104,11 +112,13 @@ class AnnotateMixin(object):
         perm_index = Job(name='perm')
         perm_index.invoke('all', '%sstate_update.py %r %r %r %r')
 
+        prefix = self._get_index_hash(read_length, exclude_genome=True)
+
         # Input files
-        fa_input = File('%s_%s.fa' % (self._prefix, index_type))
+        fa_input = File('h%s_%s.fa' % (prefix, index_type))
 
         # Output files
-        hash_v = self._get_index_hash(read_length)
+        hash_v = self._get_index_hash(read_length, seed)
         index = File('h%d_%s_%s_%s.index' % (hash_v, index_type, seed, read_length))
 
         # Arguments
@@ -167,20 +177,20 @@ class FilterMixin(object):
 
 class IterativeMapMixin(object):
     def iterative_map(self):
-        self._map_and_parse_reads('filterDir/reads%d_full.fastq', 'full')
-        unmapped = 'mapDir_full/reads%s_full_unmapped.fastq'
+        self._map_and_parse_reads('reads%d_full.fastq', 'full')
+        unmapped = 'reads%s_full_unmapped.fastq'
 
         for trim in self._trims:
             self._read_length = trim
 
             if (self._is_trim_unmapped):
                 self._map_and_parse_reads(unmapped, 'trim%d' % trim)
-                unmapped = 'mapDir_trim%d/reads*unmapped.fastq' % trim
+                unmapped = 'reads*unmapped.fastq'
 
             if (self._is_map_filtered):
-                self._map_and_parse_reads('filterDir/reads%%d_%d.fastq' % trim, 'filter%d' % trim)
+                self._map_and_parse_reads('reads%%d_%d.fastq' % trim, 'filter%d' % trim)
 
-        cat = UNIXUtils.cat(self._vis_files, '%s.sam')
+        cat = UNIXUtils.cat(self._vis_files, '%s.sam' % self._prefix)
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
 
@@ -192,14 +202,18 @@ class IterativeMapMixin(object):
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
 
-    def _map_and_parse_reads(self, files_pattern, tag):
+    def _map_and_parse_reads(self, reads, tag):
         self._setup_perm_seeds()
 
-        self._map_and_parse_reads_to_features(tag)
-        self._map_and_parse_reads_to_genome(tag)
+        self._map_and_parse_reads_to_features(reads, tag)
+
+        path, file_name, ext = GTFAR._get_filename_parts(reads)
+        reads = '%s_miss_FEATURES%s' % (file_name, ext)
+        self._map_and_parse_reads_to_genome(reads, tag)
 
         if self._splice:
-            self._map_and_parse_reads_to_genome(tag)
+            reads = '%s_miss_GENOME%s' % os.path.splitext(reads)
+            self._map_and_parse_reads_to_splices(reads, tag)
 
     def _setup_perm_seeds(self):
         self._seed = self._mismatches
@@ -207,68 +221,75 @@ class IterativeMapMixin(object):
         if self._read_length > 64:
             self._seed = (self._mismatches + 1) / 2
 
-    def _map_and_parse_reads_to_features(self, tag):
-        self._perm('features', 'FEATURES', tag)
+    def _map_and_parse_reads_to_features(self, reads, tag):
+        self._perm('features', 'FEATURES', reads, tag)
 
+        reads = os.path.basename(reads)
         for i in self._range():
-            mapping_file = 'FEATURES_B_%d_%d_reads%d_full.mapping' % (self._seed, self._mismatches, i)
-            fastq_out = 'reads%d_full_miss_FEATURES.fastq' % i
-            self._parse_alignment(mapping_file, fastq_out, tag)
+            reads_i = os.path.splitext(reads)[0] % i
+            mapping_file = 'FEATURES_B_%d_%d_%s.mapping' % (self._seed, self._mismatches, reads_i)
+            self._parse_alignment(mapping_file, tag)
 
-    def _map_and_parse_reads_to_genome(self, tag):
-        self._perm('chrs', 'GENOME', tag, output_sam=True)
+    def _map_and_parse_reads_to_genome(self, reads, tag):
+        self._perm('chrs', 'GENOME', reads, tag, output_sam=True)
 
+        reads = os.path.basename(reads)
         for i in self._range():
-            sam_file = 'GENOME_B_%d_%d_reads%d_full_miss_FEATURES_miss_GENOME.mapping' % (
-                self._seed, self._mismatches, i)
-            fastq_out = 'reads%d_full_miss_FEATURES_miss_GENOME.fastq' % i
-            self._parse_alignment(sam_file, fastq_out, tag)
+            reads_i = os.path.splitext(reads)[0] % i
+            sam_file = 'GENOME_B_%d_%d_%s.sam' % (self._seed, self._mismatches, reads_i)
+            self._parse_alignment(sam_file, tag)
 
-    def _map_and_parse_reads_to_splices(self, tag):
-        self._perm('jxnCands', 'SPLICES', tag)
+    def _map_and_parse_reads_to_splices(self, reads, tag):
+        self._perm('jxnCands', 'SPLICES', reads, tag)
 
+        reads = os.path.basename(reads)
         for i in self._range():
-            mapping_file = 'SPLICES_B_%d_%d_reads%d_full_miss_FEATURES_miss_GENOME.mapping' % (
-                self._seed, self._mismatches, i)
-            fastq_out = 'reads%d_full_unmapped.fastq' % i
-            self._parse_alignment(mapping_file, fastq_out, tag)
+            reads_i = os.path.splitext(reads)[0] % i
+            mapping_file = 'SPLICES_B_%d_%d_%s.mapping' % (self._seed, self._mismatches, reads_i)
+            self._parse_alignment(mapping_file, tag)
 
-    def _perm(self, index_type, map_to, tag, output_sam=False):
+    def _perm(self, index_type, map_to, reads, tag, output_sam=False):
         perm = Job(name='perm')
         perm.invoke('all', '%sstate_update.py %r %r %r %r')
 
         # Input files
-        hash_v = self._get_index_hash(self._read_length)
+        hash_v = self._get_index_hash(self._read_length, 'F%d' % self._seed)
         index = File('h%d_%s_F%d_%d.index' % (hash_v, index_type, self._seed, self._read_length))
-        reads = File('mapDir_%s/%s_reads.txt' % (tag, map_to.lower()))
+        reads_txt = File('%s_%s_reads.txt' % (tag, map_to.lower()))
 
         for i in self._range():
+            # Input files
+            reads_i = File(reads % i)
+
             # Output files
-            sam = File('%s_B_%d_%d_reads%d_full_miss_FEATURES.sam' % (map_to.upper(), self._seed, self._mismatches, i))
+            file_type = 'sam' if output_sam else 'mapping'
+            path, file_name, ext = GTFAR._get_filename_parts(reads_i.name)
+            sam_mapping = '%s_B_%d_%d_%s.%s' % (map_to.upper(), self._seed, self._mismatches, file_name, file_type)
+            fastq_out = File('%s_miss_%s%s' % (file_name, map_to, ext))
 
             # Uses
-            perm.uses(sam, link=Link.OUTPUT, transfer=False, register=False)
+            perm.uses(reads_i, link=Link.INPUT)
+            perm.uses(fastq_out, link=Link.OUTPUT, transfer=False, register=False)
+            perm.uses(sam_mapping, link=Link.OUTPUT, transfer=False, register=False)
 
         # Output files
-        log = File('%s.log' % map_to.upper())
+        log = File('%s_%s.log' % (tag, map_to.upper()))
 
         # Arguments
-        perm.addArguments(index, reads, '--seed F%d' % self._seed, '-v %d' % self._mismatches, '-B', '--printNM')
-        perm.addArguments('-u', '-s', '-T %d' % self._read_length)
+        perm.addArguments(index, reads_txt, '--seed F%d' % self._seed, '-v %d' % self._mismatches, '-B', '--printNM')
+        perm.addArguments('-u', '-s', '-T %d' % self._read_length, '--log', log)
 
         if output_sam:
             perm.addArguments('--noSamHeader', '--outputFormat', 'sam')
 
-        perm.setStdout(log)
-
         # Uses
         perm.uses(index, link=Link.INPUT)
-        perm.uses(reads, link=Link.INPUT)
+        perm.uses(reads_txt, link=Link.INPUT)
         perm.uses(log, link=Link.OUTPUT, transfer=False, register=False)
 
         self.adag.addJob(perm)
 
-    def _parse_alignment(self, input_file, fastq_out, tag):
+    def _parse_alignment(self, input_file, tag):
         parse_alignment = Job(name='parse_alignment')
         parse_alignment.invoke('all', '%sstate_update.py %r %r %r %r')
 
@@ -276,8 +297,8 @@ class IterativeMapMixin(object):
         input_file = File(input_file)
 
         # Output files
-        fastq_out = File(fastq_out)
-        vis = File('mapDir_%s/%s.vis' % (tag, input_file.name))
+
+        vis = File('%s.vis' % input_file.name)
 
         self._vis_files.append(vis.name)
 
@@ -287,7 +308,6 @@ class IterativeMapMixin(object):
 
         # Uses
         parse_alignment.uses(input_file, link=Link.INPUT)
-        parse_alignment.uses(fastq_out, link=Link.OUTPUT, transfer=False, register=False)
         parse_alignment.uses(vis, link=Link.OUTPUT, transfer=False, register=False)
 
         self.adag.addJob(parse_alignment)
@@ -318,7 +338,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         self._mismatches = mismatches
         self._is_trim_unmapped = is_trim_unmapped
         self._is_map_filtered = is_map_filtered
-        self._splice = splice
+        self._splice = True
         self._strand_rule = strand_rule
 
         # Pegasus
@@ -328,7 +348,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         self._email = email
 
         def get_range():
-            return range(0, 2)
+            return range(0, 1)
 
         self._range = get_range
 
@@ -357,7 +377,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         try:
             self._read_length = int(self._read_length)
 
-            if not 50 <= self._read_length <= 128:
+            if not 36 <= self._read_length <= 128:
                 errors['length'] = 'Read length must be between 50 and 128 (inclusive)'
 
         except TypeError:
@@ -390,12 +410,19 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
             # Invalid extension
             pass
 
-    def _get_index_hash(self, read_length):
-        hash_k = '%s-%s-%d' % (self._gtf, self._genome, read_length)
+    def _get_index_hash(self, read_length, seed=None, exclude_genome=False):
+        hash_k = '%s-%s-%d-%s'
+        t = (self._gtf, self._genome, read_length, seed)
+
+        if exclude_genome:
+            hash_k = '%s-%d'
+            t = (self._gtf, read_length)
+
+        hash_k = hash_k % t
         return mmh3.hash(hash_k, read_length)
 
     @staticmethod
-    def __get_filename_parts(filename):
+    def _get_filename_parts(filename):
         path = os.path.dirname(filename)
         file_name, ext = os.path.splitext(filename)
         file_name = os.path.basename(file_name)
@@ -413,17 +440,16 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
 
     def write_dax(self):
         # Write out reads file
-        self._write_reads_file('reads%d_full.fastq', 'mapDir_full/feature_reads.txt')
-        self._write_reads_file('reads%d_full_miss_FEATURES.fastq', 'mapDir_full/genome_reads.txt')
-        self._write_reads_file('reads%d_full_miss_FEATURES_miss_GENOME.fastq', 'mapDir_full/splices_reads.txt')
+        self._write_reads_file('reads%d_full.fastq', 'full_feature_reads.txt')
+        self._write_reads_file('reads%d_full_miss_FEATURES.fastq', 'full_genome_reads.txt')
+        self._write_reads_file('reads%d_full_miss_FEATURES_miss_GENOME.fastq', 'full_splices_reads.txt')
 
         if self._is_map_filtered:
             for trim in self._trims:
-                self._write_reads_file('reads%%d_%d.fastq' % trim, 'mapDir_filter%d/feature_reads.txt' % trim)
-                self._write_reads_file('reads%%d_%d_miss_FEATURES.fastq' % trim,
-                                       'mapDir_filter%d/genome_reads.txt' % trim)
+                self._write_reads_file('reads%%d_%d.fastq' % trim, 'filter%d_feature_reads.txt' % trim)
+                self._write_reads_file('reads%%d_%d_miss_FEATURES.fastq' % trim, 'filter%d_genome_reads.txt' % trim)
                 self._write_reads_file('reads%%d_%d_miss_FEATURES_miss_GENOME.fastq' % trim,
-                                       'mapDir_filter%d/splices_reads.txt' % trim)
+                                       'filter%d_splices_reads.txt' % trim)
 
         if isinstance(self._dax, str):
             with open(self._dax, 'w') as dax:

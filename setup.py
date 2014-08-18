@@ -59,8 +59,15 @@ setup(
         'Intended Audience :: Science/Research',
         'Operating System :: Unix'
     ],
-    packages=find_packages(),
-    zip_safe=True,
+    packages=find_packages(exclude=['pegasus.tests']),
+    package_data={
+        'pegasus.gtfar': find_package_data('pegasus/gtfar')
+    },
+    exclude_package_data={
+        'pegasus': ['tests/*'],
+        'pegasus.gtfar': ['static/tests/*']
+    },
+    zip_safe=False,
     scripts=[
         'bin/gtfar-server',
         'bin/gtfar-dax-generator',
@@ -79,7 +86,8 @@ setup(
         'Werkzeug==0.9.6',
         'Jinja2==2.7.3',
         'SQLAlchemy==0.9.6',
-        'MySQL-python==1.2.5'
+        'MySQL-python==1.2.5',
+        'biopython==1.64'
     ],
     test_suite='pegasus.tests'
 )
