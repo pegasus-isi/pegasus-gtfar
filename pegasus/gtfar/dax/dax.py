@@ -146,7 +146,24 @@ class AnnotateMixin(object):
 
 class FilterMixin(object):
     def option_filter(self):
-        self._option_filter()
+        splits = self._splits
+        suffix_len = max(2, len(str(splits)))
+        rejects = []
+        stats = []
+
+        self._fastq_split(splits=splits, suffix_len=suffix_len)
+
+        for i in range(splits):
+            rejects.append('reads%d_reject.fastq' % i)
+            stats.append('reads%d.stats' % i)
+            self._pre_filter_fastq(i, suffix_len)
+
+        # Merge rejects
+        cat = UNIXUtils.cat(rejects, '%s.reject.fastq' % self._prefix, o_transfer=True)
+        cat.invoke('all', '%sstate_update.py %r %r %r %r')
+        self.adag.addJob(cat)
+
+        self._merge_stats()
 
     def _option_filter(self):
         option_filter = Job(name='option_filter')
@@ -183,6 +200,79 @@ class FilterMixin(object):
 
         self.adag.addJob(option_filter)
 
+    def _fastq_split(self, splits=2, suffix_len=2):
+        fastq_split = Job(name='fastq-split')
+        fastq_split.invoke('all', '%sstate_update.py %r %r %r %r')
+
+        # Inputs
+        reads = File(self._reads)
+
+        # Arguments
+        fastq_split.addArguments(reads, '%d' % splits)
+
+        # Uses
+        fastq_split.uses(reads, link=Link.INPUT)
+
+        for i in range(splits):
+            split_i = File(('x%0' + str(suffix_len) + 'd') % i)
+
+            # Outputs
+            fastq_split.uses(split_i, link=Link.OUTPUT, transfer=False, register=False)
+
+        self.adag.addJob(fastq_split)
+
+    def _pre_filter_fastq(self, index, suffix_len):
+        pre_filter = Job(name='pre_filter_fastq.py')
+        pre_filter.invoke('all', '%sstate_update.py %r %r %r %r')
+        prefix = 'reads%d' % index
+
+        # Inputs
+        reads = File(('x%0' + str(suffix_len) + 'd') % index)
+
+        # Outputs
+        full_fastq = File('%s_full.fastq' % prefix)
+        reject = File('%s_reject.fastq' % prefix)
+        stats = File('%s.stats' % prefix)
+
+        # Arguments
+        trims = [str(i) for i in self._trims]
+        pre_filter.addArguments(reads, '-r', '%d' % self._read_length, '-t', '%r' % ' '.join(trims))
+        pre_filter.addArguments('-p', prefix)
+
+        # Uses
+        pre_filter.uses(reads, link=Link.INPUT)
+
+        for t in self._trims:
+            fastq_t = File('%s_%d.fastq' % (prefix, t))
+            pre_filter.uses(fastq_t, link=Link.OUTPUT, transfer=False, register=False)
+
+        pre_filter.uses(full_fastq, link=Link.OUTPUT, transfer=True, register=False)
+        pre_filter.uses(reject, link=Link.OUTPUT, transfer=True, register=False)
+        pre_filter.uses(stats, link=Link.OUTPUT, transfer=True, register=False)
+
+        self.adag.addJob(pre_filter)
+
+    def _merge_stats(self):
+        merge_stats = Job(name='merge-stats')
+        merge_stats.invoke('all', '%sstate_update.py %r %r %r %r')
+
+        # Outputs
+        adaptor_stats = File('%s.adaptor.stats' % self._prefix)
+
+        # Arguments
+        merge_stats.addArguments('reads*.stats', adaptor_stats)
+
+        for i in range(self._splits):
+            # Inputs
+            stats_i = File('reads%d.stats' % i)
+
+            # Uses
+            merge_stats.uses(stats_i, link=Link.INPUT)
+
+        # Outputs
+        merge_stats.uses(adaptor_stats, link=Link.OUTPUT, transfer=True, register=False)
+
+        self.adag.addJob(merge_stats)
 
 class IterativeMapMixin(object):
     def iterative_map(self):
@@ -325,7 +415,7 @@ class IterativeMapMixin(object):
 class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, CompoundTransformationMixin):
     def __init__(self, gtf, genome, prefix, reads, base_dir, read_length=100, mismatches=3, is_trim_unmapped=False,
                  is_map_filtered=False, splice=False, strand_rule='Unstranded', dax=None, url=None, email=None,
-                 adag=None):
+                 splits=2, adag=None):
 
         # Reference
         self._gtf = gtf
@@ -355,6 +445,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, CompoundTransformatio
         self._dax = sys.stdout if dax is None else '%s.dax' % (dax)
         self._url = url
         self._email = email
+        self._splits = splits
 
         def get_range():
             return range(0, 1)
