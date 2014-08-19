@@ -24,7 +24,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 
 #from pegasus.gtfar import views
 
-validExtensions = set(['txt', 'zip', 'tar', 'gz', 'bz'])
+#validExtensions = set(['txt', 'zip', 'tar', 'gz', 'bz'])
 
 app = Flask(__name__, static_url_path='')
 
@@ -45,8 +45,8 @@ db.create_all()
 cache = Cache(app)
 
 
-def isValidFile(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
+#def isValidFile(filename):
+#    return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
 
 
 def createRunDirectories(result):
@@ -57,7 +57,7 @@ def createRunDirectories(result):
         os.makedirs(path + os.sep + 'output')
         os.makedirs(path + os.sep + 'submit')
         os.makedirs(path + os.sep + 'scratch')
-        os.rename(app.config['UPLOAD_FOLDER'] + os.sep + str(result['filename']), path + os.sep + 'input' + os.sep + str(result['filename']))
+        os.system("mv %s  %s" % (app.config['UPLOAD_FOLDER'] + os.sep + str(result['filename']), path + os.sep + 'input' + os.sep + str(result['filename'])))
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
