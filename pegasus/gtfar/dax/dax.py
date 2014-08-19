@@ -21,15 +21,6 @@ import mmh3
 from Pegasus.DAX3 import ADAG, Dependency, Job, File, Link, Executable, PFN, Transformation
 
 
-class CompoundTransformationMixin(object):
-    def register_executable(self):
-        option_filter = Transformation('option_filter')
-        pre_filter = Executable('pre_filter_fastq.py')
-        option_filter.uses(pre_filter)
-
-        self.adag.addTransformation(option_filter)
-
-
 class UNIXUtils(object):
     @staticmethod
     def cat(inputs, output, o_link=Link.OUTPUT, o_transfer=False, o_register=False):
@@ -164,41 +155,6 @@ class FilterMixin(object):
         self.adag.addJob(cat)
 
         self._merge_stats()
-
-    def _option_filter(self):
-        option_filter = Job(name='option_filter')
-        option_filter.invoke('all', '%sstate_update.py %r %r %r %r')
-
-        # Inputs
-        reads = File(self._reads)
-
-        # Outputs
-        rejects = File('%s.reject.fastq' % self._prefix)
-        adaptor_stats = File('%s.adaptor.stats' % self._prefix)
-
-        # Arguments
-        option_filter.addArguments(self._prefix, reads, '%d' % self._read_length)
-
-        # Uses
-        option_filter.uses(reads, link=Link.INPUT)
-
-        for i in self._range():
-            reads_i = File('reads%d_full.fastq' % i)
-            rejects_i = File('reads%d_reject.fastq' % i)
-            adaptor_stats_i = File('reads%d.stats' % i)
-
-            for t in self._trims:
-                reads_i_t = File('reads%d_%d.fastq' % (i, t))
-                option_filter.uses(reads_i_t, link=Link.OUTPUT, transfer=False, register=False)
-
-            option_filter.uses(reads_i, link=Link.OUTPUT, transfer=False, register=False)
-            option_filter.uses(rejects_i, link=Link.OUTPUT, transfer=False, register=False)
-            option_filter.uses(adaptor_stats_i, link=Link.OUTPUT, transfer=False, register=False)
-
-        option_filter.uses(rejects, link=Link.OUTPUT, transfer=True, register=False)
-        option_filter.uses(adaptor_stats, link=Link.OUTPUT, transfer=True, register=False)
-
-        self.adag.addJob(option_filter)
 
     def _fastq_split(self, splits=2, suffix_len=2):
         fastq_split = Job(name='fastq-split')
@@ -412,9 +368,9 @@ class IterativeMapMixin(object):
         self.adag.addJob(parse_alignment)
 
 
-class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, CompoundTransformationMixin):
+class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
     def __init__(self, gtf, genome, prefix, reads, base_dir, read_length=100, mismatches=3, is_trim_unmapped=False,
-                 is_map_filtered=False, splice=False, strand_rule='Unstranded', dax=None, url=None, email=None,
+                 is_map_filtered=False, splice=True, strand_rule='Unstranded', dax=None, url=None, email=None,
                  splits=2, adag=None):
 
         # Reference
@@ -437,12 +393,12 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, CompoundTransformatio
         self._mismatches = mismatches
         self._is_trim_unmapped = is_trim_unmapped
         self._is_map_filtered = is_map_filtered
-        self._splice = True
+        self._splice = splice
         self._strand_rule = strand_rule
 
         # Pegasus
         self._base_dir = base_dir
-        self._dax = sys.stdout if dax is None else '%s.dax' % (dax)
+        self._dax = sys.stdout if dax is None else '%s.dax' % dax
         self._url = url
         self._email = email
         self._splits = splits
@@ -459,8 +415,6 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, CompoundTransformatio
 
         self._seed = None
         self._vis_files = []
-
-        self.register_executable()
 
     def validate(self):
         errors = {}
