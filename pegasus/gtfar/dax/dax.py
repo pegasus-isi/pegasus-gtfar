@@ -178,8 +178,8 @@ class FilterMixin(object):
             option_filter.uses(rejects_i, link=Link.OUTPUT, transfer=False, register=False)
             option_filter.uses(adaptor_stats_i, link=Link.OUTPUT, transfer=False, register=False)
 
-        option_filter.uses(rejects, link=Link.OUTPUT, transfer=False, register=False)
-        option_filter.uses(adaptor_stats, link=Link.OUTPUT, transfer=False, register=False)
+        option_filter.uses(rejects, link=Link.OUTPUT, transfer=True, register=False)
+        option_filter.uses(adaptor_stats, link=Link.OUTPUT, transfer=True, register=False)
 
         self.adag.addJob(option_filter)
 
