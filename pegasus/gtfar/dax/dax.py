@@ -18,7 +18,16 @@ import os
 import sys
 import mmh3
 
-from Pegasus.DAX3 import ADAG, Dependency, Job, File, Link, Executable, PFN
+from Pegasus.DAX3 import ADAG, Dependency, Job, File, Link, Executable, PFN, Transformation
+
+
+class CompoundTransformationMixin(object):
+    def register_executable(self):
+        option_filter = Transformation('option_filter')
+        pre_filter = Executable('pre_filter_fastq.py')
+        option_filter.uses(pre_filter)
+
+        self.adag.addTransformation(option_filter)
 
 
 class UNIXUtils(object):
@@ -69,7 +78,7 @@ class AnnotateMixin(object):
 
         # Inputs
         gtf = File(self._gtf)
-        genome = File(self._genome)
+        #genome = File(self._genome)
 
         for i in range(1, 23):
             chr_i = File('chr%d.fa' % i)
@@ -78,9 +87,9 @@ class AnnotateMixin(object):
             annotate_gtf.uses(chr_i, link=Link.INPUT)
 
         # Outputs
-        features = File('h%s_features.fa' % prefix)
-        chrs = File('h%s_chrs.fa' % prefix)
-        splices = File('h%s_jxnCands.fa' % prefix)
+        features = File('h%s/FEATURES.fa' % prefix)
+        chrs = File('h%s/GENOME.fa' % prefix)
+        splices = File('h%s/SPLICES.fa' % prefix)
         genes = File('h%s_geneSeqs.fa' % prefix)
 
         # Arguments
@@ -88,7 +97,7 @@ class AnnotateMixin(object):
 
         # Uses
         annotate_gtf.uses(gtf, link=Link.INPUT)
-        annotate_gtf.uses(genome, link=Link.INPUT)
+        #annotate_gtf.uses(genome, link=Link.INPUT)
         annotate_gtf.uses(features, link=Link.OUTPUT, transfer=False, register=False)
         annotate_gtf.uses(chrs, link=Link.OUTPUT, transfer=False, register=False)
         annotate_gtf.uses(splices, link=Link.OUTPUT, transfer=False, register=False)
@@ -97,16 +106,16 @@ class AnnotateMixin(object):
         self.adag.addJob(annotate_gtf)
 
     def _features_index(self, read_length, read_format='fastq', seed='F2'):
-        return self._perm_index('features', read_length, read_format=read_format, seed=seed)
+        return self._perm_index('FEATURES', read_length, read_format=read_format, seed=seed)
 
     def _chrs_index(self, read_length, read_format='fastq', seed='F2'):
-        return self._perm_index('chrs', read_length, read_format=read_format, seed=seed)
+        return self._perm_index('GENOME', read_length, read_format=read_format, seed=seed)
 
     def _splices_index(self, read_length, read_format='fastq', seed='F2'):
-        return self._perm_index('jxnCands', read_length, read_format=read_format, seed=seed)
+        return self._perm_index('SPLICES', read_length, read_format=read_format, seed=seed)
 
     def _genes_index(self, read_length, read_format='fastq', seed='F1'):
-        return self._perm_index('geneSeqs', read_length, read_format=read_format, seed=seed)
+        return self._perm_index('GENE', read_length, read_format=read_format, seed=seed)
 
     def _perm_index(self, index_type, read_length, read_format='fastq', seed='F2'):
         perm_index = Job(name='perm')
@@ -115,7 +124,7 @@ class AnnotateMixin(object):
         prefix = self._get_index_hash(read_length, exclude_genome=True)
 
         # Input files
-        fa_input = File('h%s_%s.fa' % (prefix, index_type))
+        fa_input = File('h%s/%s.fa' % (prefix, index_type))
 
         # Output files
         hash_v = self._get_index_hash(read_length, seed)
@@ -128,7 +137,7 @@ class AnnotateMixin(object):
         # Uses
         perm_index.uses(fa_input, link=Link.INPUT)
         # Save this file
-        perm_index.uses(index, link=Link.OUTPUT, transfer=False, register=False)
+        perm_index.uses(index, link=Link.OUTPUT, transfer=True, register=True)
 
         self.adag.addJob(perm_index)
 
@@ -254,7 +263,7 @@ class IterativeMapMixin(object):
 
         # Input files
         hash_v = self._get_index_hash(self._read_length, 'F%d' % self._seed)
-        index = File('h%d_%s_F%d_%d.index' % (hash_v, index_type, self._seed, self._read_length))
+        index = File('h%d_%s_F%d_%d.index' % (hash_v, map_to, self._seed, self._read_length))
         reads_txt = File('%s_%s_reads.txt' % (tag, map_to.lower()))
 
         for i in self._range():
@@ -313,7 +322,7 @@ class IterativeMapMixin(object):
         self.adag.addJob(parse_alignment)
 
 
-class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
+class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, CompoundTransformationMixin):
     def __init__(self, gtf, genome, prefix, reads, base_dir, read_length=100, mismatches=3, is_trim_unmapped=False,
                  is_map_filtered=False, splice=False, strand_rule='Unstranded', dax=None, url=None, email=None,
                  adag=None):
@@ -359,6 +368,8 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
 
         self._seed = None
         self._vis_files = []
+
+        self.register_executable()
 
     def validate(self):
         errors = {}
@@ -440,7 +451,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
 
     def write_dax(self):
         # Write out reads file
-        self._write_reads_file('reads%d_full.fastq', 'full_feature_reads.txt')
+        self._write_reads_file('reads%d_full.fastq', 'full_features_reads.txt')
         self._write_reads_file('reads%d_full_miss_FEATURES.fastq', 'full_genome_reads.txt')
         self._write_reads_file('reads%d_full_miss_FEATURES_miss_GENOME.fastq', 'full_splices_reads.txt')
 
