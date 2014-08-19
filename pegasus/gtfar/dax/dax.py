@@ -32,7 +32,7 @@ class CompoundTransformationMixin(object):
 
 class UNIXUtils(object):
     @staticmethod
-    def cat(inputs, output):
+    def cat(inputs, output, o_link=Link.OUTPUT, o_transfer=False, o_register=False):
         cat = Job(name='merge')
 
         # Outputs
@@ -49,7 +49,7 @@ class UNIXUtils(object):
             cat.uses(input_file, link=Link.INPUT)
 
         cat.setStdout(output)
-        cat.uses(output, link=Link.OUTPUT, transfer=False, register=False)
+        cat.uses(output, link=o_link, transfer=o_transfer, register=o_register)
 
         return cat
 
@@ -199,7 +199,7 @@ class IterativeMapMixin(object):
             if (self._is_map_filtered):
                 self._map_and_parse_reads('reads%%d_%d.fastq' % trim, 'filter%d' % trim)
 
-        cat = UNIXUtils.cat(self._vis_files, '%s.sam' % self._prefix)
+        cat = UNIXUtils.cat(self._vis_files, '%s.sam' % self._prefix, o_transfer=True)
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
 
