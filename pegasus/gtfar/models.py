@@ -73,7 +73,8 @@ class ReplicaEntry(db.Model):
 
         if attributes:
             self.attributes = attributes
-            self._attributes = {attr.name: attr for attr in attributes}
+            for attr in attributes:
+                self._attributes[attr.name] = attr
 
     def add_attr(self, name, value):
         self.__load_attributes_map()
@@ -121,8 +122,8 @@ class ReplicaEntry(db.Model):
         """
         if hasattr(self, '_attributes'):
             return
-
-        self._attributes = {attr.name: attr for attr in self.attributes}
+        for attr in self.attributes:
+            self._attributes[attr.name] = attr
 
     def __repr__(self):
         return '<rc_lfn(%d, %s, %s, %s, %d)>' % (self.id, self.lfn, self.pfn, self.site, len(self.attributes))

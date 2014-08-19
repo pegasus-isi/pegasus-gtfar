@@ -35,7 +35,6 @@ SECRET_KEY = os.urandom(24)
 #SQLALCHEMY_DATABASE_URI = 'sqlite:///%s/.pegasus/workflow.db' % os.getenv('HOME')
 SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db'
 
-
 UPLOAD_FOLDER = '/tmp'
 
 # Cache Configuration
@@ -44,7 +43,7 @@ CACHE_TYPE = 'simple'
 # SERVICE CONFIGURATION
 
 # Path to the directory where the service stores all its files
-#STORAGE_DIR = os.path.join(os.getenv('HOME'), ".pegasus", "gtfar")
+STORAGE_DIR = os.path.join(os.getenv('HOME'), ".pegasus", "gtfar")
 
 
 
