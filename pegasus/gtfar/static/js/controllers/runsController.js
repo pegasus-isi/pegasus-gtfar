@@ -22,11 +22,30 @@ function() {
     "use strict"
     var runsController = function($scope, $window, $http, $state) {
 
+        // Adjust this to change the number of pages you have to request from the server
+        var resultsPerPage = 100;
+
         function getRuns() {
-            $http.get($window.apiLinks.runs).success(function(data) {
+            $http.get($window.apiLinks.runs, {
+                params : {
+                    results_per_page : resultsPerPage
+                }
+            }).success(function(data) {
                 $scope.runs = data.objects;
+                // Get all the results after the first page
+                for(var currentPage = 2; currentPage <= data.total_pages; currentPage++) {
+                    $http.get($window.apiLinks.runs, {
+                        params : {
+                            results_per_page : resultsPerPage,
+                            page : currentPage
+                        }
+                    }).success(function(data) {
+                        $scope.runs = $scope.runs.concat(data.objects);
+                    }).error(function(data) {
+                        console.error(data);
+                    })
+                }
             }).error(function(data) {
-                console.error();
                 console.error(data);
             });
         }
