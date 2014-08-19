@@ -18,12 +18,12 @@ import os
 import sys
 import mmh3
 
-from Pegasus.DAX3 import ADAG, Dependency, Job, File, Link, Executable, PFN
+from Pegasus.DAX3 import ADAG, Dependency, Job, File, Link, Executable, PFN, Transformation
 
 
 class UNIXUtils(object):
     @staticmethod
-    def cat(inputs, output):
+    def cat(inputs, output, o_link=Link.OUTPUT, o_transfer=False, o_register=False):
         cat = Job(name='merge')
 
         # Outputs
@@ -40,7 +40,7 @@ class UNIXUtils(object):
             cat.uses(input_file, link=Link.INPUT)
 
         cat.setStdout(output)
-        cat.uses(output, link=Link.OUTPUT, transfer=False, register=False)
+        cat.uses(output, link=o_link, transfer=o_transfer, register=o_register)
 
         return cat
 
@@ -69,26 +69,29 @@ class AnnotateMixin(object):
 
         # Inputs
         gtf = File(self._gtf)
-        genome = File(self._genome)
+        #genome = File(self._genome)
 
-        for i in range(1, 23):
-            chr_i = File('chr%d.fa' % i)
+        chromosomes = [str(i) for i in range(1, 23)]
+        chromosomes.extend(['X', 'Y', 'R', 'M'])
+
+        for i in chromosomes:
+            chr_i = File('chr%s.fa' % i)
 
             # Uses
             annotate_gtf.uses(chr_i, link=Link.INPUT)
 
         # Outputs
-        features = File('h%s_features.fa' % prefix)
-        chrs = File('h%s_chrs.fa' % prefix)
-        splices = File('h%s_jxnCands.fa' % prefix)
-        genes = File('h%s_geneSeqs.fa' % prefix)
+        features = File('h%s/FEATURES.fa' % prefix)
+        chrs = File('h%s/GENOME.fa' % prefix)
+        splices = File('h%s/SPLICES.fa' % prefix)
+        genes = File('h%s/GENE.fa' % prefix)
 
         # Arguments
         annotate_gtf.addArguments(gtf, '-c .', '-p', self._prefix, '-l %d' % read_length)
 
         # Uses
         annotate_gtf.uses(gtf, link=Link.INPUT)
-        annotate_gtf.uses(genome, link=Link.INPUT)
+        #annotate_gtf.uses(genome, link=Link.INPUT)
         annotate_gtf.uses(features, link=Link.OUTPUT, transfer=False, register=False)
         annotate_gtf.uses(chrs, link=Link.OUTPUT, transfer=False, register=False)
         annotate_gtf.uses(splices, link=Link.OUTPUT, transfer=False, register=False)
@@ -97,16 +100,16 @@ class AnnotateMixin(object):
         self.adag.addJob(annotate_gtf)
 
     def _features_index(self, read_length, read_format='fastq', seed='F2'):
-        return self._perm_index('features', read_length, read_format=read_format, seed=seed)
+        return self._perm_index('FEATURES', read_length, read_format=read_format, seed=seed)
 
     def _chrs_index(self, read_length, read_format='fastq', seed='F2'):
-        return self._perm_index('chrs', read_length, read_format=read_format, seed=seed)
+        return self._perm_index('GENOME', read_length, read_format=read_format, seed=seed)
 
     def _splices_index(self, read_length, read_format='fastq', seed='F2'):
-        return self._perm_index('jxnCands', read_length, read_format=read_format, seed=seed)
+        return self._perm_index('SPLICES', read_length, read_format=read_format, seed=seed)
 
     def _genes_index(self, read_length, read_format='fastq', seed='F1'):
-        return self._perm_index('geneSeqs', read_length, read_format=read_format, seed=seed)
+        return self._perm_index('GENE', read_length, read_format=read_format, seed=seed)
 
     def _perm_index(self, index_type, read_length, read_format='fastq', seed='F2'):
         perm_index = Job(name='perm')
@@ -115,7 +118,7 @@ class AnnotateMixin(object):
         prefix = self._get_index_hash(read_length, exclude_genome=True)
 
         # Input files
-        fa_input = File('h%s_%s.fa' % (prefix, index_type))
+        fa_input = File('h%s/%s.fa' % (prefix, index_type))
 
         # Output files
         hash_v = self._get_index_hash(read_length, seed)
@@ -128,7 +131,7 @@ class AnnotateMixin(object):
         # Uses
         perm_index.uses(fa_input, link=Link.INPUT)
         # Save this file
-        perm_index.uses(index, link=Link.OUTPUT, transfer=False, register=False)
+        perm_index.uses(index, link=Link.OUTPUT, transfer=True, register=True)
 
         self.adag.addJob(perm_index)
 
@@ -137,43 +140,98 @@ class AnnotateMixin(object):
 
 class FilterMixin(object):
     def option_filter(self):
-        self._option_filter()
+        splits = self._splits
+        suffix_len = max(2, len(str(splits)))
+        rejects = []
+        stats = []
 
-    def _option_filter(self):
-        option_filter = Job(name='option_filter')
-        option_filter.invoke('all', '%sstate_update.py %r %r %r %r')
+        self._fastq_split(splits=splits, suffix_len=suffix_len)
+
+        for i in range(splits):
+            rejects.append('reads%d_reject.fastq' % i)
+            stats.append('reads%d.stats' % i)
+            self._pre_filter_fastq(i, suffix_len)
+
+        # Merge rejects
+        cat = UNIXUtils.cat(rejects, '%s.reject.fastq' % self._prefix, o_transfer=True)
+        cat.invoke('all', '%sstate_update.py %r %r %r %r')
+        self.adag.addJob(cat)
+
+        self._merge_stats()
+
+    def _fastq_split(self, splits=2, suffix_len=2):
+        fastq_split = Job(name='fastq-split')
+        fastq_split.invoke('all', '%sstate_update.py %r %r %r %r')
 
         # Inputs
         reads = File(self._reads)
 
+        # Arguments
+        fastq_split.addArguments(reads, '%d' % splits)
+
+        # Uses
+        fastq_split.uses(reads, link=Link.INPUT)
+
+        for i in range(splits):
+            split_i = File(('x%0' + str(suffix_len) + 'd') % i)
+
+            # Outputs
+            fastq_split.uses(split_i, link=Link.OUTPUT, transfer=False, register=False)
+
+        self.adag.addJob(fastq_split)
+
+    def _pre_filter_fastq(self, index, suffix_len):
+        pre_filter = Job(name='pre_filter_fastq.py')
+        pre_filter.invoke('all', '%sstate_update.py %r %r %r %r')
+        prefix = 'reads%d' % index
+
+        # Inputs
+        reads = File(('x%0' + str(suffix_len) + 'd') % index)
+
         # Outputs
-        rejects = File('%s.reject.fastq' % self._prefix)
+        full_fastq = File('%s_full.fastq' % prefix)
+        reject = File('%s_reject.fastq' % prefix)
+        stats = File('%s.stats' % prefix)
+
+        # Arguments
+        trims = [str(i) for i in self._trims]
+        pre_filter.addArguments(reads, '-r', '%d' % self._read_length, '-t', '%r' % ' '.join(trims))
+        pre_filter.addArguments('-p', prefix)
+
+        # Uses
+        pre_filter.uses(reads, link=Link.INPUT)
+
+        for t in self._trims:
+            fastq_t = File('%s_%d.fastq' % (prefix, t))
+            pre_filter.uses(fastq_t, link=Link.OUTPUT, transfer=False, register=False)
+
+        pre_filter.uses(full_fastq, link=Link.OUTPUT, transfer=True, register=False)
+        pre_filter.uses(reject, link=Link.OUTPUT, transfer=True, register=False)
+        pre_filter.uses(stats, link=Link.OUTPUT, transfer=True, register=False)
+
+        self.adag.addJob(pre_filter)
+
+    def _merge_stats(self):
+        merge_stats = Job(name='merge-stats')
+        merge_stats.invoke('all', '%sstate_update.py %r %r %r %r')
+
+        # Outputs
         adaptor_stats = File('%s.adaptor.stats' % self._prefix)
 
         # Arguments
-        option_filter.addArguments(self._prefix, reads, '%d' % self._read_length)
+        merge_stats.addArguments('reads*.stats', adaptor_stats)
 
-        # Uses
-        option_filter.uses(reads, link=Link.INPUT)
+        for i in range(self._splits):
+            # Inputs
+            stats_i = File('reads%d.stats' % i)
 
-        for i in self._range():
-            reads_i = File('reads%d_full.fastq' % i)
-            rejects_i = File('reads%d_reject.fastq' % i)
-            adaptor_stats_i = File('reads%d.stats' % i)
+            # Uses
+            merge_stats.uses(stats_i, link=Link.INPUT)
 
-            for t in self._trims:
-                reads_i_t = File('reads%d_%d.fastq' % (i, t))
-                option_filter.uses(reads_i_t, link=Link.OUTPUT, transfer=False, register=False)
+        # Outputs
+        merge_stats.uses(adaptor_stats, link=Link.OUTPUT, transfer=True, register=False)
 
-            option_filter.uses(reads_i, link=Link.OUTPUT, transfer=False, register=False)
-            option_filter.uses(rejects_i, link=Link.OUTPUT, transfer=False, register=False)
-            option_filter.uses(adaptor_stats_i, link=Link.OUTPUT, transfer=False, register=False)
-
-        option_filter.uses(rejects, link=Link.OUTPUT, transfer=False, register=False)
-        option_filter.uses(adaptor_stats, link=Link.OUTPUT, transfer=False, register=False)
-
-        self.adag.addJob(option_filter)
-
+        self.adag.addJob(merge_stats)
 
 class IterativeMapMixin(object):
     def iterative_map(self):
@@ -190,7 +248,7 @@ class IterativeMapMixin(object):
             if (self._is_map_filtered):
                 self._map_and_parse_reads('reads%%d_%d.fastq' % trim, 'filter%d' % trim)
 
-        cat = UNIXUtils.cat(self._vis_files, '%s.sam' % self._prefix)
+        cat = UNIXUtils.cat(self._vis_files, '%s.sam' % self._prefix, o_transfer=True)
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
 
@@ -254,7 +312,7 @@ class IterativeMapMixin(object):
 
         # Input files
         hash_v = self._get_index_hash(self._read_length, 'F%d' % self._seed)
-        index = File('h%d_%s_F%d_%d.index' % (hash_v, index_type, self._seed, self._read_length))
+        index = File('h%d_%s_F%d_%d.index' % (hash_v, map_to, self._seed, self._read_length))
         reads_txt = File('%s_%s_reads.txt' % (tag, map_to.lower()))
 
         for i in self._range():
@@ -315,8 +373,8 @@ class IterativeMapMixin(object):
 
 class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
     def __init__(self, gtf, genome, prefix, reads, base_dir, read_length=100, mismatches=3, is_trim_unmapped=False,
-                 is_map_filtered=False, splice=False, strand_rule='Unstranded', dax=None, url=None, email=None,
-                 adag=None):
+                 is_map_filtered=False, splice=True, strand_rule='Unstranded', dax=None, url=None, email=None,
+                 splits=2, adag=None):
 
         # Reference
         self._gtf = gtf
@@ -338,17 +396,18 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         self._mismatches = mismatches
         self._is_trim_unmapped = is_trim_unmapped
         self._is_map_filtered = is_map_filtered
-        self._splice = True
+        self._splice = splice
         self._strand_rule = strand_rule
 
         # Pegasus
         self._base_dir = base_dir
-        self._dax = sys.stdout if dax is None else '%s.dax' % (dax)
+        self._dax = sys.stdout if dax is None else '%s.dax' % dax
         self._url = url
         self._email = email
+        self._splits = splits
 
         def get_range():
-            return range(0, 1)
+            return range(self._splits)
 
         self._range = get_range
 
@@ -440,7 +499,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
 
     def write_dax(self):
         # Write out reads file
-        self._write_reads_file('reads%d_full.fastq', 'full_feature_reads.txt')
+        self._write_reads_file('reads%d_full.fastq', 'full_features_reads.txt')
         self._write_reads_file('reads%d_full_miss_FEATURES.fastq', 'full_genome_reads.txt')
         self._write_reads_file('reads%d_full_miss_FEATURES_miss_GENOME.fastq', 'full_splices_reads.txt')
 
