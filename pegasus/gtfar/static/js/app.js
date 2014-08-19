@@ -30,19 +30,39 @@ function(angular, runsController, runDetailsController, runCreationController,
     var app = angular.module(appName, ["ui.router", "ngGrid", "ui.bootstrap"]);
 
     // For form validation
-    var INTEGER_REGEXP = /^\-?\d+$/;
+    var INTEGER_REGEX = /^\-?\d+$/;
     app.directive('integer', function() {
         return {
             require: 'ngModel',
             link: function(scope, elm, attrs, ctrl) {
                 ctrl.$parsers.unshift(function(viewValue) {
-                    if (INTEGER_REGEXP.test(viewValue)) {
+                    if (INTEGER_REGEX.test(viewValue)) {
                         // it is valid
                         ctrl.$setValidity('integer', true);
                         return viewValue;
                     } else {
                         // it is invalid, return undefined (no model update)
                         ctrl.$setValidity('integer', false);
+                        return undefined;
+                    }
+                });
+            }
+        };
+    });
+
+    var ALPHANUM_REGEX = /^[\w\s]+$/i;
+    app.directive('alphanumeric', function() {
+        return {
+            require: 'ngModel',
+            link: function(scope, elm, attrs, ctrl) {
+                ctrl.$parsers.unshift(function(viewValue) {
+                    if (ALPHANUM_REGEX.test(viewValue)) {
+                        // it is valid
+                        ctrl.$setValidity('alphanumeric', true);
+                        return viewValue;
+                    } else {
+                        // it is invalid, return undefined (no model update)
+                        ctrl.$setValidity('alphanumeric', false);
                         return undefined;
                     }
                 });

@@ -15,53 +15,41 @@
 __author__ = 'Rajiv Mayani'
 
 __VERSION__ = 0.1
-
 import os
 import errno
-
 from flask import Flask
 from flask.ext.cache import Cache
 from flask.ext.restless import APIManager
 from flask.ext.sqlalchemy import SQLAlchemy
 
-validExtensions = set(['txt', 'zip', 'tar', 'gz', 'bz'])
+#from pegasus.gtfar import views
+
+#validExtensions = set(['txt', 'zip', 'tar', 'gz', 'bz'])
 
 app = Flask(__name__, static_url_path='')
 
-#
-#  Load default configuration
-#
-
+# Load configuration defaults
 app.config.from_object('pegasus.gtfar.defaults')
-
-#
-# Routes initialization
-#
-
-
-def isValidFile(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
-
-
-from pegasus.gtfar import views
 
 #
 # Database initialization
 #
-
 db = SQLAlchemy(app)
 from pegasus.gtfar.models import *
 
 db.create_all()
 
 #
-# Cache initialization
+# cahe initialization
 #
-
 cache = Cache(app)
 
 
-def create_run_directories(result):
+#def isValidFile(filename):
+#    return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
+
+
+def createRunDirectories(result):
     path = app.config['STORAGE_DIR'] + os.sep + str(result['id'])
     try:
         os.makedirs(path)
@@ -69,17 +57,15 @@ def create_run_directories(result):
         os.makedirs(path + os.sep + 'output')
         os.makedirs(path + os.sep + 'submit')
         os.makedirs(path + os.sep + 'scratch')
-        os.rename(app.config['UPLOAD_FOLDER'] + os.sep + str(result['filename']),
-                  path + os.sep + 'input' + os.sep + str(result['filename']))
+        os.system("mv %s  %s" % (app.config['UPLOAD_FOLDER'] + os.sep + str(result['filename']), path + os.sep + 'input' + os.sep + str(result['filename'])))
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
     return result
 
-
 apiManager = APIManager(app, flask_sqlalchemy_db=db)
 apiManager.create_api(Run,
-                      methods=['GET', 'POST', 'DELETE', 'PUT'],
-                      postprocessors={
-                          'POST': [create_run_directories]
+                      methods = ["GET", "POST", "DELETE", "PUT"],
+                      postprocessors = {
+                          'POST' : [createRunDirectories]
                       })
