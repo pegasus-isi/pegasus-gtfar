@@ -24,70 +24,32 @@ function(angular) {
     var runsCreationController = function($scope, $window, $http, $state) {
 
         var file;
-        var reader = new FileReader();
 
         $scope.strandRuleOptions = [{rule: "unstranded"},{rule: "same"},{rule: "opposite"}];
         // Defaults
-        $scope.readLength = 100;
-        $scope.mismatches = 3;
-        $scope.trimUnmapped = false;
-        $scope.mapFiltered = false;
+
+        // We have to define this out of the run object becaues we need to link it to .rule in the end
         $scope.strandRule = $scope.strandRuleOptions[0];
 
-        reader.onload = function(event) {
-            // TODO: We could update a progress bar with this event
-        };
-        reader.onloadend = function(event) {
-            $scope.fileData = event.target.result;
-            //$scope.inputFile = event.target.result;
+        $scope.run = {
+            genome : "testGenome", // TODO: add this in a bit $scope.genome,
+            gtf : "testGTF", // TODO: Add this in a bit $scope.gtf,
+            status : 0,
+            userName : "genericUser",
+            readLength : 100,
+            mismatches : 3,
+            trimUnmapped : false,
+            mapFiltered : false
         };
 
         $scope.uploadFile = function() {
-            // Angular does not support file upload so we have to go by the element name
-            file = document.getElementById("inputFile").files[0];
-            // readAsArrayBuffer would never give any contents so I'm using readAsBinaryString
-            reader.readAsBinaryString(file);
-        };
-
-        $scope.cancel = function() {
-            $state.go('runs');
-        };
-
-        $scope.addRun = function() {
-
-            // TODO: Figure out where to add validation checks for all the inputs
-
-            var runData = {
-                "name" : $scope.runName,
-                "userName" : "genericUser",
-                "status" : 0,  // For now we just set the status to running
-                "filename" : document.getElementById("inputFile").files[0].name,
-                "readLength" : $scope.readLength,
-                "genome" : "testGenome", // TODO: add this in a bit $scope.genome,
-                "gtf" : "testGTF", // TODO: Add this in a bit $scope.gtf,
-                "mismatches" : $scope.mismatches,
-                "trimUnmapped" : $scope.trimUnmapped,
-                "mapFiltered" : $scope.mapFiltered,
-                "strandRule" : $scope.strandRule.rule,
-                "email" : $scope.email
-            };
-            //console.log($scope.fileData);
-            var fileData = new FormData(document.getElementById("runForm"));
-
-            // Add the run to the database, the runId will be used to create the folder
-            $http.post($window.apiLinks.runs, runData).success(function(data) {
-             console.log(data);
-             $state.go('runs');
-             }).error(function(data) {
-             console.error(data);
-             });
-
             /*
              * Upload the file
              * Angular does not natively work with a formData object so we have to override
              * the default behavior.  Refer to the link below
              * http://uncorkedstudios.com/blog/multipartformdata-file-upload-with-angularjs
              */
+            var fileData = new FormData(document.getElementById("runForm"));
             $http.post($window.apiLinks.upload, fileData, {
                 transformRequest : angular.identity,
                 headers : {
@@ -99,6 +61,33 @@ function(angular) {
                 console.error("upload failed!");
                 console.error(data);
             });
+        };
+
+        $scope.cancel = function() {
+            $state.go('runs');
+        };
+
+        $scope.addRun = function() {
+            if($scope.form.$invalid) {
+                return;
+            }
+
+            try {
+                $scope.run["filename"] = document.getElementById("inputFile").files[0].name;
+            }
+            catch(error)
+            {
+                return; // An error message should show to the user so we just ned to return
+            }
+            // Add the run to the database, the runId will be used to create the folder
+            $http.post($window.apiLinks.runs, $scope.run).success(function(data) {
+                console.log(data);
+                $state.go('runs');
+             }).error(function(data) {
+                console.error(data);
+             });
+
+
 
 
         }
