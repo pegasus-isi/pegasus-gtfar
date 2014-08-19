@@ -448,7 +448,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, CompoundTransformatio
         self._splits = splits
 
         def get_range():
-            return range(0, 1)
+            return range(self._splits)
 
         self._range = get_range
 
