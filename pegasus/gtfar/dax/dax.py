@@ -235,6 +235,7 @@ class FilterMixin(object):
 
         self.adag.addJob(merge_stats)
 
+
 class IterativeMapMixin(object):
     def iterative_map(self):
         self._map_and_parse_reads('reads%d_full.fastq', 'full')
