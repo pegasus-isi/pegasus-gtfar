@@ -194,8 +194,8 @@ class FilterMixin(object):
         stats = File('%s.stats' % prefix)
 
         # Arguments
-        trims = ' '.join([str(i) for i in self._trims])
-        trims = '0' if trims == ' ' else trims
+        trims = ','.join([str(i) for i in self._trims])
+        trims = '0' if trims == ',' else trims
 
         pre_filter.addArguments(reads, '-r', '%d' % self._read_length, '-t', '%s' % trims)
         pre_filter.addArguments('-p', prefix)
