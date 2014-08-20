@@ -20,6 +20,8 @@ from werkzeug import secure_filename
 
 from pegasus.gtfar import app, isValidFile
 
+from pegasus.workflow import wrapper
+
 
 @app.route("/")
 def index():
@@ -27,7 +29,7 @@ def index():
     Loads up the main page
     :return the template for the main page:
     """
-    apiLinks = '{"runs" : "/api/runs", "upload" : "/api/upload"}'
+    apiLinks = '{"runs" : "/api/runs", "upload" : "/api/upload", "status" : "/status", "outputs" : "/outputs", "logs" : "/logs"}'
     return render_template("mainView.html", apiLinks = apiLinks)
 
 @app.route("/api/upload", methods = ['POST'])
@@ -37,6 +39,19 @@ def upload():
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return redirect(url_for('index'))
+
+@app.route("/api/runs/<int:id>/status", methods = ["GET"])
+def getStatus(id):
+    workflow = new wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"], )
+    pass
+
+@app.route("/api/runs/<int:id>/outputs", methods = ["GET"])
+def getOutputFiles(id):
+    pass
+
+@app.route("/api/runs/<int:id>/logs", methods = ["GET"])
+def getLogs(id):
+    pass
 
 @app.route("/tests")
 def tests():

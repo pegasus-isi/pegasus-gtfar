@@ -34,7 +34,7 @@ function(angular) {
         $scope.run = {
             genome : "testGenome", // TODO: add this in a bit $scope.genome,
             gtf : "testGTF", // TODO: Add this in a bit $scope.gtf,
-            status : 0,
+            status : -1, // default status to running
             userName : "genericUser",
             readLength : 100,
             mismatches : 3,

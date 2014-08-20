@@ -87,7 +87,7 @@ function() {
                         }
                     })
             }
-        }
+        };
 
         $scope.runsGrid = {
             data : "runs",

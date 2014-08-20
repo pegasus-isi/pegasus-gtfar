@@ -22,9 +22,47 @@ function() {
     "use strict"
 
     var runDetailsController = function($scope, $state, $stateParams, $window) {
-        console.log($stateParams);
+
+
+        function getRun() {
+            $httop.get($window.apiLInks.runs + "")
+        }
+        function getStatus() {
+            $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.status).success(function(data) {
+                if(statusChanged(data.object)) {
+                    $scope.status = data.object;
+                    getOutputs();
+                }
+                setTimeout(getStatus, 2000);
+            }).error(function(data) {
+                console.error(data);
+            });
+        }
+
+        function statusChanged(newStatus) {
+            if(!$scope.status)
+                return true;
+            for(var key in $scope.status) {
+                if($scope.status[key] != newStatus[key])
+                    return true;
+            }
+            return false;
+        }
+
+        function getOutputs() {
+            $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.outputs).success(function(data) {
+                $scope.outputs = data.objects;
+                // TODO: need to present links to download the output files
+            }).error(function(data) {
+                console.error(data);
+            });
+        }
+
+        //getStatus(); uncomment when we have the backend hooked up properly
+
+
     };
 
     // Return the array so the dependecy injections are accounted for
-    return ["$scope", "$state", "$stateParams", runDetailsController];
+    return ["$scope", "$state", "$stateParams", "$window", runDetailsController];
 });
