@@ -22,7 +22,6 @@ SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 5000
 
 
-
 # FLASK CONFIGURATION
 
 DEBUG = False
@@ -31,8 +30,8 @@ DEBUG = False
 SECRET_KEY = os.urandom(24)
 
 # The URI of the database
-#SQLALCHEMY_DATABASE_URI = "mysql://pegasus:secret@127.0.0.1:3306/pegasus_service"
-#SQLALCHEMY_DATABASE_URI = 'sqlite:///%s/.pegasus/workflow.db' % os.getenv('HOME')
+# SQLALCHEMY_DATABASE_URI = "mysql://pegasus:secret@127.0.0.1:3306/pegasus_service"
+# SQLALCHEMY_DATABASE_URI = 'sqlite:///%s/.pegasus/workflow.db' % os.getenv('HOME')
 SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db'
 
 UPLOAD_FOLDER = '/tmp'
@@ -43,7 +42,7 @@ CACHE_TYPE = 'simple'
 # SERVICE CONFIGURATION
 
 # Path to the directory where the service stores all its files
-STORAGE_DIR = os.path.join(os.getenv('HOME'), ".pegasus", "gtfar")
+STORAGE_DIR = os.path.join(os.getenv('HOME'), '.pegasus', 'gtfar')
 
 
 
@@ -57,3 +56,7 @@ ENDPOINT = None
 # User credentials
 USERNAME = ""
 PASSWORD = ""
+
+# Pegasus Configuration
+
+PEGASUS_HOME = '/usr'
