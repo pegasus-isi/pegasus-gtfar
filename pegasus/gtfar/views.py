@@ -15,10 +15,13 @@
 __author__ = 'dcbriggs'
 
 import os
-from flask import render_template, request, redirect, url_for
+
 from werkzeug import secure_filename
 
-from pegasus.gtfar import app, isValidFile
+from flask import render_template, request, redirect, url_for
+
+from pegasus.gtfar import app
+from pegasus.gtfar.models import isValidFile
 
 
 @app.route("/")
@@ -28,15 +31,17 @@ def index():
     :return the template for the main page:
     """
     apiLinks = '{"runs" : "/api/runs", "upload" : "/api/upload"}'
-    return render_template("mainView.html", apiLinks = apiLinks)
+    return render_template("mainView.html", apiLinks=apiLinks)
 
-@app.route("/api/upload", methods = ['POST'])
+
+@app.route("/api/upload", methods=['POST'])
 def upload():
     file = request.files['file']
     if file and isValidFile(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return redirect(url_for('index'))
+
 
 @app.route("/tests")
 def tests():
@@ -45,6 +50,3 @@ def tests():
     :return: the template for the test page
     """
     return render_template("testRunner.html")
-
-if __name__ == "__main__":
-    app.run(debug=True)
