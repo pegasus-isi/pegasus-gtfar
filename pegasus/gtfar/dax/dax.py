@@ -87,7 +87,7 @@ class AnnotateMixin(object):
         genes = File('h%s/GENE.fa' % prefix)
 
         # Arguments
-        annotate_gtf.addArguments(gtf, '-c .', '-p %s/' % prefix, '-l %d' % read_length)
+        annotate_gtf.addArguments(gtf, '-c .', '-p h%s/' % prefix, '-l %d' % read_length)
 
         # Uses
         annotate_gtf.uses(gtf, link=Link.INPUT)
