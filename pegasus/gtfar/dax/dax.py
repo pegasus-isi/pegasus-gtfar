@@ -87,7 +87,7 @@ class AnnotateMixin(object):
         genes = File('h%s/GENE.fa' % prefix)
 
         # Arguments
-        annotate_gtf.addArguments(gtf, '-c .', '-p', self._prefix, '-l %d' % read_length)
+        annotate_gtf.addArguments(gtf, '-c .', '-p %s/' % prefix, '-l %d' % read_length)
 
         # Uses
         annotate_gtf.uses(gtf, link=Link.INPUT)
@@ -194,8 +194,10 @@ class FilterMixin(object):
         stats = File('%s.stats' % prefix)
 
         # Arguments
-        trims = [str(i) for i in self._trims]
-        pre_filter.addArguments(reads, '-r', '%d' % self._read_length, '-t', '%r' % ' '.join(trims))
+        trims = ' '.join([str(i) for i in self._trims])
+        trims = '0' if trims == ' ' else trims
+
+        pre_filter.addArguments(reads, '-r', '%d' % self._read_length, '-t', '%s' % trims)
         pre_filter.addArguments('-p', prefix)
 
         # Uses
