@@ -73,7 +73,6 @@ setup(
         'bin/gtfar-server',
         'bin/gtfar-dax-generator',
         'bin/gtfar-email',
-        'bin/gtfar-state-update',
         # GTFAR Codes
         'bin/fastq-split.sh',
         'bin/merge-stats.sh'
