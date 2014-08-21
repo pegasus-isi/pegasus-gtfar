@@ -75,7 +75,6 @@ setup(
         'bin/gtfar-email',
         'bin/gtfar-state-update',
         # GTFAR Codes
-        'bin/option-filter.sh',
         'bin/fastq-split.sh',
         'bin/merge-stats.sh'
     ],
