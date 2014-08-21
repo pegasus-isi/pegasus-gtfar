@@ -54,11 +54,13 @@ class AnnotateMixin(object):
                 self._annotate(trim)
 
     def _annotate(self, read_length):
+        seed = 'F%d' % self._compute_seed(read_length)
+
         self._annotate_gtf(read_length)
 
-        self._features_index(read_length)
-        self._chrs_index(read_length)
-        self._splices_index(read_length)
+        self._features_index(read_length, seed=seed)
+        self._chrs_index(read_length, seed=seed)
+        self._splices_index(read_length, seed=seed)
         # self._genes_index(read_length)
 
     def _annotate_gtf(self, read_length):
@@ -281,6 +283,14 @@ class IterativeMapMixin(object):
 
         if self._read_length > 64:
             self._seed = (self._mismatches + 1) / 2
+
+    def _compute_seed(self, read_length):
+        seed = self._mismatches
+
+        if read_length > 64:
+            seed = (self._mismatches + 1) / 2
+
+        return seed
 
     def _map_and_parse_reads_to_features(self, reads, tag):
         self._perm('features', 'FEATURES', reads, tag)
@@ -508,7 +518,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
 
         if self._is_map_filtered:
             for trim in self._trims:
-                self._write_reads_file('reads%%d_%d.fastq' % trim, 'filter%d_feature_reads.txt' % trim)
+                self._write_reads_file('reads%%d_%d.fastq' % trim, 'filter%d_features_reads.txt' % trim)
                 self._write_reads_file('reads%%d_%d_miss_FEATURES.fastq' % trim, 'filter%d_genome_reads.txt' % trim)
                 self._write_reads_file('reads%%d_%d_miss_FEATURES_miss_GENOME.fastq' % trim,
                                        'filter%d_splices_reads.txt' % trim)
