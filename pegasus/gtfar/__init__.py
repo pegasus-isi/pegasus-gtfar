@@ -21,7 +21,7 @@ import errno
 
 import shutil
 
-from flask import Flask
+from flask import Flask, render_template
 from flask.ext.cache import Cache
 from flask.ext.restless import APIManager
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -66,6 +66,7 @@ def create_run_directories(result):
 
     try:
         os.makedirs(os.path.join(path, 'input'))
+        os.makedirs(os.path.join(path, 'config'))
         os.makedirs(os.path.join(path, 'output'))
         os.makedirs(os.path.join(path, 'submit'))
         os.makedirs(os.path.join(path, 'scratch'))
@@ -80,8 +81,23 @@ def create_run_directories(result):
     return result
 
 
+def create_config(result):
+    path = os.path.join(app.config['STORAGE_DIR'], str(result['id']))
+
+    with open(os.path.join(path, 'config', 'pegasus.conf'), 'w') as conf:
+        conf.write(render_template('pegasus/pegasus.conf', base_dir=path))
+
+    with open(os.path.join(path, 'config', 'tc.txt'), 'w') as tc_txt:
+        tc_txt.write(render_template('pegasus/tc.txt', base_dir=path))
+
+    with open(os.path.join(path, 'config', 'sites.xml'), 'w') as sites_xml:
+        sites_xml.write(render_template('pegasus/sites.xml', base_dir=path))
+
+    return result
+
+
 apiManager.create_api(Run,
                       methods=['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
                       postprocessors={
-                          'POST': [create_run_directories]
+                          'POST': [create_run_directories, create_config]
                       })
