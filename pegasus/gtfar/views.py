@@ -21,42 +21,10 @@ import shutil
 
 from werkzeug import secure_filename
 
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, json
 
 from pegasus.gtfar import app, apiManager
 from pegasus.gtfar.models import Run, isValidFile
-
-
-#
-# Views
-#
-
-@app.route("/")
-def index():
-    """
-    Loads up the main page
-    :return the template for the main page:
-    """
-    apiLinks = '{"runs" : "/api/runs", "upload" : "/api/upload"}'
-    return render_template("mainView.html", apiLinks=apiLinks)
-
-
-@app.route("/api/upload", methods=['POST'])
-def upload():
-    file = request.files['file']
-    if file and isValidFile(file.filename):
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return redirect(url_for('index'))
-
-
-@app.route("/tests")
-def tests():
-    """
-    Loads up the testing environment
-    :return: the template for the test page
-    """
-    return render_template("testRunner.html")
 
 
 #
@@ -176,3 +144,40 @@ apiManager.create_api(Run,
                               run_workflow
                           ]
                       })
+
+#
+# Views
+#
+
+@app.route("/api/upload", methods=['POST'])
+def upload():
+    file = request.files['file']
+    if file and isValidFile(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return redirect(url_for('index'))
+
+
+@app.route("/")
+def index():
+    """
+    Loads up the main page
+    :return the template for the main page:
+    """
+    runs_prefix = '%(table)s%(prefix)s0.%(table)s%(prefix)s' % {'prefix': 'api', 'table': Run.__tablename__}
+
+    api_links = {
+        'runs': url_for(runs_prefix),
+        'upload': url_for('upload')
+    }
+
+    return render_template('mainView.html', apiLinks=json.dumps(api_links))
+
+
+@app.route("/tests")
+def tests():
+    """
+    Loads up the testing environment
+    :return: the template for the test page
+    """
+    return render_template("testRunner.html")
