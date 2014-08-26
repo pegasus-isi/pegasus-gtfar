@@ -1,45 +1,45 @@
 tr annotate_gtf {
     site local {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/src/annotate_gtf.py"
+        pfn "{{ bin_dir }}/annotate_gtf.py"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
-    } 
+    }
 
     site condorpool {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/src/annotate_gtf.py"
+        pfn "{{ bin_dir }}/annotate_gtf.py"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
     }
 }
 
-tr perm {    
+tr perm {
     site local {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/src/perm"
+        pfn "{{ bin_dir }}/perm"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
     }
-    
+
     site condorpool {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/src/perm"
+        pfn "{{ bin_dir }}/perm"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
     }
 }
 
-tr option_filter {    
+tr option_filter {
     site local {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/pegasus-gtfar/bin/option-filter.sh"
+        pfn "{{ bin_dir }}/option-filter.sh"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
     }
-    
+
     site condorpool {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/pegasus-gtfar/bin/option-filter.sh"
+        pfn "{{ bin_dir }}/option-filter.sh"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
@@ -48,14 +48,14 @@ tr option_filter {
 
 tr fastq-split {
     site local {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/pegasus-gtfar/bin/fastq-split.sh"
+        pfn "{{ bin_dir }}/fastq-split.sh"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
     }
 
     site condorpool {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/pegasus-gtfar/bin/fastq-split.sh"
+        pfn "{{ bin_dir }}/fastq-split.sh"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
@@ -64,14 +64,14 @@ tr fastq-split {
 
 tr merge-stats {
     site local {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/pegasus-gtfar/bin/merge-stats.sh"
+        pfn "{{ bin_dir }}/merge-stats.sh"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
     }
 
     site condorpool {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/pegasus-gtfar/bin/merge-stats.sh"
+        pfn "{{ bin_dir }}/merge-stats.sh"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
@@ -80,30 +80,30 @@ tr merge-stats {
 
 tr pre_filter_fastq.py {
     site local {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/src/pre_filter_fastq.py"
+        pfn "{{ bin_dir }}/pre_filter_fastq.py"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
     }
 
     site condorpool {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/src/pre_filter_fastq.py"
+        pfn "{{ bin_dir }}/pre_filter_fastq.py"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
     }
 }
 
-tr parse_alignment {         
+tr parse_alignment {
     site local {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/src/parse_alignment.py"
+        pfn "{{ bin_dir }}/parse_alignment.py"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
     }
-    
+
     site condorpool {
-        pfn "/auto/uec-01/shared/knowles/mayani/gtfar/src/parse_alignment.py"
+        pfn "{{ bin_dir }}/parse_alignment.py"
         arch "x86_64"
         os "linux"
         type "INSTALLED"
@@ -117,7 +117,7 @@ tr merge {
         os "linux"
         type "INSTALLED"
     }
-    
+
     site condorpool {
         pfn "/bin/cat"
         arch "x86_64"
