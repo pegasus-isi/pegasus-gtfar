@@ -44,6 +44,8 @@ CACHE_TYPE = 'simple'
 # Path to the directory where the service stores all its files
 STORAGE_DIR = os.path.join(os.getenv('HOME'), '.pegasus', 'gtfar')
 
+BIN_DIR = '/data/workspace/gtfar/bin'
+
 
 
 # CLIENT CONFIGURATION
