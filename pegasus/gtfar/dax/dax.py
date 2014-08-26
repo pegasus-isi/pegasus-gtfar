@@ -256,7 +256,7 @@ class IterativeMapMixin(object):
         cat = UNIXUtils.cat(self._vis_files, '%s.sam' % self._prefix, o_transfer=True)
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
-
+        '''
         if self._is_trim_unmapped:
             cat = UNIXUtils.cat([2], '%s.unmapped.fastq')
         else:
@@ -264,6 +264,7 @@ class IterativeMapMixin(object):
 
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
+        '''
 
     def _map_and_parse_reads(self, reads, tag):
         self._setup_perm_seeds()
