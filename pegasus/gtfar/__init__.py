@@ -88,7 +88,7 @@ def create_config(result):
         conf.write(render_template('pegasus/pegasus.conf', base_dir=path))
 
     with open(os.path.join(path, 'config', 'tc.txt'), 'w') as tc_txt:
-        tc_txt.write(render_template('pegasus/tc.txt', base_dir=path))
+        tc_txt.write(render_template('pegasus/tc.txt', bin_dir=app.config['BIN_DIR']))
 
     with open(os.path.join(path, 'config', 'sites.xml'), 'w') as sites_xml:
         sites_xml.write(render_template('pegasus/sites.xml', base_dir=path))
