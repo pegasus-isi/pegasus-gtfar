@@ -16,49 +16,65 @@ __author__ = 'dcbriggs'
 
 import os
 
-# SERVER CONFIGURATION
+#
+# GTFAR Configuration
+#
 
-SERVER_HOST = "127.0.0.1"
+
+GTFAR_HOME = '/data/workspace/gtfar'
+
+GTFAR_BIN_DIR = os.path.join(GTFAR_HOME, 'bin')
+GTFAR_DATA_DIR = os.path.join(GTFAR_HOME, 'data')
+
+# The directory from which Pegasus workflow runs will be invoked
+GTFAR_STORAGE_DIR = os.path.join(GTFAR_DATA_DIR, 'runs')
+
+# Directory where GTFAR reference input files will be placed
+GTFAR_REF_DIR = os.path.join(GTFAR_DATA_DIR, 'reference')
+GTFAR_REF_GTF_DIR = os.path.join(GTFAR_REF_DIR, 'gtf')
+GTFAR_REF_GENOME_DIR = os.path.join(GTFAR_REF_DIR, 'genome')
+
+# A Temporary directory to upload files into.
+UPLOAD_FOLDER = '/tmp'
+
+
+#
+# Pegasus Configuration
+#
+
+
+PEGASUS_HOME = '/data/workspace/pegasus/dist/pegasus-4.5.0cvs/'
+
+
+#
+# Server Configuration
+#
+
+
+SERVER_HOST = '127.0.0.1'
 SERVER_PORT = 5000
+ENDPOINT = None
 
-
-# FLASK CONFIGURATION
+#
+# Flask Configuration
+#
 
 DEBUG = False
 
-# The secret key used by Flask to encrypt session keys
+# Secret key to encrypt session data
 SECRET_KEY = os.urandom(24)
 
 # The URI of the database
-# SQLALCHEMY_DATABASE_URI = "mysql://pegasus:secret@127.0.0.1:3306/pegasus_service"
-# SQLALCHEMY_DATABASE_URI = 'sqlite:///%s/.pegasus/workflow.db' % os.getenv('HOME')
-SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db'
+SQLALCHEMY_DATABASE_URI = 'mysql://gtfar_user:pegasus123@127.0.0.1:3306/gtfar'
 
-UPLOAD_FOLDER = '/tmp'
+#
+# Flask Cache Configuration
+#
 
-# Cache Configuration
 CACHE_TYPE = 'simple'
 
-# SERVICE CONFIGURATION
-
-# Path to the directory where the service stores all its files
-STORAGE_DIR = os.path.join(os.getenv('HOME'), '.pegasus', 'gtfar')
-
-BIN_DIR = '/data/workspace/gtfar/bin'
-
-
-
-# CLIENT CONFIGURATION
-
-# Service endpoint. This is only required if you install the service
-# at a URL other than "http://SERVER_HOST:SERVER_PORT/".
-ENDPOINT = None
-
-
-# User credentials
-USERNAME = ""
-PASSWORD = ""
-
-# Pegasus Configuration
-
-PEGASUS_HOME = '/usr'
+#
+# User Authentication
+#
+USERNAME = ''
+PASSWORD = ''

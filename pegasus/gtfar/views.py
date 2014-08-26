@@ -24,22 +24,85 @@ from werkzeug import secure_filename
 from flask import render_template, request, redirect, url_for, json
 
 from pegasus.gtfar import app, apiManager
+from pegasus.gtfar.dax.dax import GTFAR
 from pegasus.gtfar.models import Run, isValidFile
+
+from pegasus.workflow.wrapper import PegasusWorkflow
+
+#
+# Application Initialization
+#
+
+
+@app.before_first_request
+def before_first_request():
+    loaded = os.path.join(app.config['GTFAR_DATA_DIR'], '.loaded')
+
+    if not os.path.isfile(loaded):
+        from pegasus.gtfar import db
+        from pegasus.gtfar.models import ReplicaEntry, ReplicaAttribute
+
+        session = db.session
+
+        #
+        # Register GTF file with JDBCRC
+        #
+        for path, dir_name, files in os.walk(app.config['GTFAR_REF_GTF_DIR']):
+
+            for file_name in files:
+
+                if file_name.startswith('.'):
+                    continue
+
+                replica = ReplicaEntry(file_name,
+                                       'file://%s' % os.path.abspath(os.path.join(path, file_name)),
+                                       'local',
+                                       attributes=[ReplicaAttribute('gtf', 'true')])
+
+                session.add(replica)
+
+            session.commit()
+
+        #
+        # Register Genome files with JDBCRC
+        #
+        for path, dir_name, files in os.walk(app.config['GTFAR_REF_GENOME_DIR']):
+
+            for file_name in files:
+
+                if file_name.startswith('.'):
+                    continue
+
+                replica = ReplicaEntry(file_name,
+                                       'file://%s' % os.path.abspath(os.path.join(path, file_name)),
+                                       'local',
+                                       attributes=[ReplicaAttribute('genome', 'true')])
+
+                session.add(replica)
+
+            session.commit()
+
+        #
+        # Create a marker file to indicate that
+        # the reference GTF and GENOME files have been registered with the JDBCRC
+        #
+        open(loaded, 'a').close()
 
 
 #
 # Flask Restless
 #
 
+
 def create_run_directories(result):
-    path = os.path.join(app.config['STORAGE_DIR'], str(result['id']))
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
 
     try:
         os.makedirs(os.path.join(path, 'input'))
-        os.makedirs(os.path.join(path, 'config'))
-        os.makedirs(os.path.join(path, 'output'))
-        os.makedirs(os.path.join(path, 'submit'))
-        os.makedirs(os.path.join(path, 'scratch'))
+        os.mkdir(os.path.join(path, 'config'))
+        os.mkdir(os.path.join(path, 'output'))
+        os.mkdir(os.path.join(path, 'submit'))
+        os.mkdir(os.path.join(path, 'scratch'))
 
         shutil.move(os.path.join(app.config['UPLOAD_FOLDER'], str(result['filename'])),
                     os.path.join(path, 'input', str(result['filename'])))
@@ -52,13 +115,13 @@ def create_run_directories(result):
 
 
 def create_config(result):
-    path = os.path.join(app.config['STORAGE_DIR'], str(result['id']))
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
 
     with open(os.path.join(path, 'config', 'pegasus.conf'), 'w') as conf:
         conf.write(render_template('pegasus/pegasus.conf', base_dir=path))
 
     with open(os.path.join(path, 'config', 'tc.txt'), 'w') as tc_txt:
-        tc_txt.write(render_template('pegasus/tc.txt', bin_dir=app.config['BIN_DIR']))
+        tc_txt.write(render_template('pegasus/tc.txt', bin_dir=app.config['GTFAR_BIN_DIR']))
 
     with open(os.path.join(path, 'config', 'sites.xml'), 'w') as sites_xml:
         sites_xml.write(render_template('pegasus/sites.xml', base_dir=path))
@@ -67,9 +130,7 @@ def create_config(result):
 
 
 def generate_dax(result):
-    path = os.path.join(app.config['STORAGE_DIR'], str(result['id']))
-
-    from pegasus.gtfar.dax.dax import GTFAR
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
 
     gtfar = GTFAR(result['gtf'],
                   result['genome'],
@@ -84,7 +145,7 @@ def generate_dax(result):
                   # TODO: Use value from DB
                   strand_rule='unstranded',
                   dax=os.path.join(path, '%d' % result['id']),
-                  url='url',
+                  url='%s#/createRun' % url_for('index'),
                   email=result['email'],
                   splits=2)
 
@@ -98,16 +159,14 @@ def generate_dax(result):
 
 
 def plan_workflow(result):
-    path = os.path.join(app.config['STORAGE_DIR'], str(result['id']))
-
-    from pegasus.workflow.wrapper import PegasusWorkflow
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
 
     conf_file = os.path.join(path, 'config', 'pegasus.conf')
-    dax_file = os.path.join(path, 'input', '%d' % result['id'])
     input_dir = os.path.join(path, 'input')
+    dax_file = os.path.join(path, '%d.dax' % result['id'])
     submit_dir = os.path.join(path, 'submit')
 
-    w = PegasusWorkflow(app.config['PEGASUS_HOME'], os.path.join(path, 'submit'))
+    workflow = PegasusWorkflow(app.config['PEGASUS_HOME'], os.path.join(path, 'submit'))
 
     args = [
         ('--conf', conf_file),
@@ -115,22 +174,20 @@ def plan_workflow(result):
         ('--dir', submit_dir),
         ('--relative-dir', '.'),
         ('--dax', dax_file),
-        ('--sites', 'condor_pool'),
+        ('--sites', 'condorpool'),
         ('--staging-site', 'local'),
         ('--output-site', 'local')
     ]
 
-    w.plan(args)
+    workflow.plan(args)
 
 
 def run_workflow(result):
-    submit_dir = os.path.join(app.config['STORAGE_DIR'], str(result['id']), 'submit')
+    submit_dir = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']), 'submit')
 
-    from pegasus.workflow.wrapper import PegasusWorkflow
+    workflow = PegasusWorkflow(app.config['PEGASUS_HOME'], submit_dir)
 
-    w = PegasusWorkflow(app.config['PEGASUS_HOME'], submit_dir)
-
-    w.run()
+    workflow.run()
 
 
 apiManager.create_api(Run,
@@ -148,6 +205,7 @@ apiManager.create_api(Run,
 #
 # Views
 #
+
 
 @app.route("/api/upload", methods=['POST'])
 def upload():
