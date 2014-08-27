@@ -15,57 +15,73 @@
 __author__ = 'Rajiv Mayani'
 
 __VERSION__ = 0.1
+
 import os
 import errno
+
+import shutil
+
 from flask import Flask
 from flask.ext.cache import Cache
 from flask.ext.restless import APIManager
 from flask.ext.sqlalchemy import SQLAlchemy
 
-#from pegasus.gtfar import views
-
-#validExtensions = set(['txt', 'zip', 'tar', 'gz', 'bz'])
+#
+# Flask initialization
+#
 
 app = Flask(__name__, static_url_path='')
-
-# Load configuration defaults
 app.config.from_object('pegasus.gtfar.defaults')
 
 #
 # Database initialization
 #
+
 db = SQLAlchemy(app)
 from pegasus.gtfar.models import *
 
 db.create_all()
 
 #
-# cahe initialization
+# Cache initialization
 #
+
 cache = Cache(app)
 
+#
+# Routes initialization
+#
 
-#def isValidFile(filename):
-#    return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
+from pegasus.gtfar import views
+
+#
+# Flask Restless
+#
+
+apiManager = APIManager(app, flask_sqlalchemy_db=db)
 
 
-def createRunDirectories(result):
-    path = app.config['STORAGE_DIR'] + os.sep + str(result['id'])
+def create_run_directories(result):
+    path = os.path.join(app.config['STORAGE_DIR'], str(result['id']))
+
     try:
-        os.makedirs(path)
-        os.makedirs(path + os.sep + 'input')
-        os.makedirs(path + os.sep + 'output')
-        os.makedirs(path + os.sep + 'submit')
-        os.makedirs(path + os.sep + 'scratch')
-        os.system("mv %s  %s" % (app.config['UPLOAD_FOLDER'] + os.sep + str(result['filename']), path + os.sep + 'input' + os.sep + str(result['filename'])))
+        os.makedirs(os.path.join(path, 'input'))
+        os.makedirs(os.path.join(path, 'output'))
+        os.makedirs(os.path.join(path, 'submit'))
+        os.makedirs(os.path.join(path, 'scratch'))
+
+        shutil.move(os.path.join(app.config['UPLOAD_FOLDER'], str(result['filename'])),
+                    os.path.join(path, 'input', str(result['filename'])))
+
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
+
     return result
 
-apiManager = APIManager(app, flask_sqlalchemy_db=db)
+
 apiManager.create_api(Run,
-                      methods = ["GET", "POST", "DELETE", "PUT"],
-                      postprocessors = {
-                          'POST' : [createRunDirectories]
+                      methods=['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
+                      postprocessors={
+                          'POST': [create_run_directories]
                       })

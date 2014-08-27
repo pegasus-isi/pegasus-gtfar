@@ -18,10 +18,10 @@ import os
 from flask import render_template, request, redirect, url_for
 from werkzeug import secure_filename
 
-from pegasus.gtfar import app, isValidFile
 
 from pegasus.workflow import wrapper
-
+from pegasus.gtfar import app
+from pegasus.gtfar.models import isValidFile
 
 @app.route("/")
 def index():
@@ -30,9 +30,10 @@ def index():
     :return the template for the main page:
     """
     apiLinks = '{"runs" : "/api/runs", "upload" : "/api/upload", "status" : "/status", "outputs" : "/outputs", "logs" : "/logs"}'
-    return render_template("mainView.html", apiLinks = apiLinks)
+    return render_template("mainView.html", apiLinks=apiLinks)
 
-@app.route("/api/upload", methods = ['POST'])
+
+@app.route("/api/upload", methods=['POST'])
 def upload():
     file = request.files['file']
     if file and isValidFile(file.filename):
