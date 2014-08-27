@@ -69,10 +69,13 @@ setup(
     },
     zip_safe=False,
     scripts=[
+        # Pegasus GTFAR
         'bin/gtfar-server',
         'bin/gtfar-dax-generator',
         'bin/gtfar-email',
-        'bin/option-filter.sh'
+        # GTFAR Codes
+        'bin/fastq-split.sh',
+        'bin/merge-stats.sh'
     ],
     install_requires=[
         'enum34==1.0',

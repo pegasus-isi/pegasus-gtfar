@@ -1,0 +1,325 @@
+#!/bin/bash
+
+
+## THIS IS THE SOURCE FOR THE PYTHON LIKE OPTIONS PARSER ## 
+
+############### ARGUMENT, OPTION, AND FLAG PARSING ######################### 
+
+## ADDING ARGUMENTS ##
+
+# add_arg <arg.name> [arg.example]
+
+## ADDING OPTIONS ##
+
+#add_option <option.name> [option.short] [Default Value] [Description]
+
+## ADDING FLAGS ## 
+
+# add_flag <flag.name> [flag.short] [Default = True or False] [Description] 
+
+## ADDITIONAL OPTIONS ## 
+
+# add_argmax, add_argmin, add_noargs, add_info 
+
+############################################################################
+
+#EXAMPLE: Parse a program to copy a txt file K times.  
+#True
+# add_arg input file.txt 
+# add_option times -k 1 'Number of times to copy file' 
+# add_flag verbose -v  True Verbosity
+
+# After the command parseargs $@
+
+# The command line: ./prog foo.bar -k 10 -v 
+# The command line: ./prog foo.bar --times 10 -v 
+
+# Would yield: , TIMES=10, VERBOSE=1 
+
+
+# More Info #
+
+# Flag are either True or False; The input of a flag changes it from its default value 
+# Option requires an options to be given 
+
+#Default Types are not restricted
+
+# Description is for the help menu
+
+
+##############  POSITIONAL ARGUMENTS PARSING ############
+
+# Positional arguments will be returned in a list: Argv.  
+# To enforce a maximum number of positional arguments use:
+# add_arglim <max_number>
+
+
+############### ADDITIONAL OPTIONS (HELP MENU ) ################ 
+
+# add_info allows a help string to be printed out at the help prompt
+# add_example will also allow and example to be printed out at help prompt. 
+
+
+
+#################################################################################3
+
+
+
+
+
+
+function add_title_version { myTITLE=$1; myVERSION=$2; TITLE="True"
+}
+
+function add_example {
+    if [ -z EXAMPLE_CNT ]; then EXAMPLE_CNT=1; else EXAMPLE_CNT=`expr $EXAMPLE_CNT +1`; fi 
+    EXAMPLE_HEADER[$EXAMPLE_CNT]=$2; EXAMPLE_TEXT[$EXAMPLE_CNT]=$1
+    }
+
+function add_arg { 
+if [ $# == 0 ]; then echo 'ERROR: add_arg requires at least one argument'; exit; fi
+if [ -z $TOTAL_ARGS ]; then TOTAL_ARGS=1 ; else    TOTAL_ARGS=`expr $TOTAL_ARGS + 1` ; fi 
+if [ -z $ARG_LIST ]; then ARG_LIST=$1; else ARG_LIST=$ARG_LIST","$1; fi
+ARG_NAMES[$TOTAL_ARGS]=$(echo $1 | awk '{print ($1)}') 
+if [ $# -gt 1 ]; then ARG_INFO[$TOTAL_ARGS]="$2"; fi 
+if [ $# -gt 2 ]; then echo 'Error: add_arg requires at most two arguments (name, example)'; exit; fi  
+}
+
+
+
+
+function add_option_fail {
+    echo $1
+    echo "Example: add_option length -l TYPE=INT DEFAULT=100 INFO='length of reads'"
+    exit
+}
+
+
+
+	
+function add_option {
+    if [ $# == 0 ]; then add_option_fail 'ERROR: add_option requires at least one argument'; fi 
+
+    if [ -z $TOTAL_OPTS ]; then TOTAL_OPTS=1; else TOTAL_OPTS=`expr $TOTAL_OPTS + 1`; fi
+    TYPES[$TOTAL_OPTS]="STR"
+    until [ -z "$1" ];
+    do
+        if [ $(echo $1 | awk -F\= '{print NF}') == 2 ]; then 
+            myCOMMAND=$(echo $1 | awk -F\= '{print toupper($1)}'); myRESULT=$(echo $1 | awk -F\= '{print toupper($2)}'); myNORMAL=$(echo $1 | awk -F\= '{print $2}')
+            if   [ $myCOMMAND == "TYPE" ]; then      TYPES[$TOTAL_OPTS]=$myRESULT
+            elif [ $myCOMMAND == "FILE_EXT" ]; then  FILE_EXT[$TOTAL_OPTS]=$myRESULT
+            elif [ $myCOMMAND == "STR_OPTS" ]; then  STR_OPTS[$TOTAL_OPTS]=$myRESULT
+            elif [ $myCOMMAND == "INT_MIN" ];  then  INT_MIN[$TOTAL_OPTS]=$myRESULT
+            elif [ $myCOMMAND == "INT_MAX" ];  then  INT_MAX[$TOTAL_OPTS]=$myRESULT
+            elif [ $myCOMMAND == "DEFAULT" ];  then  DEFAULT[$TOTAL_OPTS]=$myRESULT
+            elif [ $myCOMMAND == "MULTI" ];    then  MULTI[$TOTAL_OPTS]=$myRESULT
+            elif [ $myCOMMAND == "INFO" ];     then  INFO[$TOTAL_OPTS]=$myNORMAL
+            else echo "Unknown Option Declaration " $1 ; exit
+            fi
+        elif [ $(echo $1 | awk '{print substr($1,1,1)}') == "-" ] && [ $(echo $1 |awk '{print length($1)}') == 2 ] && [ $(echo $1 | awk -F\- '{print $2}' |grep [[:alpha:]]) ]; then local mySHORT=$(echo $1 |awk '{print toupper(substr($1,2,1))}')
+        elif [ ! $(echo $1 | grep [^[:alpha:]]) ]; then local myNAME=$(echo $1 | awk '{print toupper($1)}')    
+        else echo "WIERD" $1
+        fi  
+    shift
+    done
+
+   
+    
+    ### DO A VERIFICATION ON TYPES ###
+
+    if [ -z $myNAME ]; then add_option_fail "ERROR: add_option requires a variable name"; fi  
+    if [ -z $mySHORT ]; then local mySHORT=$(echo $myNAME | awk -F\| '{print substr($1,1,1)}'); fi
+
+    OPTIONS[$TOTAL_OPTS]=$myNAME; SHORT_NAMES[$TOTAL_OPTS]=$mySHORT
+
+    ## CHECK FOR SHORT COLLISIONS ##
+
+    local j=1; 
+    until [ $j -eq $TOTAL_OPTS ]; do
+        if [ ${SHORT_NAMES[$j]} == $mySHORT ]; then echo "ERROR: SHORT OPTIONS FOR "$myNAME" and "${OPTIONS[$j]}" collide";  exit; fi 
+        let j+=1
+        done
+    nput $myNAME $mySHORT $TOTAL_OPTS 
+    #echo $myNAME $mySHORT $TOTAL_OPTS ${TYPES[$TOTAL_OPTS]} 
+}
+
+
+
+
+
+function usage {
+    if [ ! -z $TITLE ]; then echo $myTITLE; echo "Version:" $myVERSION; fi; echo ""
+
+    if [ -z $ARG_LIST ]; then echo "Usage: " $0 "[ options ]"; else  echo "Usage: " $0 "< Argument="$ARG_LIST" > [ options ]"; fi 
+    echo ""
+
+    local j=1
+    if [ ! -z $ARG_LIST ]; then echo "Commands:"; 
+        until [ $j -gt $TOTAL_ARGS ]; do echo "      "${ARG_NAMES[$j]}":" ${ARG_INFO[$j]}; let j+=1; done; echo ""
+    fi 
+    local j=1
+    if [ ! -z $TOTAL_OPTS ]; then echo "Options:"; echo ""; 
+		printf "%12s " 'NAME'; printf "%8s " 'SHORT'; printf "%18s " 'LONG'; printf "%12s " 'Default'; printf "%15s " 'Type'; printf "%30s " 'Constraints'; printf "%50s\n" 'Description' 
+		echo '' 
+        until [ $j -gt $TOTAL_OPTS ]; do
+            local myNAME=$(echo ${OPTIONS[$j]} | awk '{print tolower($1)}')
+            local mySHORT=$(echo ${SHORT_NAMES[$j]} | awk '{print tolower($1)}')
+            local myDESC=${INFO[$j]} 
+            myDEFAULT=${DEFAULT[$j]}  ; if [ -z $myDEFAULT ]; then myDEFAULT="None"; fi 
+            #echo ""
+            #echo "SO" $j $myNAME ${TYPES[$j]} 
+            local constraints='None'
+            if [ ${TYPES[$j]} == "BOOL" ]; then local myTYPE="bool"; local constraints='True or False'; 
+            elif [ ${TYPES[$j]} == "FILE" ]; then local myTYPE="File(s)"; if [ ! -z ${FILE_EXT[$j]} ]; then local constraints=${FILE_EXT[$j]}' extension'; fi 
+            elif [ ${TYPES[$j]} == "STR" ]; then local myTYPE="String"; if [ ! -z ${STR_OPTS[$j]} ]; then local constraints=${STR_OPTS[$j]}; fi 
+            elif [ ${TYPES[$j]} == "NUM" ]; then local myTYPE="Numerical"; A=${INT_MIN[$j]}; B=${INT_MAX[$j]}
+                if [ ! -z $A ] && [ ! -z $B ]; then constraints=$A' <= X =< '$B 
+                elif [ ! -z $A ]; then constraints="$A<="
+                elif [ ! -z $B ]; then constraints="<=$B"
+                fi
+            fi
+            
+            echo "" 
+            printf "%12s " $myNAME; printf "%8s " $mySHORT; printf "%18s " "--"$myNAME ; printf "%12s " $myDEFAULT; printf "%15s " $myTYPE; printf "%30s " "$constraints";  printf "%50s " "$myDESC"
+            
+            
+            
+            #if [ -z ${DEFAULT[$j]} ]; then printf "%12s " None; else printf "%12s " ${DEFAULT[$j]}; fi 
+             
+           
+           
+           
+            
+            echo ""
+            #echo ${OPTIONS[$j]}
+            let j+=1
+            done
+    fi
+    exit 
+}
+
+
+
+nput() {
+    #echo "YOU GAVE" $1 $2 $3 $4 $5 $6 $7
+    eval "$1""NUMBER"='$3'
+    eval "$2"='$1'
+    eval "$1"='$1'
+    #eval "$1"KIND"=$2
+}
+ 
+nget() {
+   eval echo '${'"$1"'#hash}'
+  } 
+
+
+
+
+function positional_arg {
+    echo $1 | awk 'substr($1,1,1) != "-"'
+}
+
+function short_form {
+    echo $1 | awk 'substr($1,1,1) == "-" && length($1)==2 && substr($1,2,1)!="-"'
+}
+
+function long_form {
+    echo $1 | awk 'substr($1,1,2) == "--" && length($1)>3'
+}
+
+function in_comma_list {
+    for x in $(echo $2 | awk -F\, '{$1=$1; print}'); do 
+        if [ $(echo $1 | awk '{print toupper($1)}')  == $(echo $x | awk '{print toupper($1)}') ]; then echo "True"; return ; fi
+    done
+}
+
+function parseargs {
+	until [ -z "$1" ]  # Until all parameters used up . . .
+	do
+		if [ $1 == '--help' ] || [ $1 == '-h' ] || [ $1 == 'help' ] || [ $1 == 'HELP' ]; then usage; fi
+        if [ $CURRENT_OPTION ]; then
+            if [ ! $(positional_arg $1) ]; then echo "FAIL ARGS"; exit; fi  
+            while [ $(positional_arg $1) ]; do
+                if [ ${TYPES[$OPT_NUM]} == "FILE" ]; then 
+                    if [ ! -f $1 ]; 
+			then echo "ERROR - File Not Found: " $1 ; usage
+                    elif [ ${FILE_EXT[$OPT_NUM]} ] && [ $(echo "${1##*.}" | awk '{print toupper($1)}') != ${FILE_EXT[$OPT_NUM]} ]; 
+			then echo "ERROR - Incorrect File Extension: " $1 ; usage; fi 
+                elif [ ${TYPES[$OPT_NUM]} == "NUM" ]; then 
+                    if [[ ! $1 =~ ^[0-9]+$ ]]; then echo "ERROR - Numerical Option Required for " $CURRENT_OPTION ; usage
+                    elif [ ${INT_MIN[$OPT_NUM]} ] && [ ${INT_MIN[$OPT_NUM]} -gt $1 ]; then 
+			echo "ERROR -  "$CURRENT_OPTION "must be greater than or equal to" ${INT_MIN[$OPT_NUM]}; usage 
+                    elif [ ${INT_MAX[$OPT_NUM]} ] && [ ${INT_MAX[$OPT_NUM]} -lt $1 ]; 
+			then echo "ERROR -  "$CURRENT_OPTION "must be less than or equal to" ${INT_MAX[$OPT_NUM]}; usage; fi 
+                elif [ ${TYPES[$OPT_NUM]} == "STR" ]; then 
+                    if [ ${STR_OPTS[$OPT_NUM]} ] && [ ! $(in_comma_list $1 ${STR_OPTS[$OPT_NUM]}) ]; then echo "ERROR - "$CURRENT_OPTION "cannot be "$1; usage; fi 
+                elif [ ${TYPES[$OPT_NUM]} == "DIR" ]; then 
+                    if [ ! -d $1 ]; then echo "ERROR - Directory not found " $1; usage; fi 
+		else echo "ERROR - Unsuported Type" ${TYPES[$OPT_NUM]} " is not allowed "; usage; fi 
+                #else echo "ERROR: Unsupported Type " ${STR_OPTS[$OPT_NUM]} " is not allowed "; usage; fi 
+		if [ ! ${MULTI[$OPT_NUM]} ]; then 
+			STR=$1; shift; break; 
+		else
+			if [ ${#STR[@]} -gt 0 ]; then STR=$STR" "$1; 
+			else			      STR=$1; fi
+			shift
+		fi
+		#if [ ${#STR[@]} == 0 ]; then STR=$1; else STR=$STR" "$1; fi     
+                #if [ -z $STR ]; then STR=$1; else STR=$STR" "$1; fi 
+                #shift
+                #if [ ! ${MULTI[$OPT_NUM]} ]; then break; fi 
+            done
+            eval $CURRENT_OPTION=\"$STR\"; CURRENT_OPTION=; STR=""
+		else
+            # IF PREV ITEM WAS NOT AN OPTION -> EVALUATE CURRENT ITEM #
+            if [ $(positional_arg $1) ]; then 
+                if [ ! -z $ARGUMENT ]; then echo "ERROR - Too many commands "$1 ; usage; else ARGUMENT=$1; fi 
+            else
+                if  [ $(short_form $1) ]; then CURRENT_OPTION=`nget $(echo $1 | awk '{print toupper(substr($1,2,1))}')`
+		elif [ $(long_form $1) ]; then CURRENT_OPTION=`nget $(echo $1 | awk '{print toupper(substr($1,3,length($1)))}')`    
+                else                      echo "FAIL"
+                fi
+
+		if [ -z $CURRENT_OPTION ]; then echo "Unknown Option" $1; usage; fi 
+
+                local OPT_NUM=$(echo `nget "$CURRENT_OPTION""NUMBER"`)
+		#echo "SO" ${TYPES[$OPT_NUM]}
+                if [ ${TYPES[$OPT_NUM]} == "BOOL" ]; then 
+                    if [ ${DEFAULT[$OPT_NUM]} ] && [ ${DEFAULT[$OPT_NUM]} == "TRUE" ]; then eval $CURRENT_OPTION=""; else eval $CURRENT_OPTION='True'; fi; CURRENT_OPTION=""
+                fi
+			fi
+        shift    
+		fi 
+    done 
+
+    if [ $CURRENT_OPTION ]; then echo "ERROR - No Arugment Supplied for Option "$CURRENT_OPTION; usage; fi 	
+
+	if [ ! -z $myARG ]; then
+        if [ ! $(in_comma_list $myARG $ARG_LIST) ]; then echo "ERROR - Unknown arugment supplied "$myARG; usage; fi  
+    fi    
+    	
+
+
+    
+    j=1
+    
+    until [ $j -gt $TOTAL_OPTS ]; do 
+        if [ "${!OPTIONS[$j]}" == "${OPTIONS[$j]}" ]; then 
+            if [ ! ${DEFAULT[$j]} ]; then echo "ERROR - No value give for require option "${OPTIONS[$j]}; usage           
+            else eval ${OPTIONS[$j]}=${DEFAULT[$j]}; fi 
+        fi
+        let j+=1
+        done
+
+
+}
+
+
+
+
+
+
+
+
+
+

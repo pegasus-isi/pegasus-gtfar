@@ -1,19 +1,19 @@
 #!/bin/bash
 
-if [ $# -ne 2 ]; then
+if [ $# -lt 2 ]; then
     echo "Usage: `basename $0` <REGEX> <OUTPUT>"
     exit 1
 fi
 
-REGEX=$1
-OUTPUT=$2
+REGEX=${@:0:$#}
+OUTPUT=${!#}
 
-if [ -z ${REGEX} ]; then
+if [ -z "${REGEX}" ]; then
     echo "REGEX cannot be empty"
     exit 2
 fi
 
-if [ ! -e ${OUTPUT} ]; then
+if [ -z "${OUTPUT}" ]; then
     echo "OUTPUT cannot be empty"
     exit 3
 fi

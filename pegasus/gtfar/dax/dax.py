@@ -54,11 +54,13 @@ class AnnotateMixin(object):
                 self._annotate(trim)
 
     def _annotate(self, read_length):
+        seed = 'F%d' % self._compute_seed(read_length)
+
         self._annotate_gtf(read_length)
 
-        self._features_index(read_length)
-        self._chrs_index(read_length)
-        self._splices_index(read_length)
+        self._features_index(read_length, seed=seed)
+        self._chrs_index(read_length, seed=seed)
+        self._splices_index(read_length, seed=seed)
         # self._genes_index(read_length)
 
     def _annotate_gtf(self, read_length):
@@ -87,7 +89,7 @@ class AnnotateMixin(object):
         genes = File('h%s/GENE.fa' % prefix)
 
         # Arguments
-        annotate_gtf.addArguments(gtf, '-c .', '-p', self._prefix, '-l %d' % read_length)
+        annotate_gtf.addArguments(gtf, '-c .', '-p h%s/' % prefix, '-l %d' % read_length)
 
         # Uses
         annotate_gtf.uses(gtf, link=Link.INPUT)
@@ -194,8 +196,10 @@ class FilterMixin(object):
         stats = File('%s.stats' % prefix)
 
         # Arguments
-        trims = [str(i) for i in self._trims]
-        pre_filter.addArguments(reads, '-r', '%d' % self._read_length, '-t', '%r' % ' '.join(trims))
+        trims = ','.join([str(i) for i in self._trims])
+        trims = '0' if trims == ',' else trims
+
+        pre_filter.addArguments(reads, '-r', '%d' % self._read_length, '-t', '%s' % trims)
         pre_filter.addArguments('-p', prefix)
 
         # Uses
@@ -233,6 +237,7 @@ class FilterMixin(object):
 
         self.adag.addJob(merge_stats)
 
+
 class IterativeMapMixin(object):
     def iterative_map(self):
         self._map_and_parse_reads('reads%d_full.fastq', 'full')
@@ -251,7 +256,7 @@ class IterativeMapMixin(object):
         cat = UNIXUtils.cat(self._vis_files, '%s.sam' % self._prefix, o_transfer=True)
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
-
+        '''
         if self._is_trim_unmapped:
             cat = UNIXUtils.cat([2], '%s.unmapped.fastq')
         else:
@@ -259,6 +264,7 @@ class IterativeMapMixin(object):
 
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
+        '''
 
     def _map_and_parse_reads(self, reads, tag):
         self._setup_perm_seeds()
@@ -278,6 +284,14 @@ class IterativeMapMixin(object):
 
         if self._read_length > 64:
             self._seed = (self._mismatches + 1) / 2
+
+    def _compute_seed(self, read_length):
+        seed = self._mismatches
+
+        if read_length > 64:
+            seed = (self._mismatches + 1) / 2
+
+        return seed
 
     def _map_and_parse_reads_to_features(self, reads, tag):
         self._perm('features', 'FEATURES', reads, tag)
@@ -335,10 +349,12 @@ class IterativeMapMixin(object):
 
         # Arguments
         perm.addArguments(index, reads_txt, '--seed F%d' % self._seed, '-v %d' % self._mismatches, '-B', '--printNM')
-        perm.addArguments('-u', '-s', '-T %d' % self._read_length, '--log', log)
+        perm.addArguments('-u', '-s', '-T %d' % self._read_length)
 
         if output_sam:
             perm.addArguments('--noSamHeader', '--outputFormat', 'sam')
+
+        perm.setStdout(log)
 
         # Uses
         perm.uses(index, link=Link.INPUT)
@@ -505,7 +521,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
 
         if self._is_map_filtered:
             for trim in self._trims:
-                self._write_reads_file('reads%%d_%d.fastq' % trim, 'filter%d_feature_reads.txt' % trim)
+                self._write_reads_file('reads%%d_%d.fastq' % trim, 'filter%d_features_reads.txt' % trim)
                 self._write_reads_file('reads%%d_%d_miss_FEATURES.fastq' % trim, 'filter%d_genome_reads.txt' % trim)
                 self._write_reads_file('reads%%d_%d_miss_FEATURES_miss_GENOME.fastq' % trim,
                                        'filter%d_splices_reads.txt' % trim)

@@ -38,7 +38,7 @@ def main():
     parser.add_argument('-m', '--mismatches', type=int, default=3, help='The number of mismatches to allow per mapping')
     parser.add_argument('-y', '--trimunmapped', default=False, dest='is_trim_unmapped', action='store_true')
     parser.add_argument('-z', '--mapfiltered', default=False, dest='is_map_filtered', action='store_true')
-    parser.add_argument('-i', '--splices', default=False, dest='splice', action='store_true')
+    parser.add_argument('-i', '--splices', default=True, dest='splice', action='store_true')
     parser.add_argument('-s', '--strandrule', default='Unstranded', dest='strand_rule',
                         choices=('Unstranded', 'Same', 'Opposite'),
                         help='A rule for strandedness (None, Same or Opposite)')
