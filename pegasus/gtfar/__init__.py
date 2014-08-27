@@ -16,11 +16,6 @@ __author__ = 'Rajiv Mayani'
 
 __VERSION__ = 0.1
 
-import os
-import errno
-
-import shutil
-
 from flask import Flask
 from flask.ext.cache import Cache
 from flask.ext.restless import APIManager
@@ -49,39 +44,13 @@ db.create_all()
 cache = Cache(app)
 
 #
-# Routes initialization
-#
-
-from pegasus.gtfar import views
-
-#
 # Flask Restless
 #
 
 apiManager = APIManager(app, flask_sqlalchemy_db=db)
 
+#
+# Routes initialization
+#
 
-def create_run_directories(result):
-    path = os.path.join(app.config['STORAGE_DIR'], str(result['id']))
-
-    try:
-        os.makedirs(os.path.join(path, 'input'))
-        os.makedirs(os.path.join(path, 'output'))
-        os.makedirs(os.path.join(path, 'submit'))
-        os.makedirs(os.path.join(path, 'scratch'))
-
-        shutil.move(os.path.join(app.config['UPLOAD_FOLDER'], str(result['filename'])),
-                    os.path.join(path, 'input', str(result['filename'])))
-
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-
-    return result
-
-
-apiManager.create_api(Run,
-                      methods=['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
-                      postprocessors={
-                          'POST': [create_run_directories]
-                      })
+from pegasus.gtfar import views
