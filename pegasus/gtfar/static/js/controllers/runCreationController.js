@@ -32,8 +32,8 @@ function(angular) {
         $scope.strandRule = $scope.strandRuleOptions[0];
 
         $scope.run = {
-            genome : "testGenome", // TODO: add this in a bit $scope.genome,
-            gtf : "testGTF", // TODO: Add this in a bit $scope.gtf,
+            genome : "Genome", // TODO: add this in a bit $scope.genome,
+            gtf : "GTF", // TODO: Add this in a bit $scope.gtf,
             status : -1, // default status to running
             userName : "genericUser",
             readLength : 100,
@@ -74,6 +74,7 @@ function(angular) {
 
             try {
                 $scope.run["filename"] = document.getElementById("inputFile").files[0].name;
+                $scope.run["strandRule"] = $scope.strandRule.rule;
             }
             catch(error)
             {

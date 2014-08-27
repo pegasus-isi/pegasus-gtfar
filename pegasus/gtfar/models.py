@@ -55,8 +55,8 @@ class Run(db.Model):
     @validates('name')
     def validate_name(self, key, address):
         assert address.isalnum()
-        return address;
-    
+        return address
+
     @validates('filename')
     def validate_filename(self, key, address):
         assert isValidFile(address)

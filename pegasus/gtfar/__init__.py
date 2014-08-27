@@ -66,7 +66,7 @@ def create_run_directories(result):
 
     try:
         os.makedirs(os.path.join(path, 'input'))
-        os.makedirs(os.path.join(path, 'output'))
+        os.makedirs(os.path.join(path, 'outputs'))
         os.makedirs(os.path.join(path, 'submit'))
         os.makedirs(os.path.join(path, 'scratch'))
 

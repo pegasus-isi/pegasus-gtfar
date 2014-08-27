@@ -15,5 +15,40 @@
   ~  limitations under the License.
   -->
 <div class="jumbotron">
-    <h1
+    <div class="container">
+        <h3>{{run.name}}</h3>
+
+        <h4>Status :</h4>
+        <div class="progress">
+            <div class="progress-bar col-md-12" ng-class="getStatusColor('progress-bar')" role="progressbar" aria-valuenow="{{status.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{status.progress}}%;">
+                {{status.progress}}%
+            </div>
+        </div>
+        <h4 class="failures col-md-12" ng-show="status.failed > 0">Failures: {{status.failed}}</h4>
+
+        <div class="inputFileSection col-md-12">
+            <h4 >Input File:</h4>
+            <div  class="col-md-3 text-center">
+                <i class="fa fa-file-text-o fa-3x"></i><br/>
+                <b><a ng-href="{{inputDownload + run.filename}}">{{run.filename}}</a></b>
+            </div>
+        </div>
+
+        <h4 class="gtf col-md-12">GTF: {{run.gtf}}</h4>
+        <h4 class="genome col-md-12">Genome: {{run.genome}}</h4>
+        <h4 class="readLen col-md-12">Read Length: {{run.readLength}}</h4>
+        <h4 class="mismatches col-md-12">Mismatches Allowed: {{run.mismatches}}</h4>
+        <h4 class="mapFiltered col-md-12">Map Filtered: {{run.mapFiltered ? 'On' : 'Off'}}</h4>
+        <h4 class="strandRule col-md-12">Strand Rule: {{strandRule}}</h4>
+        <h4 class="email col-md-12">Email Recipient: {{run.email}}</h4>
+
+
+        <div class="outputFileSection col-md-6">
+            <h4>Output File(s):</h4>
+            <div ng-repeat="file in outputFiles" class="col-md-3 text-center">
+                <i class="fa fa-file-text-o fa-3x"></i><br/>
+                <b><a ng-href="{{outputDownload + file.name}}">{{file.name}}</a></b>
+            </div>
+        </div>
+    </div>
 </div>

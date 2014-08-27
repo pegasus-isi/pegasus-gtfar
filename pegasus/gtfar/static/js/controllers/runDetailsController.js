@@ -21,19 +21,32 @@ define([],
 function() {
     "use strict"
 
-    var runDetailsController = function($scope, $state, $stateParams, $window) {
+    var runDetailsController = function($scope, $state, $stateParams, $http, $window) {
 
 
         function getRun() {
-            $httop.get($window.apiLInks.runs + "")
+            $http.get($window.apiLinks.runs + "/" + $stateParams.id).success(function(data) {
+                $scope.run = data;
+            }).error(function(data) {
+                console.error(data);
+            });
         }
+
+
         function getStatus() {
             $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.status).success(function(data) {
-                if(statusChanged(data.object)) {
-                    $scope.status = data.object;
-                    getOutputs();
+                if(statusChanged(data)) {
+                    $scope.status = data;
+                    $scope.statusText =
+                    getOutputFiles();
                 }
-                setTimeout(getStatus, 2000);
+                // We don't want the calls to continue when we leave this state
+                if($state.includes('runDetails')) {
+                    if($scope.status.state <= 3) {
+                        setTimeout(getStatus, 2000);
+                    }
+                }
+
             }).error(function(data) {
                 console.error(data);
             });
@@ -49,20 +62,48 @@ function() {
             return false;
         }
 
-        function getOutputs() {
+        function getOutputFiles() {
+            console.log("WE NEED TO CHECK THE OUTPUT FILES!");
             $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.outputs).success(function(data) {
-                $scope.outputs = data.objects;
+                $scope.outputFiles = data.objects;
                 // TODO: need to present links to download the output files
             }).error(function(data) {
                 console.error(data);
             });
         }
 
-        //getStatus(); uncomment when we have the backend hooked up properly
+        $scope.getStatusColor = function(prefix) {
+            if($scope.status) { // We have to make sure we've gotten data back from the server
+                if($scope.status.state == 5) { // Failed
+                    return prefix + "-danger";
+                }
+                if($scope.status.state == 4) { // Success
+                    return prefix + "-success";
+                }
+                if($scope.status.failed > 0) { // Failing
+                    return prefix + "-warning";
+                }
+                // Running
+                return prefix + "-info";
+            }
+
+        };
+
+        /*function downloadFile(section, filename) {
+            $http.get($window.apiLinks.download + "/" + $stateParams.id + "/" + section + "/" + filename).success(function(data) {
+
+            })
+        }*/
+
+        getRun();
+        getStatus();
+
+        $scope.inputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/input/";
+        $scope.outputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/outputs/";
 
 
     };
 
     // Return the array so the dependecy injections are accounted for
-    return ["$scope", "$state", "$stateParams", "$window", runDetailsController];
+    return ["$scope", "$state", "$stateParams", "$http", "$window", runDetailsController];
 });

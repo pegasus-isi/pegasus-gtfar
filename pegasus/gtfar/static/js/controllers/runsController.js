@@ -99,10 +99,14 @@ function() {
             columnDefs : [
                 {field : "name", displayName : "Name", cellTemplate: "<a class='gridCenter' ui-sref='runDetails({id : row.getProperty(\"id\")})'><div class='ngCellText'>{{row.getProperty(col.field)}}</div></a>"},
                 {field : "status", displayName : "Status", width : 60, cellTemplate: "<i class='ngCellText' ng-class='getExitCodeIcon(row.getProperty(col.field))'></i>"},
-                {field : "filename", displayName : "File"},
+                {field : "filename", displayName : "File", cellTemplate : "<a ng-href='{{getDownloadLink(row.getProperty(\"id\"), row.getProperty(col.field))}}'>{{row.getProperty(col.field)}}</a>"},
                 {field : "created", displayName : "Created On"}
             ],
             selectedItems : []
+        };
+
+        $scope.getDownloadLink = function(id, filename) {
+            return $window.apiLinks.download + "/" + id + "/input/" + filename;
         }
 
     };

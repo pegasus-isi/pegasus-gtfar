@@ -143,7 +143,7 @@ class PegasusWorkflow(Workflow):
 
         status = {
             'progress': float(status[7]),
-            'state': WorkflowStates[status[8].lower()],
+            'state': WorkflowStates[status[8].lower()].value,
             'failed': int(status[6])
         }
 

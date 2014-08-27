@@ -15,7 +15,7 @@
 __author__ = 'dcbriggs'
 
 import os
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, jsonify, send_from_directory
 from werkzeug import secure_filename
 
 
@@ -29,28 +29,37 @@ def index():
     Loads up the main page
     :return the template for the main page:
     """
-    apiLinks = '{"runs" : "/api/runs", "upload" : "/api/upload", "status" : "/status", "outputs" : "/outputs", "logs" : "/logs"}'
+    apiLinks = '{"runs" : "/api/runs", "upload" : "/api/upload", "status" : "/status", "outputs" : "/outputs", "logs" : "/logs", "download" : "/api/download"}'
     return render_template("mainView.html", apiLinks=apiLinks)
 
 
-@app.route("/api/upload", methods=['POST'])
+@app.route("/api/upload", methods=["POST"])
 def upload():
-    file = request.files['file']
+    file = request.files["file"]
     if file and isValidFile(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return redirect(url_for('index'))
+        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        return redirect(url_for("index"))
 
-@app.route("/api/runs/<int:id>/status", methods = ["GET"])
+@app.route("/api/runs/<int:id>/status", methods=["GET"])
 def getStatus(id):
-    workflow = new wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"], )
-    pass
+    workflow = wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"], app.config["STORAGE_DIR"] + os.sep + str(id) + os.sep + "submit")
+    status = workflow.monitor(['-l'])
+    # we have to change the state to be a basic data type
+    return jsonify(status)
 
-@app.route("/api/runs/<int:id>/outputs", methods = ["GET"])
+@app.route("/api/download/<path:file>")
+def download(file):
+    return send_from_directory(app.config["STORAGE_DIR"], file)
+
+@app.route("/api/runs/<int:id>/outputs", methods=["GET"])
 def getOutputFiles(id):
-    pass
+    files = {"objects" : []}
+    for filename in os.listdir(app.config["STORAGE_DIR"] + os.sep + str(id) + os.sep + "outputs"):
+        files["objects"].append({"name" : filename})
+    return jsonify(files)
 
-@app.route("/api/runs/<int:id>/logs", methods = ["GET"])
+@app.route("/api/runs/<int:id>/logs", methods=["GET"])
 def getLogs(id):
     pass
 
