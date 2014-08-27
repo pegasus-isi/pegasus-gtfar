@@ -33,7 +33,7 @@ function(angular) {
 
         $scope.run = {
             genome : "Genome", // TODO: add this in a bit $scope.genome,
-            gtf : "GTF", // TODO: Add this in a bit $scope.gtf,
+            gtf : "gencode.v19.annotation.gtf", // TODO: Add this in a bit $scope.gtf,
             status : -1, // default status to running
             userName : "genericUser",
             readLength : 100,
