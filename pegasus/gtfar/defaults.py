@@ -21,7 +21,7 @@ import os
 #
 
 
-GTFAR_HOME = '/data/workspace/gtfar'
+GTFAR_HOME = '/lfs1/dcbriggs/repos/pegasus-gtfar'
 
 GTFAR_BIN_DIR = os.path.join(GTFAR_HOME, 'bin')
 GTFAR_DATA_DIR = os.path.join(GTFAR_HOME, 'data')
@@ -38,12 +38,14 @@ GTFAR_REF_GENOME_DIR = os.path.join(GTFAR_REF_DIR, 'genome')
 UPLOAD_FOLDER = '/tmp'
 
 
+
+
 #
 # Pegasus Configuration
 #
 
 
-PEGASUS_HOME = '/data/workspace/pegasus/dist/pegasus-4.5.0cvs/'
+PEGASUS_HOME = '/usr'
 
 
 #

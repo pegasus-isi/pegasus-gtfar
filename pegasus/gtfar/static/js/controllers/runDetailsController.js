@@ -63,7 +63,6 @@ function() {
         }
 
         function getOutputFiles() {
-            console.log("WE NEED TO CHECK THE OUTPUT FILES!");
             $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.outputs).success(function(data) {
                 $scope.outputFiles = data.objects;
                 // TODO: need to present links to download the output files
@@ -89,17 +88,15 @@ function() {
 
         };
 
-        /*function downloadFile(section, filename) {
-            $http.get($window.apiLinks.download + "/" + $stateParams.id + "/" + section + "/" + filename).success(function(data) {
-
-            })
-        }*/
+        $scope.gotoList = function() {
+            $state.go('runs');
+        };
 
         getRun();
         getStatus();
 
         $scope.inputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/input/";
-        $scope.outputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/outputs/";
+        $scope.outputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/output/";
 
 
     };

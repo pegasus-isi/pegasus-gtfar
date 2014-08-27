@@ -218,36 +218,23 @@ def upload():
         return redirect(url_for("index"))
 
 
-@app.route("/")
-def index():
-    """
-    Loads up the main page
-    :return the template for the main page:
-    """
-    runs_prefix = '%(table)s%(prefix)s0.%(table)s%(prefix)s' % {'prefix': 'api', 'table': Run.__tablename__}
 
-    api_links = {
-        'runs': url_for(runs_prefix),
-        'upload': url_for('upload')
-    }
-
-    return render_template('mainView.html', apiLinks=json.dumps(api_links))
 
 @app.route("/api/runs/<int:id>/status", methods=["GET"])
 def getStatus(id):
-    workflow = wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"], app.config["STORAGE_DIR"] + os.sep + str(id) + os.sep + "submit")
+    workflow = wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"], app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "submit")
     status = workflow.monitor(['-l'])
     # we have to change the state to be a basic data type
     return jsonify(status)
 
 @app.route("/api/download/<path:file>")
 def download(file):
-    return send_from_directory(app.config["STORAGE_DIR"], file)
+    return send_from_directory(app.config["GTFAR_STORAGE_DIR"], file)
 
 @app.route("/api/runs/<int:id>/outputs", methods=["GET"])
 def getOutputFiles(id):
     files = {"objects" : []}
-    for filename in os.listdir(app.config["STORAGE_DIR"] + os.sep + str(id) + os.sep + "outputs"):
+    for filename in os.listdir(app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "output"):
         files["objects"].append({"name" : filename})
     return jsonify(files)
 
@@ -262,3 +249,21 @@ def tests():
     :return: the template for the test page
     """
     return render_template("testRunner.html")
+
+@app.route("/")
+def index():
+    """
+    Loads up the main page
+    :return the template for the main page:
+    """
+    runs_prefix = '%(table)s%(prefix)s0.%(table)s%(prefix)s' % {'prefix': 'api', 'table': Run.__tablename__}
+
+    api_links = {
+        'runs': url_for(runs_prefix),
+        'upload': url_for('upload'),
+        'download' : '/api/download',
+        'status' : '/status',
+        'outputs' : '/outputs'
+    }
+
+    return render_template('mainView.html', apiLinks=json.dumps(api_links))

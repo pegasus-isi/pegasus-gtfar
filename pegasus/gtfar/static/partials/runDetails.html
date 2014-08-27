@@ -18,6 +18,7 @@
     <div class="container">
         <h3>{{run.name}}</h3>
 
+
         <h4>Status :</h4>
         <div class="progress">
             <div class="progress-bar col-md-12" ng-class="getStatusColor('progress-bar')" role="progressbar" aria-valuenow="{{status.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{status.progress}}%;">
@@ -43,12 +44,13 @@
         <h4 class="email col-md-12">Email Recipient: {{run.email}}</h4>
 
 
-        <div class="outputFileSection col-md-6">
+        <div class="outputFileSection col-md-12" ng-show="{{outputFiles.len > 0}}">
             <h4>Output File(s):</h4>
             <div ng-repeat="file in outputFiles" class="col-md-3 text-center">
                 <i class="fa fa-file-text-o fa-3x"></i><br/>
                 <b><a ng-href="{{outputDownload + file.name}}">{{file.name}}</a></b>
             </div>
         </div>
+        <button class="btn btn-default bt-sm col-md-offset-10" ng-click="gotoList()">Back To List</button>
     </div>
 </div>
