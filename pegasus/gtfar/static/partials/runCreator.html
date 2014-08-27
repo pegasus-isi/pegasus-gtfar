@@ -1,83 +1,81 @@
-<!DOCTYPE html>
-<!--
-  ~ Copyright 2007-2014 University Of Southern California
-  ~
-  ~  Licensed under the Apache License, Version 2.0 (the "License");
-  ~  you may not use this file except in compliance with the License.
-  ~  You may obtain a copy of the License at
-  ~
-  ~  http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~  Unless required by applicable law or agreed to in writing,
-  ~  software distributed under the License is distributed on an "AS IS" BASIS,
-  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~  See the License for the specific language governing permissions and
-  ~  limitations under the License.
-  -->
-
-
-<div class="jumbotron container">
-    <h3>Create a New Workflow</h3><br/>
-    <form id="runForm" name="form" class="form-horizontal" role="form" enctype="multipart/form-data" method="post" action="">
-        <div class="form-group">
-            <label for="inputRunName" class="col-md-2">Workflow Name</label>
-            <div class="col-md-6">
-                <input type="text" class="form-control" id="inputRunName" placeholder="Workflow Name" ng-model="run.name" name="name" required alphanumeric>
-            </div>
+<h3>Start Run</h3>
+<br />
+<form id="runForm" name="form" class="form-horizontal" role="form" enctype="multipart/form-data" method="post" action="">
+    <div class="form-group">
+        <label for="inputRunName" class="col-md-2 control-label">Workflow Name</label>
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="inputRunName" placeholder="Workflow Name" ng-model="run.name" name="name" required alphanumeric>
+            <span class="help-block">Description</span>
         </div>
-        <div class="form-group">
-            <label for="inputGTF" class="col-md-2">GTF File</label>
-            <div class="col-md-6">
-                <input type="text" class="form-control" id="inputGTF" placeholder="" ng-model="run.gtf" name="gtf" readonly>
-            </div>
+    </div>
+    <div class="form-group">
+        <label for="inputGTF" class="col-md-2 control-label">GTF File</label>
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="inputGTF" placeholder="" ng-model="run.gtf" name="gtf" readonly>
+            <span class="help-block">Description</span>
         </div>
-        <div class="form-group">
-            <label for="inputGenome" class="col-md-2">Genome File</label>
-            <div class="col-md-6">
-                <input type="text" class="form-control" id="inputGenome" placeholder="" ng-model="run.genome" name="genome" readonly>
-            </div>
+    </div>
+    <div class="form-group">
+        <label for="inputGenome" class="col-md-2 control-label">Genome File</label>
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="inputGenome" placeholder="" ng-model="run.genome" name="genome" readonly>
+            <span class="help-block">Description</span>
         </div>
-        <div class="form-group">
-            <label for="inputFile" class="col-md-2">File Input</label>
-            <!-- Use onChange instead of ng-change because the people who write Angular don't think they should support file uploading-->
+    </div>
+    <div class="form-group">
+        <label for="inputFile" class="col-md-2 control-label">Reads File</label>
+        <!-- Use onChange instead of ng-change because the people who write Angular don't think they should support file uploading-->
+        <div class="col-md-6">
             <input type="file" name="file" id="inputFile" required onchange="angular.element(this).scope().uploadFile()">
-            <div class="col-md-2"></div>
-            <p class="help-block col-md-10"><small>Make sure it is under 5 GB.</small></p>
+            <span class="help-block">FastQ file must be compressed in gzip format</span>
         </div>
-        <div class="form-group">
-            <label for="inputReadLength" class="col-md-2">Read Length (50-128)</label>
-            <div class="col-md-1">
-                <input type="text" class="form-control" id="inputReadLength" ng-model="run.readLength" name="readLength" required integer min="50" max="128">
-            </div>
+    </div>
+    <div class="form-group">
+        <label for="inputReadLength" class="col-md-2 control-label">Read Length</label>
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="inputReadLength" ng-model="run.readLength" name="readLength" maxlength="3" required integer min="50" max="128">
+            <span class="help-block">Should be between 50 and 128 inclusive</span>
         </div>
-        <div class="form-group">
-            <label for="inputMismatches" class="col-md-2">Mismatches Allowed (0-8)</label>
-            <div class="col-md-1">
-                <input type="text" class="form-control" id="inputMismatches" ng-model="run.mismatches" name="mismatches" required integer min="0" max="8">
-            </div>
+    </div>
+    <div class="form-group">
+        <label for="inputMismatches" class="col-md-2 control-label">Mismatches</label>
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="inputMismatches" ng-model="run.mismatches" name="mismatches" maxlength="1" required integer min="0" max="8">
+            <span class="help-block">Should be between 0 and 8 inclusive</span>
         </div>
-        <!--div class="checkbox">
-            <label><input type="checkbox" ng-model="run.trimUnmapped">&nbsp Trim Unmapped</label>
-        </div-->
-        <div class="checkbox">
-            <label><input type="checkbox" ng-model="run.mapFiltered">&nbsp Map Filtered</label>
+    </div>
+    <!--div class="checkbox">
+        <label><input type="checkbox" ng-model="run.trimUnmapped">&nbsp Trim Unmapped</label>
+    </div-->
+    <div class="form-group">
+        <label class="col-md-2 control-label" for="mapFiltered">Map Filtered</label>
+        <div class="col-md-1">
+            <input type="checkbox" ng-model="run.mapFiltered">
+            <span class="help-block">Description</span>
         </div>
-        <br/>
-        <div class="form-group">
-            <label for="inputStrandRule" class="col-md-2">Strand Rule</label>
-            <div class="col-md-4">
-                <select class="form-control" id="inputStrandRule" ng-model="strandRule" ng-options="option.rule for option in strandRuleOptions"></select>
-            </div>
+    </div>
+    <br/>
+    <div class="form-group">
+        <label for="inputStrandRule" class="col-md-2 control-label">Strand Rule</label>
+        <div class="col-md-6">
+            <select class="form-control" id="inputStrandRule" ng-model="strandRule" ng-options="option.rule for option in strandRuleOptions"></select>
+            <span class="help-block">Description</span>
         </div>
-        <div class="form-group">
-            <label for="inputEmail" class="col-md-2">Email Address</label>
-            <div class="col-md-6">
-                <input type="email" class="form-control" id="inputEmail" placeholder="Enter email" ng-model="run.email" name="email" required>
-            </div>
+    </div>
+    <div class="form-group">
+        <label for="inputEmail" class="col-md-2 control-label">Email Address</label>
+        <div class="col-md-6">
+            <input type="email" class="form-control" id="inputEmail" placeholder="Enter email" ng-model="run.email" name="email">
+            <span class="help-block">Description</span>
         </div>
-        <div class="form-group">
-            <button type="submit" class="btn btn-default col-md-offset-6 button-sm" ng-click="addRun()">Submit</button>
-            <button class="btn btn-default button-sm" ng-click="cancel()">Cancel</button>
+    </div>
+    <div class="form-group">
+        <div class="col-xs-6 col-md-offset-2 col-md-2">
+            <button type="submit" class="btn btn-primary btn-block" ng-click="addRun()">Submit <i class="fa fa-long-arrow-right"></i>
+            </button>
         </div>
-    </form>
-</div>
+        <div class="col-xs-6 col-md-2">
+            <button class="btn btn-warning btn-block" ng-click="cancel()">Cancel <i class="fa fa-close"></i></button>
+        </div>
+    </div>
+</form>
