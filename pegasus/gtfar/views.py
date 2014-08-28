@@ -144,8 +144,7 @@ def generate_dax(result):
                   is_trim_unmapped=result['trimUnmapped'],
                   is_map_filtered=result['trimUnmapped'],
                   splice=True,
-                  # TODO: Use value from DB
-                  strand_rule='unstranded',
+                  strand_rule=result['strandRule'],
                   dax=os.path.join(path, '%d' % result['id']),
                   url='%s#/createRun' % url_for('index'),
                   email=result['email'],
