@@ -102,6 +102,7 @@ function() {
                 {field : "filename", displayName : "File", cellTemplate : "<a ng-href='{{getDownloadLink(row.getProperty(\"id\"), row.getProperty(col.field))}}'>{{row.getProperty(col.field)}}</a>"},
                 {field : "created", displayName : "Created On"}
             ],
+            sortInfo : {fields : ['created'], directions : ['desc']},
             selectedItems : []
         };
 
