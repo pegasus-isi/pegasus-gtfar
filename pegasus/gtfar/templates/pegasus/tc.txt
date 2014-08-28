@@ -30,22 +30,6 @@ tr perm {
     }
 }
 
-tr option_filter {
-    site local {
-        pfn "{{ bin_dir }}/option-filter.sh"
-        arch "x86_64"
-        os "linux"
-        type "INSTALLED"
-    }
-
-    site condorpool {
-        pfn "{{ bin_dir }}/option-filter.sh"
-        arch "x86_64"
-        os "linux"
-        type "INSTALLED"
-    }
-}
-
 tr fastq-split {
     site local {
         pfn "{{ bin_dir }}/fastq-split.sh"
