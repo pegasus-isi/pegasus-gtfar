@@ -36,8 +36,8 @@ style="{{ ['display: inline-block',
                 <tbody>
                 <tr>
                     <td>
-                        <a href="{{ url_for('index', _external=True) }}">
-                            <img src="{{ url_for('static', filename='images/banner.jpg', _external=True) }}" width="640" border="0" align="top">
+                        <a href="/">
+                            <img src="" width="640" border="0" align="top">
                         </a>
                     </td>
                 </tr>
@@ -79,7 +79,7 @@ style="{{ ['display: inline-block',
                                         </tr>
                                         <tr>
                                             <td class="details" align="center" style="font-family: Arial;padding-top: 1.4em;">
-                                                <a href="{{ url_for('static', filename='gtfar-email.html', _external=true) }}" class="details-button" {{ button() }}>
+                                                <a href="{{ url }}" class="details-button" {{ button() }}>
                                                     Show Details
                                                 </a>
                                             </td>

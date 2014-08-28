@@ -138,6 +138,7 @@ def generate_dax(result):
                   result['id'],
                   result['filename'],
                   base_dir=path,
+                  bin_dir=app.config['GTFAR_BIN_DIR'],
                   read_length=result['readLength'],
                   mismatches=result['mismatches'],
                   is_trim_unmapped=result['trimUnmapped'],

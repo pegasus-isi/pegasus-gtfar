@@ -388,9 +388,9 @@ class IterativeMapMixin(object):
 
 
 class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
-    def __init__(self, gtf, genome, prefix, reads, base_dir, read_length=100, mismatches=3, is_trim_unmapped=False,
-                 is_map_filtered=False, splice=True, strand_rule='Unstranded', dax=None, url=None, email=None,
-                 splits=2, adag=None):
+    def __init__(self, gtf, genome, prefix, reads, base_dir, bin_dir, read_length=100, mismatches=3,
+                 is_trim_unmapped=False, is_map_filtered=False, splice=True, strand_rule='Unstranded', dax=None,
+                 url=None, email=None, splits=2, adag=None):
 
         # Reference
         self._gtf = gtf
@@ -417,6 +417,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
 
         # Pegasus
         self._base_dir = base_dir
+        self._bin_dir = bin_dir
         self._dax = sys.stdout if dax is None else '%s.dax' % dax
         self._url = url
         self._email = email

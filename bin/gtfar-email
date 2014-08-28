@@ -21,6 +21,8 @@ import sys
 import smtplib
 import argparse
 
+import MySQLdb as driver
+
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -47,26 +49,59 @@ def send_using_sendmail(message):
         raise RuntimeError('Sendmail exit status: %d' % (rc >> 8))
 
 
+def get_run_info(uid):
+
+    try:
+        # TODO: Use config file to get DB credentials
+        db = driver.connect(host='localhost', user='gtfar_user', passwd='pegasus123', db='gtfar')
+        cursor = db.cursor()
+
+        count = cursor.execute('SELECT * FROM runs WHERE id = %s' % uid)
+
+        if count is None or count == 0:
+            print >> sys.stderr, 'No records found'
+            sys.exit(4)
+
+        for run in cursor:
+            return run
+
+    except driver.Error, e:
+        print >> sys.stderr, e
+        sys.exit(3)
+
+    finally:
+        if db:
+            db.close()
+
+
+def left_justify_text(s, width=80, fill_char=' '):
+    return s.ljust(width, fill_char)
+
+
 def get_email_message(uid, url):
     env = Environment(loader=PackageLoader('pegasus.gtfar', 'templates'))
+    env.filters['ljust'] = left_justify_text
 
     wf_id = os.environ['PEGASUS_JOBID']
     event = os.environ['PEGASUS_EVENT']
     submit_dir = os.environ['PEGASUS_SUBMIT_DIR']
     iso_timestamp = os.environ['PEGASUS_EVENT_TIMESTAMP_ISO']
 
-    def get_template_str(template):
+    def get_template_str(template, run):
+
         template = env.get_template(template)
 
         return template.render(uid=uid,
-                               url=url,
                                wf_id=wf_id,
                                event=event,
                                submit_dir=submit_dir,
-                               iso_timestamp=iso_timestamp)
+                               iso_timestamp=iso_timestamp,
+                               url=url,
+                               run=run)
+    run = get_run_info(uid)
 
-    text_message = get_template_str('email/gtfar-email.txt')
-    html_message = get_template_str('email/gtfar-email.html')
+    text_message = get_template_str('email/gtfar-email.txt', run)
+    html_message = get_template_str('email/gtfar-email.html', run)
 
     return text_message, html_message
 

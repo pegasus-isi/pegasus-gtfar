@@ -45,6 +45,7 @@ def main():
 
     # Pegasus
     parser.add_argument('-b', '--base-dir', default=None, required=True, help='Workflow run directory')
+    parser.add_argument('-e', '--bin-dir', default=None, required=True, help='GTFAR executable directory')
     parser.add_argument('-d', '--dax', default=None, help='GTF file')
     parser.add_argument('-u', '--url', default=None, help='Link to the results of the workflow')
     parser.add_argument('-e', '--email', default=None, help='Send Email notification on workflow completion')

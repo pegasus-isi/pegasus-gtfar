@@ -6,7 +6,7 @@
 {{ 'Request ID' | ljust(width=20) }}: {{ uid | safe }}
 {{ 'Request ID' | ljust(width=20) }}: {{ uid | safe }}
 
-{{ 'Link' | ljust(width=20) }}: {{ url_for('static', filename='gtfar-email.html', _external=true) }}
+{{ 'Link' | ljust(width=20) }}: {{ url }}
 
 
 {{ message | safe }}
