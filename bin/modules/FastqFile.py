@@ -17,6 +17,14 @@ class FastqFile:
         #self.fname = open(fileHandle)
         self.fname = fileHandle
         self.readLen ,self.lowQual, self.minAvg, self.minTrim = rlen, lowQ, avgQ, minTrim
+        
+        self.qualMins = dd(int)
+        self.qualMaxs = dd(int)
+        self.qualMeans = dd(int)
+        self.lowBases  = dd(int)
+        self.NCounts = dd(int)
+        self.totalReads = 0 
+
         self.adaptors=[]
         self.multiple=multiple
         self.seedLen=10
@@ -70,7 +78,7 @@ class FastqFile:
             self.readQual = self.readQual[0:self.readLen]
         self.phreds = [ord(q)-35 for q in self.readQual]
         
-
+        self.totalReads +=1
         if not self.readQual:
             self.finish=True
             return False
@@ -110,6 +118,37 @@ class FastqFile:
             if self.readSeq[i]=="N" and self.firstN==None:
                 self.firstN=i
         self.avgQual=sum(self.phreds)/float(len(self.phreds))
+
+
+    def storeQualDist(self):
+        lowQuals = 0
+        nCnts = False
+        for i in range(len(self.phreds)):
+            if self.phreds[i]<self.lowQual:
+                lowQuals +=1
+            if self.readSeq[i]=="N":
+                nCnts = True 
+        
+        self.qualMeans[int(sum(self.phreds)/float(len(self.phreds)))]+=1
+        self.qualMaxs[max(self.phreds)]+=1
+        self.qualMins[min(self.phreds)]+=1
+        self.lowBases[lowQuals]+=1
+        self.NCounts[nCnts]+=1
+
+    def printQualDists(self):
+        totalScrs,totalMins,totalMaxes = 0,0,0
+        totalReads = 0
+        for i in range(100):
+            totalScrs += i*self.qualMeans[i]
+            totalMins += i*self.qualMins[i]
+            totalMaxes += i*self.qualMaxs[i]
+            totalReads += self.qualMeans[i]
+        print "MEAN MIN,AVG,MAX",totalMins / float(totalReads),totalScrs / float(totalReads), totalMaxes / float(totalReads)
+
+
+
+
+
 
 
     def filterPass(self):
