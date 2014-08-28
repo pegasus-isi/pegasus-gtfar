@@ -44,6 +44,12 @@ db.create_all()
 cache = Cache(app)
 
 #
+# Filters initialization
+#
+
+from pegasus.gtfar import filters
+
+#
 # Flask Restless
 #
 
