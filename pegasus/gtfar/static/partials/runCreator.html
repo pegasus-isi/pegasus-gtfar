@@ -4,7 +4,7 @@
     <div class="form-group">
         <label for="inputRunName" class="col-md-2 control-label">Workflow Name</label>
         <div class="col-md-6">
-            <input type="text" class="form-control" id="inputRunName" placeholder="Workflow Name" ng-model="run.name" name="name" required alphanumeric>
+            <input type="text" class="form-control" id="inputRunName" placeholder="62H2EAAXX_7_HSB_135" ng-model="run.name" name="name" required alphanumeric>
             <span class="help-block">Description</span>
         </div>
     </div>
@@ -33,14 +33,14 @@
     <div class="form-group">
         <label for="inputReadLength" class="col-md-2 control-label">Read Length</label>
         <div class="col-md-6">
-            <input type="text" class="form-control" id="inputReadLength" ng-model="run.readLength" name="readLength" maxlength="3" required integer min="50" max="128">
+            <input type="number" class="form-control" id="inputReadLength" ng-model="run.readLength" name="readLength" maxlength="3" required integer min="50" max="128">
             <span class="help-block">Should be between 50 and 128 inclusive</span>
         </div>
     </div>
     <div class="form-group">
         <label for="inputMismatches" class="col-md-2 control-label">Mismatches</label>
         <div class="col-md-6">
-            <input type="text" class="form-control" id="inputMismatches" ng-model="run.mismatches" name="mismatches" maxlength="1" required integer min="0" max="8">
+            <input type="number" class="form-control" id="inputMismatches" ng-model="run.mismatches" name="mismatches" maxlength="1" required integer min="0" max="8">
             <span class="help-block">Should be between 0 and 8 inclusive</span>
         </div>
     </div>
@@ -65,7 +65,7 @@
     <div class="form-group">
         <label for="inputEmail" class="col-md-2 control-label">Email Address</label>
         <div class="col-md-6">
-            <input type="email" class="form-control" id="inputEmail" placeholder="Enter email" ng-model="run.email" name="email">
+            <input type="email" class="form-control" id="inputEmail" placeholder="example@domain.com" ng-model="run.email" name="email">
             <span class="help-block">Description</span>
         </div>
     </div>
