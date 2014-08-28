@@ -9,14 +9,14 @@ example: HG19=/export/uec-gs1/knowles/analysis/tade/references_and_annotation/hu
 '''
 
 
-def runthrough(fName,genomePath,filters,prefix,readlen,gapcands,mutationList):
+
    
-    gtf = GtfFile(fName,prefix,readlen,filters)
-    while gtf.open:
-        gtf.loadGenesOnChromosome()
-        gtf.addFasta(genomePath+'/'+gtf.chr+'.fa') 
-        gtf.printGenesOnChromosome()
-        gtf.startNextChromosome()
+
+
+
+
+
+
     
 
     
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     parser.add_option("-l", "--readlen", default = 100, type='int', help="Expected Read Length")
     parser.add_option("-p", "--prefix", default = 'mygtf', type='string', help="Output Filename Prefix")
     parser.add_option("-c", "--chromosomes", default = None, type='string', help="Path to genome autosome fasta files")
-    parser.add_option("-f", "--filterseqs", default = "HUMAN", type='string', help="Organism for filters")
+    parser.add_option("-f", "--filterType", default = "HUMAN", type='string', help="Organism for filters")
     parser.add_option("-g", "--gapcands", default = None, type='string', help="File which lists possible gaps for annotation")
     parser.add_option("-m", "--mutationList", default = None, type='string', help="Path mutation list")
     parser.add_option("-s", "--snpcands", default = None, type='string', help="Path snp cands")
@@ -39,27 +39,28 @@ if __name__ == '__main__':
 
 if len(args) == 0:
     sys.stderr.write("A gtf is required\n")
-    sys.stderr.write("EXAMPLE: ./annotate_gtf.py file.gtf -c chromosome_path -f filter_seqs -p PREFIXNAME -l READLENGTH -m Mutationlist\n") 
+    sys.stderr.write("EXAMPLE: ./create_RDD_candidate_blocks.py file.gtf -c chromosome_path  -p PREFIXNAME -l READLENGTH -m Mutationlist\n") 
     parser.print_help()
 elif options.chromosomes == None:
     sys.stderr.write("A path to chromosome files is required\n")
-    sys.stderr.write("EXAMPLE: ./annotate_gtf.py file.gtf -c chromosome_path -f filter_seqs -p PREFIXNAME -l READLENGTH -m Mutationlist\n") 
+    sys.stderr.write("EXAMPLE: ./create_RDD_candidate_blocks.py file.gtf -c chromosome_path  -p PREFIXNAME -l READLENGTH -m Mutationlist\n") 
+    parser.print_help()
+elif options.snpcands == None and options.gapcands == None:
+    sys.stderr.write("A path to candidate locations is is required\n")
+    sys.stderr.write("EXAMPLE: ./create_RDD_candidate_blocks.py file.gtf -c chromosome_path  -p PREFIXNAME -l READLENGTH -m Mutationlist\n") 
     parser.print_help()
 else:
     if options.chromosomes[-1]=="/": options.chromosomes=options.chromosomes[0:len(options.chromosomes)-1]
-    if options.snpcands == None:
-        runthrough(args[0],options.chromosomes,options.filterseqs,options.prefix,options.readlen,options.gapcands,options.mutationList)
-    elif options.snpcands != None:
-        gtf = GtfFile(args[0],options.prefix,options.readlen,options.filterseqs)
+    if options.snpcands != None:
+        gtf = GtfFile(args[0],options.prefix,options.readlen,options.filterType)
         gtf.addCandidates(options.snpcands,"SNPS")
         while gtf.open:
             gtf.loadGenesOnChromosome()
             gtf.addFasta(options.chromosomes+'/'+gtf.chr+'.fa') 
-            gtf.printCandidatesOnChromosome()
+            if gtf.SNPCANDS:
+                gtf.printSnpCandsOnChromosome()
+            #gtf.printGenesOnChromosome()
             gtf.startNextChromosome()
 
 
-    else:
-        print "ANNOTATE AND CREATE SEQS/KEY"
-        print "USAGE: ./annotate_gtf.py file.gtf -c chromosome_path -f filter_seqs -p PREFIXNAME -l READLENGTH -m Mutationlist" 
 

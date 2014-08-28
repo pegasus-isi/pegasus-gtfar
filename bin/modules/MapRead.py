@@ -30,9 +30,9 @@ class MapReads:
 
         self.mapMax = 50
 
-        if strandSpecific == "OPPOSITE":    self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): False,("-","-"): False,("+","."): True, ("-","."): True}
-        elif strandSpecific == "MATCH":         self.strandKey = {("+","-"): False,("-","+"): False,("+","+"): True,("-","-"): True,("+","."): True,("-","."): True}
-        else:                               self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): True,("-","-"): True,("+","."): True,("-","."): True}
+        if strandSpecific == "OPPOSITE":    self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): False,("-","-"): False,("+","."): True, ("-","."): True, ("X","+"): True, ("X","-"): True}
+        elif strandSpecific == "MATCH":     self.strandKey = {("+","-"): False,("-","+"): False,("+","+"): True,("-","-"): True,("+","."): True,("-","."): True, ("X","+"): True, ("X","-"): True}
+        else:                               self.strandKey = {("+","-"): True,("-","+"): True,("+","+"): True,("-","-"): True,("+","."): True,("-","."): True, ("X","+"): True, ("X","-"): True}
 
     
         self.samStrand = {'0':'+','16':'-','+':'0','-':'16'}

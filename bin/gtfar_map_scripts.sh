@@ -14,7 +14,6 @@ function map_and_parse_reads {
     MAPDIR=$1; READS=$2; TAG=$3
     mkdir -p $MAPDIR 
    
-
     setup_perm_seeds
     setup_perm_reads
     setup_perm_refs
@@ -136,12 +135,14 @@ function map_and_parse_reads_to_features {
     
     terminal_talk "Mapping reads to features..."
     valid_read_files=$(validate_reads feature_reads.txt val_reads.txt)
+   
     
-    
-    
+    CONSERVE_MATCH=$(( $MISMATCHES + 3))
     if [ -f FEATURES.log ] && [ $SKIP == "TRUE" ]; then terminal_talk "SKIPPING\n"
     elif [ $valid_read_files == 0 ]; then terminal_talk "NO READS\n"; 
-    else perm $myFEATURES val_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH > FEATURES.log; check_progress $?; 
+    else 
+        if [ $CONSERVATIVE == "TRUE" ]; then perm $myFEATURES val_reads.txt --seed $SEED -v $CONSERVE_MATCH -A --printNM -u -s -T $LENGTH > FEATURES.log; check_progress $?; 
+        else   perm $myFEATURES val_reads.txt --seed $SEED -v $MISMATCHES -B --printNM -u -s -T $LENGTH > FEATURES.log; check_progress $?; fi
         terminal_talk "Success\n"; fi 
     terminal_talk  "Parsing read alignments.."
     for i in *.mapping; do if [ -f $i".vis" ] && [ $SKIP == "TRUE" ]; then terminal_talk ".SKIP."; else parse_alignment.py $i --strandRule $STRANDRULE --tag $TAG > "$i".vis & fi done

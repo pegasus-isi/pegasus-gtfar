@@ -22,6 +22,7 @@ add_option length -l  DEFAULT=100 TYPE=NUM INT_MIN=50 INT_MAX=128  INFO='length 
 add_option MULTI=True INT_MIN=10 INT_MAX=150 trims INFO='trimmings' DEFAULT='None'
 add_option MULTI=True TYPE=File -r reads  DEFAULT="None" INFO='reads or file in fastq or fastq.gz format'
 add_option config -c  DEFAULT='None' TYPE=File        INFO='Configuration File for Reference Data'
+add_option conservative -a DEFAULT='False' TYPE=bool
 
 add_option strandRule -s DEFAULT="UNSTRANDED" STR_OPTS=Unstranded,Same,Opposite  INFO='A rule for strandedness (None, Same or Opposite)'
 add_option mismatches -m DEFAULT=3 INT_MIN=0 INT_MAX=8    INFO='The number of mismatches to allow per mapping'
@@ -96,6 +97,7 @@ function option_iterativeMap {
     if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping - create one using gtfar annotate"; else source $CONFIG; fi
     READS=$OUTDIR/filterDir/reads*_full.fastq; MAPDIR=$OUTDIR/mapDir_full
     cd $OUTDIR 
+    
     map_and_parse_reads mapDir_full "filterDir/reads*_full.fastq" "FULL"; UNMAPPED="mapDir_full/reads*unmapped.fastq"
     for ((A=${#TRIMARRAY[@]}-1;A>=0;A--)); do 
         LENGTH=${TRIMARRAY[$A]}
