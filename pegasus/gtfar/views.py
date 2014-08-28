@@ -26,8 +26,8 @@ from flask import render_template, request, redirect, url_for, json, jsonify, se
 from pegasus.gtfar import app, apiManager
 from pegasus.gtfar.dax.dax import GTFAR
 from pegasus.gtfar.models import Run, isValidFile
-from pegasus.workflow import wrapper
 
+from pegasus.workflow import wrapper
 from pegasus.workflow.wrapper import PegasusWorkflow
 
 #
@@ -208,7 +208,6 @@ apiManager.create_api(Run,
 #
 
 
-
 @app.route("/api/upload", methods=["POST"])
 def upload():
     file = request.files["file"]
@@ -218,29 +217,32 @@ def upload():
         return redirect(url_for("index"))
 
 
-
-
 @app.route("/api/runs/<int:id>/status", methods=["GET"])
 def getStatus(id):
-    workflow = wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"], app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "submit")
+    workflow = wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"],
+                                       app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "submit")
     status = workflow.monitor(['-l'])
     # we have to change the state to be a basic data type
     return jsonify(status)
+
 
 @app.route("/api/download/<path:file>")
 def download(file):
     return send_from_directory(app.config["GTFAR_STORAGE_DIR"], file)
 
+
 @app.route("/api/runs/<int:id>/outputs", methods=["GET"])
 def getOutputFiles(id):
-    files = {"objects" : []}
+    files = {"objects": []}
     for filename in os.listdir(app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "output"):
-        files["objects"].append({"name" : filename})
+        files["objects"].append({"name": filename})
     return jsonify(files)
+
 
 @app.route("/api/runs/<int:id>/logs", methods=["GET"])
 def getLogs(id):
     pass
+
 
 @app.route("/tests")
 def tests():
@@ -249,6 +251,7 @@ def tests():
     :return: the template for the test page
     """
     return render_template("testRunner.html")
+
 
 @app.route("/")
 def index():
@@ -261,9 +264,9 @@ def index():
     api_links = {
         'runs': url_for(runs_prefix),
         'upload': url_for('upload'),
-        'download' : '/api/download',
-        'status' : '/status',
-        'outputs' : '/outputs'
+        'download': '/api/download',
+        'status': '/status',
+        'outputs': '/outputs'
     }
 
     return render_template('mainView.html', apiLinks=json.dumps(api_links))
