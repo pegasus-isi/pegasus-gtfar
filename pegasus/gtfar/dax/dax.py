@@ -212,7 +212,7 @@ class FilterMixin(object):
             fastq_t = File('%s_%d.fastq' % (prefix, t))
             pre_filter.uses(fastq_t, link=Link.OUTPUT, transfer=False, register=False)
 
-        pre_filter.uses(full_fastq, link=Link.OUTPUT, transfer=True, register=False)
+        pre_filter.uses(full_fastq, link=Link.OUTPUT, transfer=False, register=False)
         pre_filter.uses(reject, link=Link.OUTPUT, transfer=True, register=False)
         pre_filter.uses(stats, link=Link.OUTPUT, transfer=True, register=False)
 
