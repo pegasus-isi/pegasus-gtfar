@@ -72,9 +72,9 @@ function(angular) {
                 return;
             }
 
+            $scope.run["strandRule"] = $scope.strandRule.rule;
             try {
                 $scope.run["filename"] = document.getElementById("inputFile").files[0].name;
-                $scope.run["strandRule"] = $scope.strandRule.rule;
             }
             catch(error)
             {

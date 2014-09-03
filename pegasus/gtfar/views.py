@@ -243,6 +243,25 @@ def getOutputFiles(id):
 def getLogs(id):
     pass
 
+@app.route("/api/runs/<int:id>/stop")
+def stopRun(id):
+    workflow = wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"],
+                                       app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "submit")
+    response = {
+        'status' : 300,
+        'reason' : 'Run stopped successfully.'
+    }
+    try:
+        workflow.stop()
+    except StopException:
+        response = {
+            'status' : 500,
+            'reason' : 'Unable to stop the requested run.'
+        }
+    return jsonify(response)
+
+
+
 
 @app.route("/tests")
 def tests():
@@ -266,7 +285,8 @@ def index():
         'upload': url_for('upload'),
         'download': '/api/download',
         'status': '/status',
-        'outputs': '/outputs'
+        'outputs': '/outputs',
+        'stop' : '/stop'
     }
 
     return render_template('mainView.html', apiLinks=json.dumps(api_links))

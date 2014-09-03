@@ -41,7 +41,7 @@ function() {
                     getOutputFiles();
                 }
                 // We don't want the calls to continue when we leave this state
-                if($state.includes('runDetails')) {
+                if($state.includes("runDetails")) {
                     if($scope.status.state <= 3) {
                         setTimeout(getStatus, 2000);
                     }
@@ -88,12 +88,54 @@ function() {
 
         };
 
+        // Pass in either the option 'bar' or 'alert'
+        $scope.showBarOrAlert = function(option) {
+            if($scope.status) {
+                if($scope.status.state > 3) {
+                    return option == "alert";
+                }
+                return option == "bar";
+            }
+        };
+
+        $scope.getStatusText = function() {
+            if($scope.status) { // We have to make sure we've gotten data back from the server
+                if($scope.status.state == 5) { // Failed
+                    return "Run Failed!";
+                }
+                if($scope.status.state == 4) { // Success
+                    return "Run Succeeded!";
+                }
+                if($scope.status.failed > 0) { // Failing
+                    return "Failures found, but run still progressing.";
+                }
+                // Running
+                return "Still Running.";
+            }
+        };
+
+        $scope.stopRun = function() {
+            $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.stop).success(function(data) {
+                $scope.alerts.push({
+                    'message' : data.reason,
+                    'type' : 'success'
+                });
+            }).error(function(data) {
+                $scope.alerts.push({
+                    'message' : data.reason + "Error Code: " + data.status,
+                    'type' : 'danger'
+                });
+            });
+        };
+
         $scope.gotoList = function() {
-            $state.go('runs');
+            $state.go("runs");
         };
 
         getRun();
         getStatus();
+
+        $scope.alerts = [];
 
         $scope.inputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/input/";
         $scope.outputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/output/";
