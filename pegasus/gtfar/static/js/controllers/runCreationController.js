@@ -24,7 +24,12 @@ function(angular) {
     var runsCreationController = function($scope, $window, $http, $state) {
 
         var file;
-
+        var FIVE_GIGABYTES = 5000000000;
+        $scope.alerts = [];
+        $scope.closeAlert = function(index) {
+            $scope.alerts.splice(index, 1);
+        };
+        $scope.uploadProgress = null;
         $scope.strandRuleOptions = [{rule: "unstranded"},{rule: "same"},{rule: "opposite"}];
         // Defaults
 
@@ -49,8 +54,51 @@ function(angular) {
              * the default behavior.  Refer to the link below
              * http://uncorkedstudios.com/blog/multipartformdata-file-upload-with-angularjs
              */
+            if( document.getElementById("inputFile").files[0].size > FIVE_GIGABYTES) {
+                $scope.alerts.push({
+                    "type" : "danger",
+                    "message" : "That file is too large, please select one smaller than five gigabytes"
+                });
+                return;
+            }
+
             var fileData = new FormData(document.getElementById("runForm"));
-            $http.post($window.apiLinks.upload, fileData, {
+            var xhr = new XMLHttpRequest();
+            // TODO: disable the browse button
+            xhr.upload.onprogress = function(e) {
+                $scope.$apply(function() {
+                    if (e.lengthComputable) {
+                        $scope.uploadProgress = Math.round(e.loaded / e.total * 100);
+                    }
+                });
+            };
+
+            xhr.upload.onload = function(e) {
+                // Event listener for when the file completed uploading
+                $scope.$apply(function() {
+                    $scope.uploadProgress = null;
+                    $scope.alerts.push({
+                        "type" : "success",
+                        "message" : "File uploaded successfully"
+                    });
+                    // TODO: make the browse button clickable again
+                });
+            };
+
+            xhr.onerror = function(e) {
+                $scope.$apply(function() {
+                    $scope.upload.percentCompleted = null;
+                    $scope.alerts.push({
+                        "type" : "danger",
+                        "message" : "File failed to upload"
+                    });
+                });
+            };
+
+            xhr.open('POST', $window.apiLinks.upload);
+            xhr.send(fileData);
+
+            /*$http.post($window.apiLinks.upload, fileData, {
                 transformRequest : angular.identity,
                 headers : {
                     "Content-Type" : undefined
@@ -60,7 +108,7 @@ function(angular) {
             }).error(function(data) {
                 console.error("upload failed!");
                 console.error(data);
-            });
+            });*/
         };
 
         $scope.cancel = function() {

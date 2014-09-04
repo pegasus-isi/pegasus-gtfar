@@ -23,6 +23,14 @@ function() {
 
     var runDetailsController = function($scope, $state, $stateParams, $http, $window) {
 
+        $scope.alerts = [];
+        $scope.closeAlert = function(index) {
+            $scope.alerts.splice(index, 1);
+        };
+
+        $scope.inputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/input/";
+        $scope.outputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/output/";
+
 
         function getRun() {
             $http.get($window.apiLinks.runs + "/" + $stateParams.id).success(function(data) {
@@ -135,10 +143,7 @@ function() {
         getRun();
         getStatus();
 
-        $scope.alerts = [];
 
-        $scope.inputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/input/";
-        $scope.outputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/output/";
 
 
     };

@@ -248,7 +248,7 @@ def stopRun(id):
     workflow = wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"],
                                        app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "submit")
     response = {
-        'status' : 300,
+        'status' : 200,
         'reason' : 'Run stopped successfully.'
     }
     try:

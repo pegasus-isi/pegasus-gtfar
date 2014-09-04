@@ -16,11 +16,7 @@
   -->
 <div class="jumbotron">
     <div class="container">
-        <ul class="col-md-12">
-            <li ng-repeat="alert in alerts" class="col-md-12">
-                <div class="alert alert-dismissible" ng-class="alert-{{alert.type}}">{{alert.message}}</div>
-            </li>
-        </ul>
+        <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</alert>
         <h3>{{run.name}}</h3>
 
         <div class="inputFileSection col-md-12">
@@ -61,8 +57,8 @@
 
         <div class="col-md-12">
             <h4 class="col-md-12">Status :</h4>
-            <div class="progressContainer col-md-10">
-                <div class="progress" ng-show="showBarOrAlert('bar')">
+            <div class="progressContainer col-md-10" ng-show="showBarOrAlert('bar')">
+                <div class="progress">
                     <div class="progress-bar" ng-class="getStatusColor('progress-bar')" role="progressbar" aria-valuenow="{{status.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{status.progress}}%;">
                         {{status.progress}}%
                     </div>
