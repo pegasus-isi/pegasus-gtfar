@@ -39,3 +39,7 @@
 .blue {
     color : blue;
 }
+
+.borderless td {
+    border : none;
+}

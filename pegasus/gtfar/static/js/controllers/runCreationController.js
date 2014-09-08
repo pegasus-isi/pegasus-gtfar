@@ -44,7 +44,8 @@ function(angular) {
             readLength : 100,
             mismatches : 3,
             trimUnmapped : false,
-            mapFiltered : false
+            mapFiltered : false,
+            genSplice : false
         };
 
         $scope.uploadFile = function() {
@@ -92,6 +93,7 @@ function(angular) {
                         "type" : "danger",
                         "message" : "File failed to upload"
                     });
+                    // TODO: make the browse button clickable again
                 });
             };
 
@@ -130,8 +132,8 @@ function(angular) {
             }
             // Add the run to the database, the runId will be used to create the folder
             $http.post($window.apiLinks.runs, $scope.run).success(function(data) {
-                console.log(data);
-                $state.go('runs');
+                //console.log(data);
+                $state.go('runDetails', {id : data.id});
              }).error(function(data) {
                 console.error(data);
              });

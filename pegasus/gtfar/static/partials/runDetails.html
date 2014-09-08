@@ -14,72 +14,79 @@
   ~  See the License for the specific language governing permissions and
   ~  limitations under the License.
   -->
-<div class="jumbotron">
-    <div class="container">
-        <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</alert>
-        <h3>{{run.name}}</h3>
+<div class="container">
+    <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</alert>
+    <h3>{{run.name}}</h3>
 
-        <div class="inputFileSection col-md-12">
-            <h4 class="col-md-12">Input File:</h4>
-            <div  class="col-md-3 text-center">
-                <i class="fa fa-file-text-o fa-3x"></i><br/>
-                <b><a ng-href="{{inputDownload + run.filename}}">{{run.filename}}</a></b>
-            </div>
+    <div class="inputFileSection col-md-12">
+        <b class="col-md-3 text-right">Input File:</b>
+        <div  class="col-md-2 text-center">
+            <i class="fa fa-file-text-o fa-3x"></i><br/>
+            <b><a ng-href="{{inputDownload + run.filename}}">{{run.filename}}</a></b>
         </div>
-        <div class="gtf col-md-12">
-            <h4 class="col-md-2 control-label">GTF:</h4>
-            <h4>{{run.gtf}}</h4>
-        </div>
-        <div class="genome col-md-12">
-            <h4 class="col-md-2 control-label">Genome:</h4>
-            <h4>{{run.genome}}</h4>
-        </div>
-        <div class="readLen col-md-12">
-            <h4 class="col-md-2 control-label">Read Length:</h4>
-            <h4>{{run.readLength}}</h4>
-        </div>
-        <div class="mismatches col-md-12">
-            <h4 class="col-md-2 control-label">Mismatches Allowed:</h4>
-            <h4>{{run.mismatches}}</h4>
-        </div>
-        <div class="mapFiltered col-md-12">
-            <h4 class="col-md-2 control-label">Map Filtered:</h4>
-            <input type="checkbox" ng-model="run.mapFiltered" disabled>
-        </div>
-        <div class="strandRule col-md-12">
-            <h4 class="col-md-2 control-label">Strand Rule:</h4>
-            <h4>{{run.strandRule}}</h4>
-        </div>
-        <div class="email col-md-12">
-            <h4 class="col-md-2 control-label">Email Recipient:</h4>
-            <h4><a ng-href="mailto:{{run.email}}">{{run.email}}</a></h4>
-        </div>
+    </div>
+    <div class="gtf col-md-12">
+        <b class="col-md-3 text-right">GTF:</b>
+        <b>{{run.gtf}}</b>
+    </div>
+    <div class="genome col-md-12">
+        <b class="col-md-3 text-right">Genome:</b>
+        <b>{{run.genome}}</b>
+    </div>
+    <div class="readLen col-md-12">
+        <b class="col-md-3 text-right">Read Length:</b>
+        <b>{{run.readLength}}</b>
+    </div>
+    <div class="mismatches col-md-12">
+        <b class="col-md-3 text-right">Mismatches Allowed:</b>
+        <b>{{run.mismatches}}</b>
+    </div>
+    <div class="mapFiltered col-md-12">
+        <b class="col-md-3 text-right">Map Filtered:</b>
+        <input class="col-md-1" type="checkbox" ng-model="run.mapFiltered" disabled>
+    </div>
+    <div class="mapFiltered col-md-12">
+        <b class="col-md-3 text-right">Generate New Splice Candidates:</b>
+        <input class="col-md-1" type="checkbox" ng-model="run.genSplice" disabled>
+    </div>
+    <div class="strandRule col-md-12">
+        <b class="col-md-3 text-right">Strand Rule:</b>
+        <b>{{run.strandRule}}</b>
+    </div>
+    <div class="email col-md-12">
+        <b class="col-md-3 text-right">Email Recipient:</b>
+        <b><a ng-href="mailto:{{run.email}}">{{run.email}}</a></b>
+    </div>
 
-        <div class="col-md-12">
-            <h4 class="col-md-12">Status :</h4>
-            <div class="progressContainer col-md-10" ng-show="showBarOrAlert('bar')">
+    <div class="col-md-12">
+        <b class="col-md-3 text-right">Status :</b>
+        <div id="progressAndStopContainer" class="col-md-9" ng-show="showBarOrAlert('bar')">
+            <div id="progressContainer" class="col-md-10">
                 <div class="progress">
                     <div class="progress-bar" ng-class="getStatusColor('progress-bar')" role="progressbar" aria-valuenow="{{status.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{status.progress}}%;">
                         {{status.progress}}%
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <button class="btn btn-danger btn-sm" ng-click="stopRun()">Stop</button>
-                </div>
             </div>
-            <div ng-show="showBarOrAlert('alert')" class="alert col-md-12" role="alert" ng-class="getStatusColor('alert')">{{getStatusText()}}</div>
-            <h4 class="failures col-md-12" ng-show="status.failed > 0">Failures: {{status.failed}}</h4>
+            <div class="col-md-2">
+                <button class="btn btn-danger btn-sm" ng-click="stopRun()">Stop</button>
+            </div>
         </div>
 
-
-        <div class="outputFileSection col-md-12" ng-show="{{outputFiles.len > 0}}">
-            <h4>Output File(s):</h4>
-            <ul class="nav nav-pills">
-                <li ng-repeat="file in outputFiles" class="col-md-3 text-center">
-                    <a ng-href="{{outputDownload + file.name}}">{{file.name}}</a>
-                </li>
-            </ul>
-        </div>
-        <button class="btn btn-default bt-sm col-md-offset-10" ng-click="gotoList()">Back To List</button>
+        <div ng-show="showBarOrAlert('alert')" class="alert col-md-9" role="alert" ng-class="getStatusColor('alert')">{{getStatusText()}}</div>
+        <b class="failures col-md-3 text-right" ng-show="status.failed > 0">Failures:</b>
+        <b>{{status.failed}}</b>
     </div>
+
+
+    <div class="outputFileSection col-md-12" >
+        <b class="col-md-3 text-right">Output File(s):</b>
+        <b ng-show="outputFiles.length == 0">No output files available.</b>
+        <ul class="nav nav-pills col-md-12" ng-show="outputFiles.length > 0">
+            <li ng-repeat="file in outputFiles" class="col-md-3 text-center">
+                <b><a ng-href="{{outputDownload + file.name}}">{{file.name}}</a></b>
+            </li>
+        </ul>
+    </div>
+    <button class="btn btn-default bt-sm col-md-offset-10" ng-click="gotoList()">Back To List</button>
 </div>

@@ -46,6 +46,7 @@ class Run(db.Model):
     mismatches = Column(Integer)
     trimUnmapped = Column(Boolean)
     mapFiltered = Column(Boolean)
+    genSplice = Column(Boolean)
     strandRule = Column(Text)
     email = Column(Text)
     gtf = Column(Text)
