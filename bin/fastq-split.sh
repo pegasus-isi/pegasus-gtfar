@@ -49,7 +49,7 @@ function split_reads {
 
     elif [ ${myEXT} == fastq ] || [ ${myEXT} == fq ]; then
 
-        cat ${READS}.init | awk '{if (NR%4==0) printf $1"\n"; else printf $1" "}' > ${READS}.tmp
+        cat ${READS} | awk '{if (NR%4==0) printf $1"\n"; else printf $1" "}' > ${READS}.tmp
 
     else
 
