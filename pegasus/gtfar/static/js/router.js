@@ -60,6 +60,9 @@ function(runsController, runDetailsController, runCreationController){
                 url: "/createRun",
                 templateUrl: "partials/runCreator.html",
                 controller : "runCreationController"
+            }).state('help', {
+                url: "/help",
+                templateUrl : "partials/help.html"
             });
     };
 

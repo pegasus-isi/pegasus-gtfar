@@ -13,13 +13,20 @@
   ~  See the License for the specific language governing permissions and
   ~  limitations under the License.
   -->
-<div class="jumbotron">
+<div class="container">
+    <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</alert>
     <button class="btn btn-default btn-sm" ng-click="createRun()">Create New Run</button>
     <button class="btn btn-primary btn-sm" ng-click="refresh()">
         <i class="fa fa-refresh" >&nbsp Refresh</i>
     </button>
     <br/>
-    <div class="gridStyle hideScrollX" ng-grid="runsGrid"></div>
-    <br/>
-    <button class="col-md-offset-11 btn btn-danger btn-sm" ng-click="deleteSelected()">Delete Selected</button>
+    <!-- Using ng-if instead of nd-show because ng-grid does not play nice with it-->
+    <div ng-if="runs.length > 0">
+        <div class="gridStyle hideScrollX" ng-grid="runsGrid"></div>
+        <br/>
+        <button class="col-md-offset-11 btn btn-danger btn-sm" ng-click="deleteSelected()">Delete Selected</button>
+    </div>
+    <div id="noRunsMessage" class="col-md-12" ng-show="runs.length == 0">
+        <b>There are currently no runs available.</b>
+    </div>
 </div>

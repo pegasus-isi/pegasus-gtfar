@@ -54,8 +54,8 @@
         <b>{{run.strandRule}}</b>
     </div>
     <div class="email col-md-12">
-        <b class="col-md-3 text-right">Email Recipient:</b>
-        <b><a ng-href="mailto:{{run.email}}">{{run.email}}</a></b>
+        <b class="col-md-3 text-right">Email Recipient(s):</b>
+        <b ng-repeat="email in run.emails"><a ng-href="mailto:{{email}}">{{email}}</a></b>
     </div>
 
     <div class="col-md-12">
@@ -75,7 +75,7 @@
 
         <div ng-show="showBarOrAlert('alert')" class="alert col-md-9" role="alert" ng-class="getStatusColor('alert')">{{getStatusText()}}</div>
         <b class="failures col-md-3 text-right" ng-show="status.failed > 0">Failures:</b>
-        <b>{{status.failed}}</b>
+        <b ng-show="status.failed">{{status.failed}}</b>
     </div>
 
 

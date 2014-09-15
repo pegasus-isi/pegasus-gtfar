@@ -94,6 +94,71 @@ def before_first_request():
 # Flask Restless
 #
 
+strandRuleOptions = set(['unstranded', 'same', 'opposite'])
+
+validExtensions = set(['gz'])
+
+def matchesAny(set, string):
+    for item in set:
+        if item == string:
+            return 1
+    return 0
+
+def isValidFile(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
+
+
+
+def validate_fields(data):
+    validationErrorMessages = []
+    print data
+    if not 'name' in data:
+        validationErrorMessages.append({'field' : 'Name', 'error' : 'You must provide a name for the run'})
+    elif not data['name'].isalnum():
+        validationErrorMessages.append({'field' : 'Name', 'error' : 'Name must be an alphanumeric value'})
+
+    if not 'filename' in data:
+        validationErrorMessages.append({'field' : 'File', 'error' : 'You must provide a file for the run'})
+    elif not isValidFile(data['filename']):
+        validationErrorMessages.append({'field' : 'File', 'error' : 'File must be a GZIPPED file. (.gz)'})
+
+    if not 'readLength' in data:
+        validationErrorMessages.append({'field' : 'Read Length', 'error' : 'You must provide a read length for the run'})
+    elif not type(data['readLength']) == int or not str(data['readLength']).isdigit() or not int(data['readLength']) >= 50 or not int(data['readLength']) <= 128:
+        validationErrorMessages.append({'field' : 'Read Length', 'error' : 'Read length must be an integer between 50 and 128 (inclusive)'})
+
+    if not 'mismatches' in data:
+        validationErrorMessages.append({'field' : 'Mismatches Allowed', 'error' : 'You must provide the number of mismatches allowed for the run'})
+    elif not type(data['mismatches']) == int or not str(data['mismatches']).isdigit() or not int(data['mismatches']) >= 0 or not int(data['mismatches']) <= 8:
+        validationErrorMessages.append({'field' : 'Mismatches Allowed', 'error' : 'Mismatches allowed must be an integer between 0 and 8 (inclusive)'})
+
+    if not 'strandRule' in data:
+        validationErrorMessages.append({'field' : 'Strand Rule', 'error' : 'You must provide a strand rule for the run.'})
+    elif not matchesAny(strandRuleOptions, data['strandRule']):
+        validationErrorMessages.append({'field' : 'Strand Rule', 'error' : 'Strand Rule must be either "unstranded", "same", or "opposite".'})
+
+    if not 'genSplice' in data:
+        validationErrorMessages.append({'field' : 'Generate New Splice Candidates', 'error' : 'You must specify whether or not you want the run to generate new splice candidates.'})
+    elif not type(data['genSplice']) == bool:
+        validationErrorMessages.append({'field' : 'Generate New Splice Candidates', 'error' : 'Generate New Splice Candidates must be a boolean.'})
+
+    if not 'mapFiltered' in data:
+        validationErrorMessages.append({'field' : 'Map Filtered', 'error' : 'You must specify whether or not you want the run to be map filtered.'})
+    elif not type(data['mapFiltered']) == bool:
+        validationErrorMessages.append({'field' : 'Map Filtered', 'error' : 'Map Filtered must be a boolean.'})
+
+    if 'email' in data:
+        emails = data['email'].split(',')
+        for email in emails:
+            if not '@' in email:
+                validationErrorMessages.append({'field' : 'Email', 'error' : 'You must use a real, properly formatted email address'})
+
+    if validationErrorMessages:
+        raise ValidationException(jsonify(validationErrorMessages))
+
+
+class ValidationException(Exception):
+    pass
 
 def create_run_directories(result):
     path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
@@ -191,9 +256,25 @@ def run_workflow(result):
 
     workflow.run()
 
+def remove_run_directories(instance_id, **kw):
+    try:
+        shutil.rmtree(os.path.join(app.config['GTFAR_STORAGE_DIR'], str(instance_id)))
+
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+
 
 apiManager.create_api(Run,
                       methods=['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
+                      preprocessors={
+                          'POST' : [
+                              validate_fields
+                          ],
+                          'DELETE' : [
+                              remove_run_directories,
+                          ]
+                      },
                       postprocessors={
                           'POST': [
                               create_run_directories,

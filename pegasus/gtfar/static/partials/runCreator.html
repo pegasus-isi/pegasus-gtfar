@@ -30,7 +30,7 @@
             <input ng-disabled="uploadProgress != null" type="file" name="file" id="inputFile" required onchange="angular.element(this).scope().uploadFile()">
             <span class="help-block">FastQ file must be compressed in gzip format</span>
         </div>
-        <div class="progress-container col-md-offset-2 col-md-6">
+        <div class="progress-container col-md-offset-3 col-md-6">
             <div class="progress" ng-show="uploadProgress">
                 <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="{{uploadProgress}}" aria-valuemin="0" aria-valuemax="100" style="width:{{uploadProgress}}%;">
                     {{uploadProgress}}%
@@ -80,13 +80,13 @@
     <div class="form-group">
         <label for="inputEmail" class="col-md-3 control-label">Email Address</label>
         <div class="col-md-6">
-            <input type="email" class="form-control" id="inputEmail" placeholder="example@domain.com" ng-model="run.email" name="email">
-            <span class="help-block">Description</span>
+            <input type="email" class="form-control" id="inputEmail" placeholder="example@domain.com" ng-model="run.email" name="email" multiple>
+            <span class="help-block">Separate multiple emails by commas</span>
         </div>
     </div>
     <div class="form-group">
         <div class="col-xs-6 col-md-offset-2 col-md-2">
-            <button type="submit" class="btn btn-primary btn-block" ng-click="addRun()">Submit <i class="fa fa-long-arrow-right"></i>
+            <button type="submit" ng-disabled="addingRun != null" class="btn btn-primary btn-block" ng-click="addRun()">Submit <i class="fa fa-long-arrow-right"></i>
             </button>
         </div>
         <div class="col-xs-6 col-md-2">

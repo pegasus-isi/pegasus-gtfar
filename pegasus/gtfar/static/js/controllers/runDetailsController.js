@@ -35,6 +35,7 @@ function() {
         function getRun() {
             $http.get($window.apiLinks.runs + "/" + $stateParams.id).success(function(data) {
                 $scope.run = data;
+                $scope.run.emails = $scope.run.email.split(',');
             }).error(function(data) {
                 console.error(data);
             });

@@ -25,6 +25,11 @@ function() {
         // Adjust this to change the number of pages you have to request from the server
         var resultsPerPage = 100;
 
+        $scope.alerts = [];
+        $scope.closeAlert = function(index) {
+            $scope.alerts.splice(index, 1);
+        };
+
         function getRuns() {
             $http.get($window.apiLinks.runs, {
                 params : {
@@ -42,7 +47,10 @@ function() {
                     }).success(function(data) {
                         $scope.runs = $scope.runs.concat(data.objects);
                     }).error(function(data) {
-                        console.error(data);
+                        $scope.alerts.push({
+                            "type" : "danger",
+                            "message" : "Unable to get runs, please contact the Pegasus team if this issue persists"
+                        });
                     })
                 }
             }).error(function(data) {
