@@ -243,6 +243,8 @@ class FilterMixin(object):
 
 class IterativeMapMixin(object):
     def iterative_map(self):
+        self._clip_and_parse_reads('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES.fastq', 'full')
+
         self._map_and_parse_reads('reads%d_full.fastq', 'full')
         unmapped = 'reads%s_full_unmapped.fastq'
 
@@ -268,8 +270,6 @@ class IterativeMapMixin(object):
         cat.invoke('all', '%sstate_update.py %r %r %r %r')
         self.adag.addJob(cat)
         '''
-
-        self._clip_and_parse_reads('aa', 'full')
 
     def _map_and_parse_reads(self, reads, tag):
         self._setup_perm_seeds()
@@ -379,8 +379,6 @@ class IterativeMapMixin(object):
     def _clip_and_parse_reads(self, reads, tag):
         anchor = self._compute_clip_seed(self._read_length)
 
-        #clipR $myGENES gene_reads.txt --seed $SEED --anchorL $anchor -e -v $MISMATCHES -s -u --noSamHeader --ignoreDummyR 40 --ignoreRepeatR 15 > clip.log &
-
         clip_reads = Job(name='clipR')
         clip_reads.invoke('all', '%sstate_update.py %r %r %r %r')
 
@@ -392,21 +390,22 @@ class IterativeMapMixin(object):
         index = File('h%d_%s_F%d_%d.index' % (hash_v, 'GENE', 1, self._read_length))
         reads_txt = File('%s_%s_reads.txt' % (tag, 'gene'))
 
-        """for i in self._range():
+        for i in self._range():
             # Input files
             reads_i = File(reads % i)
 
             # Output files
+            """
             file_type = 'sam' if output_sam else 'mapping'
             path, file_name, ext = GTFAR._get_filename_parts(reads_i.name)
             sam_mapping = '%s_B_%d_%d_%s.%s' % (map_to.upper(), self._seed, self._mismatches, file_name, file_type)
             fastq_out = File('%s_miss_%s%s' % (file_name, map_to, ext))
-
+            """
             # Uses
             clip_reads.uses(reads_i, link=Link.INPUT)
-            clip_reads.uses(fastq_out, link=Link.OUTPUT, transfer=False, register=False)
-            clip_reads.uses(sam_mapping, link=Link.OUTPUT, transfer=False, register=False)
-        """
+            #clip_reads.uses(fastq_out, link=Link.OUTPUT, transfer=False, register=False)
+            #clip_reads.uses(sam_mapping, link=Link.OUTPUT, transfer=False, register=False)
+
         # Output files
         log = File('%s_%s.log' % (tag, 'GENE'))
 
@@ -533,6 +532,9 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         except ValueError:
             errors['mismatches'] = 'Mismatches must be a valid integer'
 
+        if self._clip_reads and self._read_length != 75 and not self._read_length >= 100:
+            errors['common'] = 'With clip-reads, read-length must be 75 or >= 100'
+
         return True if len(errors) == 0 else errors
 
     def count_and_split_reads(self):
@@ -580,6 +582,9 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
         self._write_reads_file('reads%d_full.fastq', 'full_features_reads.txt')
         self._write_reads_file('reads%d_full_miss_FEATURES.fastq', 'full_genome_reads.txt')
         self._write_reads_file('reads%d_full_miss_FEATURES_miss_GENOME.fastq', 'full_splices_reads.txt')
+
+        if self._clip_reads:
+            self._write_reads_file('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES.fastq', 'full_gene_reads.txt')
 
         if self._is_map_filtered:
             for trim in self._trims:

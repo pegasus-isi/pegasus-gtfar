@@ -15,7 +15,7 @@
   -->
 <div class="container">
     <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)"><i ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{alert.message}}</alert>
-    <button class="btn btn-default btn-sm" ng-click="createRun()">Create New Run</button>
+    <button class="btn btn-default btn-sm" ng-click="createRun()">Start New Run</button>
     <button class="btn btn-primary btn-sm" ng-click="refresh()">
         <i class="fa fa-refresh" >&nbsp Refresh</i>
     </button>
