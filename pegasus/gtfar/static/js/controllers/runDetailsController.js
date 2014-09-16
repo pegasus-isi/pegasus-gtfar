@@ -24,6 +24,9 @@ function() {
     var runDetailsController = function($scope, $state, $stateParams, $http, $window) {
 
         $scope.alerts = [];
+        $scope.getAlertIcon = function(status) {
+            return (status == 'success') ? "text-success fa fa-check-circle" : "text-danger fa fa-exclamation-triangle";
+        };
         $scope.closeAlert = function(index) {
             $scope.alerts.splice(index, 1);
         };
@@ -35,7 +38,10 @@ function() {
         function getRun() {
             $http.get($window.apiLinks.runs + "/" + $stateParams.id).success(function(data) {
                 $scope.run = data;
-                $scope.run.emails = $scope.run.email.split(',');
+                $scope.run.emails = null;
+                if($scope.run.email) {
+                    $scope.run.emails = $scope.run.email.split(',');
+                }
             }).error(function(data) {
                 console.error(data);
             });
@@ -128,6 +134,11 @@ function() {
                 $scope.alerts.push({
                     'message' : data.reason,
                     'type' : 'success'
+                });
+                $http.put($window.apiLinks.runs + "/" + $stateParams.id, {"status" : 1}).success(function(data) {
+                    // No need to do anything
+                }).error(function(data){
+
                 });
             }).error(function(data) {
                 $scope.alerts.push({

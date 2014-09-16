@@ -1,6 +1,6 @@
 <h3><a ng-href="#/runs">Workflow Runs</a> > Create Run</h3>
 <br />
-<alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</alert>
+<alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)"><i ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{alert.message}}</alert>
 <form id="runForm" name="form" class="form-horizontal" role="form" enctype="multipart/form-data" method="post" action="">
     <div class="form-group">
         <label for="inputRunName" class="col-md-3 control-label">Workflow Name</label>

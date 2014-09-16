@@ -26,6 +26,10 @@ function() {
         var resultsPerPage = 100;
 
         $scope.alerts = [];
+        $scope.getAlertIcon = function(status) {
+            return (status == 'success') ? "text-success fa fa-check-circle" : "text-danger fa fa-exclamation-triangle";
+        };
+
         $scope.closeAlert = function(index) {
             $scope.alerts.splice(index, 1);
         };

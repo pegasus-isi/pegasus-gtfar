@@ -15,7 +15,7 @@
   ~  limitations under the License.
   -->
 <div class="container">
-    <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</alert>
+    <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)"><i ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{alert.message}}</alert>
     <h3><a ng-href="#/runs">Workflow Runs</a> > {{run.name}}</h3>
 
     <div class="inputFileSection col-md-12">

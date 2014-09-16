@@ -26,6 +26,9 @@ function(angular) {
         var file;
         var FIVE_GIGABYTES = 5000000000;
         $scope.alerts = [];
+        $scope.getAlertIcon = function(status) {
+            return (status == 'success') ? "text-success fa fa-check-circle" : "text-danger fa fa-exclamation-triangle";
+        };
         $scope.closeAlert = function(index) {
             $scope.alerts.splice(index, 1);
         };
@@ -162,8 +165,11 @@ function(angular) {
                     $state.go('runDetails', {id : data.id});
                 }, 1000);
              }).error(function(data) {
+                $scope.addingRun = null;
+                if(data.code && data.code == 503) {
+                    $scope.alerts.push({'type' : 'danger', 'message' : 'Could not connect to server, please check your connection.'});
+                }
                 for(var i = 0; i < data.length; i++) {
-                    $scope.addingRun = null;
                     $scope.alerts.push({'type' : 'danger', 'message' : data[i].message});
                 }
              });
