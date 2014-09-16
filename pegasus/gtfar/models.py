@@ -16,6 +16,7 @@ __author__ = 'Rajiv Mayani'
 
 from datetime import datetime
 
+from flask import jsonify
 from sqlalchemy import Column, Integer, Boolean, Text, DateTime
 from sqlalchemy.orm import validates
 
@@ -23,7 +24,7 @@ from pegasus.gtfar import db
 
 strandRuleOptions = set(['unstranded', 'same', 'opposite'])
 
-validExtensions = set(['txt', 'zip', 'tar', 'gz', 'bz'])
+validExtensions = set(['gz'])
 
 def matchesAny(set, string):
     for item in set:
@@ -34,7 +35,13 @@ def matchesAny(set, string):
 def isValidFile(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
 
+
+
+
+validationErrors = []
+
 class Run(db.Model):
+    global validationErrors
     __tablename__ = 'runs'
     id = Column(Integer, primary_key=True)
     name = Column(Text)
@@ -53,39 +60,6 @@ class Run(db.Model):
     genome = Column(Text)
     created = Column(DateTime, default=datetime.utcnow)
 
-    @validates('name')
-    def validate_name(self, key, address):
-        assert address.isalnum()
-        return address
-
-    @validates('filename')
-    def validate_filename(self, key, address):
-        assert isValidFile(address)
-        return address
-
-    @validates('readLength')
-    def validate_readLength(self, key, address):
-        assert type(address) == int or address.isdigit()
-        assert int(address) >= 50
-        assert int(address) <= 128
-        return address
-
-    @validates('mismatches')
-    def validate_mismatches(self, key, address):
-        assert type(address) == int or address.isdigit()
-        assert int(address) >= 0
-        assert int(address) <= 8
-        return address
-
-    @validates('strandRule')
-    def validate_strandRule(self, key, address):
-        assert matchesAny(strandRuleOptions, address)
-        return address
-
-    @validates('email')
-    def validate_email(self, key, address):
-        assert '@' in address
-        return address
 #
 # Pegasus Database bases replica catalog.
 #

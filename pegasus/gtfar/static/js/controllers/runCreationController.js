@@ -30,6 +30,7 @@ function(angular) {
             $scope.alerts.splice(index, 1);
         };
         $scope.uploadProgress = null;
+        $scope.addingRun = null;
         $scope.strandRuleOptions = [{rule: "unstranded"},{rule: "same"},{rule: "opposite"}];
         // Defaults
 
@@ -88,7 +89,7 @@ function(angular) {
 
             xhr.onerror = function(e) {
                 $scope.$apply(function() {
-                    $scope.upload.percentCompleted = null;
+                    $scope.uploadProgress = null;
                     $scope.alerts.push({
                         "type" : "danger",
                         "message" : "File failed to upload"
@@ -100,17 +101,6 @@ function(angular) {
             xhr.open('POST', $window.apiLinks.upload);
             xhr.send(fileData);
 
-            /*$http.post($window.apiLinks.upload, fileData, {
-                transformRequest : angular.identity,
-                headers : {
-                    "Content-Type" : undefined
-                }
-            }).success(function(data) {
-                console.log("file uploaded");
-            }).error(function(data) {
-                console.error("upload failed!");
-                console.error(data);
-            });*/
         };
 
         $scope.cancel = function() {
@@ -118,11 +108,44 @@ function(angular) {
         };
 
         $scope.addRun = function() {
+            $scope.alerts = [];
+            var invalid = false;
             if($scope.form.$invalid) {
-                return;
+                if($scope.form.name.$invalid) {
+                    invalid = true;
+                    $scope.alerts.push({'type' : 'danger', 'message' : 'The name field is required and must be an alphanumeric value'});
+                }
+                if($scope.form.mismatches.$invalid) {
+                    invalid = true;
+                    $scope.alerts.push({'type' : 'danger', 'message' : 'The mismatches field is required and must be an integer between 0 and 8 (inclusive)'});
+                }
+                if($scope.form.readLength.$invalid) {
+                    invalid = true;
+                    $scope.alerts.push({'type' : 'danger', 'message' : 'The read length field is required and must be an integer between 50 and 128 (inclusive)'});
+                }
+                if($scope.form.email.$invalid) {
+                    if($scope.form.email.$viewValue.indexOf(',') != -1) { // Multiple emails input
+                        var emails = $scope.form.email.$viewValue.split(",");
+                        for(var i = 0; i < emails.length; i++) {
+                            if(emails[i].indexOf("@") == -1) {
+                                invalid = true;
+                                $scope.alerts.push({'type' : 'danger', 'message' : 'Emails must be properly formatted user@location.domain'});
+                                return;
+                            }
+                        }
+                    }
+                    else {
+                        invalid = true;
+                        $scope.alerts.push({'type' : 'danger', 'message' : 'Emails must be properly formatted user@location.domain'});
+                    }
+                }
+                if(invalid) {
+                    return;
+                }
             }
 
             $scope.run["strandRule"] = $scope.strandRule.rule;
+            $scope.run.email = $scope.form.email.$viewValue;
             try {
                 $scope.run["filename"] = document.getElementById("inputFile").files[0].name;
             }
@@ -130,12 +153,19 @@ function(angular) {
             {
                 return; // An error message should show to the user so we just ned to return
             }
+            $scope.addingRun = true;
             // Add the run to the database, the runId will be used to create the folder
             $http.post($window.apiLinks.runs, $scope.run).success(function(data) {
-                //console.log(data);
-                $state.go('runDetails', {id : data.id});
+                $scope.addingRun = null;
+                $scope.alerts.push({'type' : 'success', 'message' : 'Run successfully created and starting now, please wait'});
+                setTimeout(function() {
+                    $state.go('runDetails', {id : data.id});
+                }, 1000);
              }).error(function(data) {
-                console.error(data);
+                for(var i = 0; i < data.length; i++) {
+                    $scope.addingRun = null;
+                    $scope.alerts.push({'type' : 'danger', 'message' : data[i].message});
+                }
              });
 
 

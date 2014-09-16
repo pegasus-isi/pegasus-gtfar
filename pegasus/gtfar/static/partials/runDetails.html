@@ -16,7 +16,7 @@
   -->
 <div class="container">
     <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.message}}</alert>
-    <h3>{{run.name}}</h3>
+    <h3><a ng-href="#/runs">Workflow Runs</a> > {{run.name}}</h3>
 
     <div class="inputFileSection col-md-12">
         <b class="col-md-3 text-right">Input File:</b>
@@ -25,42 +25,41 @@
             <b><a ng-href="{{inputDownload + run.filename}}">{{run.filename}}</a></b>
         </div>
     </div>
-    <div class="gtf col-md-12">
+    <div class="gtf col-md-12 topBuffer">
         <b class="col-md-3 text-right">GTF:</b>
         <b>{{run.gtf}}</b>
     </div>
-    <div class="genome col-md-12">
+    <div class="genome col-md-12 topBuffer">
         <b class="col-md-3 text-right">Genome:</b>
         <b>{{run.genome}}</b>
     </div>
-    <div class="readLen col-md-12">
+    <div class="readLen col-md-12 topBuffer">
         <b class="col-md-3 text-right">Read Length:</b>
         <b>{{run.readLength}}</b>
     </div>
-    <div class="mismatches col-md-12">
+    <div class="mismatches col-md-12 topBuffer">
         <b class="col-md-3 text-right">Mismatches Allowed:</b>
         <b>{{run.mismatches}}</b>
     </div>
-    <div class="mapFiltered col-md-12">
+    <div class="mapFiltered col-md-12 topBuffer">
         <b class="col-md-3 text-right">Map Filtered:</b>
         <input class="col-md-1" type="checkbox" ng-model="run.mapFiltered" disabled>
     </div>
-    <div class="mapFiltered col-md-12">
+    <div class="mapFiltered col-md-12 topBuffer">
         <b class="col-md-3 text-right">Generate New Splice Candidates:</b>
         <input class="col-md-1" type="checkbox" ng-model="run.genSplice" disabled>
     </div>
-    <div class="strandRule col-md-12">
+    <div class="strandRule col-md-12 topBuffer">
         <b class="col-md-3 text-right">Strand Rule:</b>
         <b>{{run.strandRule}}</b>
     </div>
-    <div class="email col-md-12">
-        <b class="col-md-3 text-right">Email Recipient:</b>
-        <b><a ng-href="mailto:{{run.email}}">{{run.email}}</a></b>
+    <div class="email col-md-12 topBuffer">
+        <b class="col-md-3 text-right">Email Recipient(s):</b>
+        <b ng-repeat="email in run.emails"><a ng-href="mailto:{{email}}">{{email}}</a></b>
     </div>
 
-    <div class="col-md-12">
-        <b class="col-md-3 text-right">Status :</b>
-        <div id="progressAndStopContainer" class="col-md-9" ng-show="showBarOrAlert('bar')">
+    <div class="col-md-12 topBuffer-lg">
+        <div id="progressAndStopContainer" class="col-md-12 topBuffer" ng-show="showBarOrAlert('bar')">
             <div id="progressContainer" class="col-md-10">
                 <div class="progress">
                     <div class="progress-bar" ng-class="getStatusColor('progress-bar')" role="progressbar" aria-valuenow="{{status.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{status.progress}}%;">
@@ -73,13 +72,15 @@
             </div>
         </div>
 
-        <div ng-show="showBarOrAlert('alert')" class="alert col-md-9" role="alert" ng-class="getStatusColor('alert')">{{getStatusText()}}</div>
-        <b class="failures col-md-3 text-right" ng-show="status.failed > 0">Failures:</b>
-        <b>{{status.failed}}</b>
+        <div ng-show="showBarOrAlert('alert')" class="alert col-md-12 topBuffer" role="alert" ng-class="getStatusColor('alert')">{{getStatusText()}}</div>
+        <div class="topBuffer" ng-show="status.failed > 0">
+            <b class="failures col-md-3 text-right" >Failures:</b>
+            <b>{{status.failed}}</b>
+        </div>
     </div>
 
 
-    <div class="outputFileSection col-md-12" >
+    <div class="outputFileSection col-md-12 topBuffer" >
         <b class="col-md-3 text-right">Output File(s):</b>
         <b ng-show="outputFiles.length == 0">No output files available.</b>
         <ul class="nav nav-pills col-md-12" ng-show="outputFiles.length > 0">
@@ -88,5 +89,4 @@
             </li>
         </ul>
     </div>
-    <button class="btn btn-default bt-sm col-md-offset-10" ng-click="gotoList()">Back To List</button>
 </div>
