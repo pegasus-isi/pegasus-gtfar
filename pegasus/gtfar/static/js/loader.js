@@ -56,6 +56,7 @@ requirejs.config({
         jquery : {
             exports : "$"
         }
+
     }
 });
 

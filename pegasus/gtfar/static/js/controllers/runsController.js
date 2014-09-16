@@ -68,7 +68,7 @@ function() {
         };
 
         $scope.getExitCodeIcon = function(status) {
-            return (status == 0) ? "green fa fa-check-circle" : (status == -1) ? "blue fa fa-exclamation-circle" : "red fa fa-exclamation-triangle";
+            return (status == 0) ? "text-success fa fa-check-circle" : (status == -1) ? "text-primary fa fa-exclamation-circle" : "text-danger fa fa-exclamation-triangle";
         };
 
         $scope.createRun = function() {
@@ -97,6 +97,11 @@ function() {
             }
         };
 
+        $scope.getFormattedDate = function(dateString) {
+            return new Date(dateString).toString();
+        };
+
+
         $scope.runsGrid = {
             data : "runs",
             enablePaging : true,
@@ -105,18 +110,20 @@ function() {
             selectWithCheckboxOnly : true,
             showFilter : true,
             columnDefs : [
-                {field : "name", displayName : "Name", cellTemplate: "<a class='gridCenter' ui-sref='runDetails({id : row.getProperty(\"id\")})'><div class='ngCellText'>{{row.getProperty(col.field)}}</div></a>"},
-                {field : "status", displayName : "Status", width : 60, cellTemplate: "<i class='ngCellText' ng-class='getExitCodeIcon(row.getProperty(col.field))'></i>"},
-                {field : "filename", displayName : "File", cellTemplate : "<a ng-href='{{getDownloadLink(row.getProperty(\"id\"), row.getProperty(col.field))}}'>{{row.getProperty(col.field)}}</a>"},
-                {field : "created", displayName : "Created On"}
+                {field : "name", displayName : "Name", cellTemplate : "<a class='gridCenter' ui-sref='runDetails({id : row.getProperty(\"id\")})'><div class='ngCellText'>{{row.getProperty(col.field)}}</div></a>" },
+                {field : "status", displayName : "Status", width : 60, cellTemplate : "<i class='ngCellText' ng-class='getExitCodeIcon(row.getProperty(col.field))'></i>" },
+                {field : "filename", displayName : "File", cellTemplate : "<a ng-href='{{getDownloadLink(row.getProperty(\"id\"), row.getProperty(col.field))}}'>{{row.getProperty(col.field)}}</a>" },
+                {field : "created", displayName : "Created On", cellTemplate : "<div class='ngCellText'>{{getFormattedDate(row.getProperty(col.field))}}</div>" }
             ],
             sortInfo : {fields : ['created'], directions : ['desc']},
             selectedItems : []
         };
 
+
+
         $scope.getDownloadLink = function(id, filename) {
             return $window.apiLinks.download + "/" + id + "/input/" + filename;
-        }
+        };
 
     };
 

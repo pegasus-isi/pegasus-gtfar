@@ -36,18 +36,14 @@
     overflow : hidden;
 }
 
-.red {
-    color : red;
-}
-
-.green {
-    color : green;
-}
-
-.blue {
-    color : blue;
-}
-
 .borderless td {
     border : none;
+}
+
+.topBuffer {
+    margin-top: 20px;
+}
+
+.topBuffer-lg {
+    margin-top: 60px;
 }

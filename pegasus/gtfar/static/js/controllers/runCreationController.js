@@ -157,7 +157,10 @@ function(angular) {
             // Add the run to the database, the runId will be used to create the folder
             $http.post($window.apiLinks.runs, $scope.run).success(function(data) {
                 $scope.addingRun = null;
-                $state.go('runDetails', {id : data.id});
+                $scope.alerts.push({'type' : 'success', 'message' : 'Run successfully created and starting now, please wait'});
+                setTimeout(function() {
+                    $state.go('runDetails', {id : data.id});
+                }, 1000);
              }).error(function(data) {
                 for(var i = 0; i < data.length; i++) {
                     $scope.addingRun = null;
