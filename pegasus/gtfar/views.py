@@ -28,7 +28,7 @@ from pegasus.gtfar.dax.dax import GTFAR
 from pegasus.gtfar.models import Run, isValidFile
 
 from pegasus.workflow import wrapper
-from pegasus.workflow.wrapper import PegasusWorkflow
+from pegasus.workflow.wrapper import PegasusWorkflow, StopException
 
 #
 # Application Initialization
@@ -98,15 +98,20 @@ strandRuleOptions = set(['unstranded', 'same', 'opposite'])
 
 validExtensions = set(['gz'])
 
+
+class ValidationException(Exception):
+    pass
+
+
 def matchesAny(set, string):
     for item in set:
         if item == string:
             return 1
     return 0
 
+
 def isValidFile(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
-
 
 
 def validate_fields(data):
@@ -157,9 +162,6 @@ def validate_fields(data):
         raise ValidationException(jsonify(validationErrorMessages))
 
 
-class ValidationException(Exception):
-    pass
-
 def create_run_directories(result):
     path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
 
@@ -191,6 +193,9 @@ def create_config(result):
 
     with open(os.path.join(path, 'config', 'sites.xml'), 'w') as sites_xml:
         sites_xml.write(render_template('pegasus/sites.xml', base_dir=path))
+
+    with open(os.path.join(path, 'config', 'notifications.conf'), 'w') as notf_conf:
+        notf_conf.write(render_template('pegasus/notifications.conf', base_dir=path))
 
     return result
 
@@ -256,6 +261,7 @@ def run_workflow(result):
 
     workflow.run()
 
+
 def remove_run_directories(instance_id, **kw):
     try:
         shutil.rmtree(os.path.join(app.config['GTFAR_STORAGE_DIR'], str(instance_id)))
@@ -268,10 +274,10 @@ def remove_run_directories(instance_id, **kw):
 apiManager.create_api(Run,
                       methods=['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
                       preprocessors={
-                          'POST' : [
+                          'POST': [
                               validate_fields
                           ],
-                          'DELETE' : [
+                          'DELETE': [
                               remove_run_directories,
                           ]
                       },
