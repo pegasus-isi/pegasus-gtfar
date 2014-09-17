@@ -194,6 +194,9 @@ def create_config(result):
     with open(os.path.join(path, 'config', 'sites.xml'), 'w') as sites_xml:
         sites_xml.write(render_template('pegasus/sites.xml', base_dir=path))
 
+    with open(os.path.join(path, 'config', 'om.txt'), 'w') as om_txt:
+        om_txt.write(render_template('pegasus/om.txt', data_dir=app.config['GTFAR_DATA_DIR']))
+
     with open(os.path.join(path, 'config', 'notifications.conf'), 'w') as notf_conf:
         notf_conf.write(render_template('pegasus/notifications.conf', base_dir=path))
 
