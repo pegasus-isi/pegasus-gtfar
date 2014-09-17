@@ -1,0 +1,112 @@
+tr annotate_gtf {
+    site local {
+        pfn "{{ bin_dir }}/annotate_gtf.py"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/annotate_gtf.py"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+}
+
+tr perm {
+    site local {
+        pfn "{{ bin_dir }}/perm"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/perm"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+}
+
+tr fastq-split {
+    site local {
+        pfn "{{ bin_dir }}/fastq-split.sh"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/fastq-split.sh"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+}
+
+tr merge-stats {
+    site local {
+        pfn "{{ bin_dir }}/merge-stats.sh"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/merge-stats.sh"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+}
+
+tr pre_filter_fastq.py {
+    site local {
+        pfn "{{ bin_dir }}/pre_filter_fastq.py"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/pre_filter_fastq.py"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+}
+
+tr parse_alignment {
+    site local {
+        pfn "{{ bin_dir }}/parse_alignment.py"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/parse_alignment.py"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+}
+
+tr merge {
+    site local {
+        pfn "/bin/cat"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "/bin/cat"
+        arch "x86_64"
+        os "linux"
+        type "INSTALLED"
+    }
+}
+
