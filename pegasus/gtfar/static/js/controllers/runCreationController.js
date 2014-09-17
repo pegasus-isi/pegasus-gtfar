@@ -169,8 +169,10 @@ function(angular) {
                 if(data.code && data.code == 503) {
                     $scope.alerts.push({'type' : 'danger', 'message' : 'Could not connect to server, please check your connection.'});
                 }
-                for(var i = 0; i < data.length; i++) {
-                    $scope.alerts.push({'type' : 'danger', 'message' : data[i].message});
+                else if(data[0].message) {
+                    for(var i = 0; i < data.length; i++) {
+                        $scope.alerts.push({'type' : 'danger', 'message' : data[i].message});
+                    }
                 }
              });
 
