@@ -68,7 +68,7 @@ class AnnotateMixin(object):
 
     def _annotate_gtf(self, read_length):
         annotate_gtf = Job(name='annotate_gtf')
-        annotate_gtf.invoke('all', '%sstate_update.py %r %r %r %r')
+        annotate_gtf.invoke('all', self._state_update)
 
         prefix = self._get_index_hash(read_length, exclude_genome=True)
 
@@ -118,7 +118,7 @@ class AnnotateMixin(object):
 
     def _perm_index(self, index_type, read_length, read_format='fastq', seed='F2'):
         perm_index = Job(name='perm')
-        perm_index.invoke('all', '%sstate_update.py %r %r %r %r')
+        perm_index.invoke('all', self._state_update)
 
         prefix = self._get_index_hash(read_length, exclude_genome=True)
 
@@ -159,14 +159,14 @@ class FilterMixin(object):
 
         # Merge rejects
         cat = UNIXUtils.cat(rejects, '%s.reject.fastq' % self._prefix, o_transfer=True)
-        cat.invoke('all', '%sstate_update.py %r %r %r %r')
+        cat.invoke('all', self._state_update)
         self.adag.addJob(cat)
 
         self._merge_stats()
 
     def _fastq_split(self, splits=2, suffix_len=2):
         fastq_split = Job(name='fastq-split')
-        fastq_split.invoke('all', '%sstate_update.py %r %r %r %r')
+        fastq_split.invoke('all', self._state_update)
 
         # Inputs
         reads = File(self._reads)
@@ -187,7 +187,7 @@ class FilterMixin(object):
 
     def _pre_filter_fastq(self, index, suffix_len):
         pre_filter = Job(name='pre_filter_fastq.py')
-        pre_filter.invoke('all', '%sstate_update.py %r %r %r %r')
+        pre_filter.invoke('all', self._state_update)
         prefix = 'reads%d' % index
 
         # Inputs
@@ -220,7 +220,7 @@ class FilterMixin(object):
 
     def _merge_stats(self):
         merge_stats = Job(name='merge-stats')
-        merge_stats.invoke('all', '%sstate_update.py %r %r %r %r')
+        merge_stats.invoke('all', self._state_update)
 
         # Outputs
         adaptor_stats = File('%s.adaptor.stats' % self._prefix)
@@ -259,7 +259,7 @@ class IterativeMapMixin(object):
                 self._map_and_parse_reads('reads%%d_%d.fastq' % trim, 'filter%d' % trim)
 
         cat = UNIXUtils.cat(self._vis_files, '%s.sam' % self._prefix, o_transfer=True)
-        cat.invoke('all', '%sstate_update.py %r %r %r %r')
+        cat.invoke('all', self._state_update)
         self.adag.addJob(cat)
         '''
         if self._is_trim_unmapped:
@@ -267,7 +267,7 @@ class IterativeMapMixin(object):
         else:
             cat = UNIXUtils.cat(['reads%d_full_unmapped.fastq' % i for i in self._range()], '%s.unmapped.fastq')
 
-        cat.invoke('all', '%sstate_update.py %r %r %r %r')
+        cat.invoke('all', self._state_update)
         self.adag.addJob(cat)
         '''
 
@@ -327,7 +327,7 @@ class IterativeMapMixin(object):
 
     def _perm(self, index_type, map_to, reads, tag, output_sam=False):
         perm = Job(name='perm')
-        perm.invoke('all', '%sstate_update.py %r %r %r %r')
+        perm.invoke('all', self._state_update)
 
         # Input files
         hash_v = self._get_index_hash(self._read_length, 'F%d' % self._seed)
@@ -380,7 +380,7 @@ class IterativeMapMixin(object):
         anchor = self._compute_clip_seed(self._read_length)
 
         clip_reads = Job(name='clipR')
-        clip_reads.invoke('all', '%sstate_update.py %r %r %r %r')
+        clip_reads.invoke('all', self._state_update)
 
         seed = 'F1'
         mismatches = 1
@@ -424,7 +424,7 @@ class IterativeMapMixin(object):
 
     def _parse_alignment(self, input_file, tag):
         parse_alignment = Job(name='parse_alignment')
-        parse_alignment.invoke('all', '%sstate_update.py %r %r %r %r')
+        parse_alignment.invoke('all', self._state_update)
 
         # Input files
         input_file = File(input_file)
@@ -477,7 +477,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
 
         # Pegasus
         self._base_dir = base_dir
-        self._bin_dir = bin_dir
+        self._bin_dir = os.path.abspath(bin_dir)
         self._dax = sys.stdout if dax is None else '%s.dax' % dax
         self._url = url
         self._email = email
@@ -490,8 +490,19 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
 
         self.adag = ADAG('gtfar_%s' % self._prefix) if adag is None else adag
 
-        self._state_update = '%sstate_update.py %%r %%r %%r %%r' % '/bin/dir'
-        self._email_script = '%sgtfar-email %%r %%r %%r %%r' % '/bin/dir'
+        self._state_update = '%s/state_update.py %%r %%r %%r %%r' % self._bin_dir
+
+        if self._email:
+            email_script = '%s/gtfar-email --id %r --from %r --to %r --subject %r --url %r --config %r' % (
+                self._bin_dir,
+                self._prefix,
+                'pegasus-gtfar@localhost.com',
+                self._email,
+                'GTFAR Workflow finished running',
+                self._url,
+                os.path.join(self._base_dir, 'config', 'notifications.conf'))
+
+            self.adag.invoke('at_end', email_script)
 
         self._seed = None
         self._vis_files = []
