@@ -47,3 +47,10 @@
 .topBuffer-lg {
     margin-top: 60px;
 }
+
+.logo {
+    font-family: Voltaire;
+    font-weight: bold;
+    font-size: 36px !important;
+    color: #EF8B01 !important;
+}
