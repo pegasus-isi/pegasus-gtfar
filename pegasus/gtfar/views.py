@@ -116,7 +116,7 @@ def isValidFile(filename):
 
 def validate_fields(data):
     validationErrorMessages = []
-    print data
+
     if not 'name' in data:
         validationErrorMessages.append({'field' : 'Name', 'error' : 'You must provide a name for the run'})
     elif not data['name'].isalnum():

@@ -141,7 +141,6 @@ class PegasusWorkflow(Workflow):
 
         status = self._parse_monitoring_output(out)
 
-        print status[7]
         status = {
             'progress': float(status[7]),
             'state': WorkflowStates[status[8].lower()].value,
