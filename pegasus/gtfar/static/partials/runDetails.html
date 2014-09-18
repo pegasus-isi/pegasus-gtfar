@@ -14,7 +14,7 @@
   ~  See the License for the specific language governing permissions and
   ~  limitations under the License.
   -->
-<div class="container">
+<div>
     <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)"><i ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{alert.message}}</alert>
     <ol class="breadcrumb">
         <li><a href="#/runs">GTFAR Runs</a></li>
@@ -54,7 +54,7 @@
     </div>
     <div class="strandRule col-md-12 topBuffer">
         <b class="col-md-3 text-right">Strand Rule:</b>
-        <b>{{run.strandRule}}</b>
+        <b class="text-capitalize">{{run.strandRule}}</b>
     </div>
     <div class="email col-md-12 topBuffer">
         <b class="col-md-3 text-right">Email Recipient(s):</b>
