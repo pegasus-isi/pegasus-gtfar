@@ -1,99 +1,147 @@
-<ol class="breadcrumb">
-    <li><a href="#/runs">GTFAR Runs</a></li>
-    <li class="active">Start a Run</li>
-</ol>
-<p></p>
-<alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)"><i ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{alert.message}}</alert>
-<form id="runForm" name="form" class="form-horizontal" role="form" enctype="multipart/form-data" method="post" action="">
-    <div class="form-group">
-        <label for="inputRunName" class="col-md-3 control-label">Workflow Name</label>
-        <div class="col-md-6">
-            <input type="text" class="form-control" id="inputRunName" placeholder="62H2EAAXX_7_HSB_135" ng-model="run.name" name="name" required alphanumeric>
-            <span class="help-block">Description</span>
+<div class="col-md-12">
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="#/runs">GTFAR Runs</a></li>
+                <li class="active">Start a Run</li>
+            </ol>
         </div>
     </div>
-    <div class="form-group">
-        <label for="inputGTF" class="col-md-3 control-label">GTF File</label>
-        <div class="col-md-6">
-            <input type="text" class="form-control" id="inputGTF" placeholder="" ng-model="run.gtf" name="gtf" readonly>
-            <span class="help-block">Description</span>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <alert ng-repeat="alert in alerts" type="{{ alert.type }}" close="closeAlert($index)">
+                <i ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{ alert.message }}
+            </alert>
         </div>
     </div>
-    <div class="form-group">
-        <label for="inputGenome" class="col-md-3 control-label">Genome File</label>
-        <div class="col-md-6">
-            <input type="text" class="form-control" id="inputGenome" placeholder="" ng-model="run.genome" name="genome" readonly>
-            <span class="help-block">Description</span>
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="inputFile" class="col-md-3 control-label">Reads File</label>
-        <!-- Use onChange instead of ng-change because the people who write Angular don't think they should support file uploading-->
-        <div class="col-md-6">
-            <input ng-disabled="uploadProgress != null" type="file" name="file" id="inputFile" required onchange="angular.element(this).scope().uploadFile()">
-            <span class="help-block">FastQ file must be compressed in gzip format</span>
-        </div>
-        <div class="progress-container col-md-offset-3 col-md-6">
-            <div class="progress" ng-show="uploadProgress">
-                <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="{{uploadProgress}}" aria-valuemin="0" aria-valuemax="100" style="width:{{uploadProgress}}%;">
-                    {{uploadProgress}}%
+
+    <div class="row">
+        <div class="col-xs-12">
+            <form id="runForm" name="form" class="form-horizontal" role="form" enctype="multipart/form-data"
+                  method="post"
+                  action="">
+                <div class="form-group">
+                    <label for="inputRunName" class="col-xs-12 col-sm-5 col-md-4 col-lg-3 control-label">Workflow
+                        Name</label>
+
+                    <div class="col-xs-12 col-sm-7 col-md-8 col-lg-9">
+                        <input type="text" class="form-control" id="inputRunName" placeholder="62H2EAAXX_7_HSB_135"
+                               ng-model="run.name" name="name" required alphanumeric>
+                        <span class="help-block">Description</span>
+                    </div>
                 </div>
-            </div>
+                <div class="form-group">
+                    <label for="inputGTF" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">GTF File</label>
+
+                    <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
+                        <input type="text" class="form-control" id="inputGTF" placeholder="" ng-model="run.gtf"
+                               name="gtf"
+                               readonly>
+                        <span class="help-block">Description</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputGenome" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Genome
+                        File</label>
+
+                    <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
+                        <input type="text" class="form-control" id="inputGenome" placeholder="" ng-model="run.genome"
+                               name="genome" readonly>
+                        <span class="help-block">Description</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputFile" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Reads
+                        File</label>
+                    <!-- Use onChange instead of ng-change because the people who write Angular don't think they should support file uploading-->
+                    <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
+                        <input ng-disabled="uploadProgress != null" type="file" name="file" id="inputFile" required
+                               onchange="angular.element(this).scope().uploadFile()">
+                        <span class="help-block">FastQ file must be compressed in gzip format</span>
+                    </div>
+                    <div class="progress-container col-md-offset-3 col-md-6">
+                        <div class="progress" ng-show="uploadProgress">
+                            <div class="progress-bar progress-bar-striped progress-bar-info active" role="progressbar"
+                                 aria-valuenow="{{ uploadProgress }}"
+                                 aria-valuemin="0" aria-valuemax="100" style="width:{{ uploadProgress }}%;">
+                                {{ uploadProgress }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputReadLength" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Read
+                        Length</label>
+
+                    <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
+                        <input type="number" class="form-control" id="inputReadLength" ng-model="run.readLength"
+                               name="readLength" maxlength="3" required integer min="50" max="128">
+                        <span class="help-block">Should be between 50 and 128 inclusive</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputMismatches"
+                           class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Mismatches</label>
+
+                    <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
+                        <input type="number" class="form-control" id="inputMismatches" ng-model="run.mismatches"
+                               name="mismatches" maxlength="1" required integer min="0" max="8">
+                        <span class="help-block">Should be between 0 and 8 inclusive</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label" for="mapFiltered">Map
+                        Filtered</label>
+
+                    <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
+                        <input id="mapFiltered" type="checkbox" ng-model="run.mapFiltered">
+                        <span class="help-block">Description</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label" for="genSplice">Generate New
+                        Splice Candidates</label>
+
+                    <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
+                        <input id="genSplice" type="checkbox" ng-model="run.genSplice">
+                        <span class="help-block">Description</span>
+                    </div>
+                </div>
+                <br/>
+
+                <div class="form-group">
+                    <label for="inputStrandRule" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Strand
+                        Rule</label>
+
+                    <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
+                        <select class="form-control text-capitalize" id="inputStrandRule" ng-model="strandRule"
+                                ng-options="option.rule for option in strandRuleOptions"></select>
+                        <span class="help-block">Description</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputEmail" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Email
+                        Address</label>
+
+                    <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
+                        <input type="email" class="form-control" id="inputEmail" placeholder="example@domain.com"
+                               ng-model="run.email" name="email" multiple>
+                        <span class="help-block">Separate multiple emails by commas</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6 col-md-offset-3 col-md-2">
+                        <button type="submit" ng-disabled="addingRun != null" class="btn btn-primary btn-block"
+                                ng-click="addRun()">Submit <i class="fa fa-long-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="col-xs-6 col-md-2">
+                        <button class="btn btn-warning btn-block" ng-click="cancel()">Cancel <i class="fa fa-close"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
-    <div class="form-group">
-        <label for="inputReadLength" class="col-md-3 control-label">Read Length</label>
-        <div class="col-md-6">
-            <input type="number" class="form-control" id="inputReadLength" ng-model="run.readLength" name="readLength" maxlength="3" required integer min="50" max="128">
-            <span class="help-block">Should be between 50 and 128 inclusive</span>
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="inputMismatches" class="col-md-3 control-label">Mismatches</label>
-        <div class="col-md-6">
-            <input type="number" class="form-control" id="inputMismatches" ng-model="run.mismatches" name="mismatches" maxlength="1" required integer min="0" max="8">
-            <span class="help-block">Should be between 0 and 8 inclusive</span>
-        </div>
-    </div>
-    <!--div class="checkbox">
-        <label><input type="checkbox" ng-model="run.trimUnmapped">&nbsp Trim Unmapped</label>
-    </div-->
-    <div class="form-group">
-        <label class="col-md-3 control-label" for="mapFiltered">Map Filtered</label>
-        <div class="col-md-1">
-            <input id="mapFiltered" type="checkbox" ng-model="run.mapFiltered">
-            <span class="help-block">Description</span>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="col-md-3 control-label" for="genSplice">Generate New Splice Candidates</label>
-        <div class="col-md-1">
-            <input id="genSplice" type="checkbox" ng-model="run.genSplice">
-            <span class="help-block">Description</span>
-        </div>
-    </div>
-    <br/>
-    <div class="form-group">
-        <label for="inputStrandRule" class="col-md-3 control-label">Strand Rule</label>
-        <div class="col-md-6">
-            <select class="form-control text-capitalize" id="inputStrandRule" ng-model="strandRule" ng-options="option.rule for option in strandRuleOptions"></select>
-            <span class="help-block">Description</span>
-        </div>
-    </div>
-    <div class="form-group">
-        <label for="inputEmail" class="col-md-3 control-label">Email Address</label>
-        <div class="col-md-6">
-            <input type="email" class="form-control" id="inputEmail" placeholder="example@domain.com" ng-model="run.email" name="email" multiple>
-            <span class="help-block">Separate multiple emails by commas</span>
-        </div>
-    </div>
-    <div class="form-group">
-        <div class="col-xs-6 col-md-offset-3 col-md-2">
-            <button type="submit" ng-disabled="addingRun != null" class="btn btn-primary btn-block" ng-click="addRun()">Submit <i class="fa fa-long-arrow-right"></i>
-            </button>
-        </div>
-        <div class="col-xs-6 col-md-2">
-            <button class="btn btn-warning btn-block" ng-click="cancel()">Cancel <i class="fa fa-close"></i></button>
-        </div>
-    </div>
-</form>
+</div>

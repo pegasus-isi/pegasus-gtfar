@@ -1,26 +1,39 @@
-<div>
-    <alert ng-repeat="alert in alerts" type="{{ alert.type }}" close="closeAlert($index)">
-        <i ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{ alert.message }}</alert>
-    <div>
-        <button class="btn btn-default" ng-click="createRun()">
-            <i class="fa fa-plus-square"></i> Start New Run
-        </button>
-        <button class="btn btn-primary" ng-click="refresh()">
-            <i class="fa fa-refresh"></i> Refresh
-        </button>
-        <div class="pull-right">
-            <button class="btn btn-danger text-right" ng-click="deleteSelected()"
-                    ng-show="runsGrid.selectedItems.length > 0">
-                <i class="fa fa-trash"> </i> Delete Selected
-            </button>
+<div class="col-md-12">
+    <div class="row">
+        <div class="col-xs-12">
+            <alert ng-repeat="alert in alerts" type="{{ alert.type }}" close="closeAlert($index)">
+                <i ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{ alert.message }}
+            </alert>
         </div>
     </div>
-    <br/>
-    <!-- Using ng-if instead of ng-show because ng-grid does not play nice with it-->
-    <div ng-if="runs.length > 0">
-        <div class="gridStyle hideScrollX" ng-grid="runsGrid"></div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <button class="btn btn-default" ng-click="createRun()">
+                <i class="fa fa-plus-square"></i> Start New Run
+            </button>
+            <button class="btn btn-primary" ng-click="refresh()">
+                <i class="fa fa-refresh"></i> Refresh
+            </button>
+            <div class="pull-right">
+                <button class="btn btn-danger text-right" ng-click="deleteSelected()"
+                        ng-show="runsGrid.selectedItems.length > 0">
+                    <i class="fa fa-trash"> </i> Delete Selected
+                </button>
+            </div>
+        </div>
     </div>
-    <div id="noRunsMessage" class="text-center" ng-show="runs.length == 0">
-        No runs found. <a style="cursor: pointer;" ng-click="createRun()">Start New Run</a>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <br/>
+            <!-- Using ng-if instead of ng-show because ng-grid does not play nice with it-->
+            <div ng-if="runs.length > 0">
+                <div class="gridStyle hideScrollX" ng-grid="runsGrid"></div>
+            </div>
+            <div id="noRunsMessage" class="text-center" ng-show="runs.length == 0">
+                No runs found. <a style="cursor: pointer;" ng-click="createRun()">Start New Run</a>
+            </div>
+        </div>
     </div>
 </div>
