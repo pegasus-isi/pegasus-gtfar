@@ -19,14 +19,14 @@
     <div class="row form-horizontal">
         <div class="col-xs-12">
             <div class="form-group">
-                <label for="inputRunName" class="col-xs-6 col-sm-5 col-md-4 col-lg-3">Workflow Name</label>
+                <label for="inputRunName" class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label">Workflow Name</label>
 
                 <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
                     <span class="help-block">{{ run.name }}</span>
                 </div>
             </div>
             <div class="form-group">
-                <label for="inputFile" class="col-xs-6 col-sm-5 col-md-4 col-lg-3">Reads File</label>
+                <label for="inputFile" class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label">Reads File</label>
 
                 <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
                 <span class="help-block"><i class="fa fa-file-text-o"></i>
@@ -34,35 +34,35 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="inputGTF" class="col-xs-6 col-sm-5 col-md-4 col-lg-3">GTF File</label>
+                <label for="inputGTF" class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label">GTF File</label>
 
                 <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
                     <span class="help-block">{{ run.gtf }}</span>
                 </div>
             </div>
             <div class="form-group">
-                <label for="inputGenome" class="col-xs-6 col-sm-5 col-md-4 col-lg-3">Genome File</label>
+                <label for="inputGenome" class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label">Genome File</label>
 
                 <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
                     <span class="help-block">{{ run.genome }}</span>
                 </div>
             </div>
             <div class="form-group">
-                <label for="inputReadLength" class="col-xs-6 col-sm-5 col-md-4 col-lg-3">Read Length</label>
+                <label for="inputReadLength" class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label">Read Length</label>
 
                 <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
                     <span class="help-block">{{ run.readLength }}</span>
                 </div>
             </div>
             <div class="form-group">
-                <label for="inputMismatches" class="col-xs-6 col-sm-5 col-md-4 col-lg-3">Mismatches</label>
+                <label for="inputMismatches" class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label">Mismatches</label>
 
                 <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
                     <span class="help-block">{{ run.mismatches }}</span>
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-xs-6 col-sm-5 col-md-4 col-lg-3" for="mapFiltered">Map Filtered</label>
+                <label class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label" for="mapFiltered">Map Filtered</label>
 
                 <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
                 <span class="help-block">
@@ -71,7 +71,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-xs-6 col-sm-5 col-md-4 col-lg-3" for="genSplice">
+                <label class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label" for="genSplice">
                     Generate New Splice Candidates
                 </label>
 
@@ -81,14 +81,14 @@
             </div>
 
             <div class="form-group">
-                <label for="inputStrandRule" class="col-xs-6 col-sm-5 col-md-4 col-lg-3">Strand Rule</label>
+                <label for="inputStrandRule" class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label">Strand Rule</label>
 
                 <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
                     <span class="help-block text-capitalize">{{ run.strandRule }}</span>
                 </div>
             </div>
             <div class="form-group">
-                <label for="inputEmail" class="col-xs-6 col-sm-5 col-md-4 col-lg-3">Email Recipient(s)</label>
+                <label for="inputEmail" class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label">Email Recipient(s)</label>
 
                 <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
                 <span class="help-block" ng-repeat="email in run.emails"><i class="fa fa-envelope-o"></i>
