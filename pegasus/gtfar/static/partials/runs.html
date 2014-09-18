@@ -1,20 +1,26 @@
 <div>
-    <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)"><i ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{alert.message}}</alert>
-    <button class="btn btn-default" ng-click="createRun()"><i class="fa fa-plus-square fa-fw"></i> Start New Run</button>
-    <button class="btn btn-primary" ng-click="refresh()">
-        <i class="fa fa-refresh" ></i> Refresh
-    </button>
-    <br/><br/>
-    <!-- Using ng-if instead of nd-show because ng-grid does not play nice with it-->
+    <alert ng-repeat="alert in alerts" type="{{ alert.type }}" close="closeAlert($index)"><i
+            ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{ alert.message }}</alert>
+    <div>
+        <button class="btn btn-default" ng-click="createRun()">
+            <i class="fa fa-plus-square fa-fw"></i> Start New Run
+        </button>
+        <button class="btn btn-primary" ng-click="refresh()">
+            <i class="fa fa-refresh"></i> Refresh
+        </button>
+        <div class="pull-right">
+            <button class="btn btn-danger text-right" ng-click="deleteSelected()"
+                    ng-show="runsGrid.selectedItems.length > 0">
+                <i class="fa fa-trash"> </i> Delete Selected
+            </button>
+        </div>
+    </div>
+    <br/>
+    <!-- Using ng-if instead of ng-show because ng-grid does not play nice with it-->
     <div ng-if="runs.length > 0">
         <div class="gridStyle hideScrollX" ng-grid="runsGrid"></div>
-        <br/>
-
     </div>
-    <div class="text-right">
-        <button class="btn btn-danger" ng-click="deleteSelected()"><i class="fa fa-trash"> </i> Delete Selected</button>
-    </div>
-    <div id="noRunsMessage" class="col-md-12" ng-show="runs.length == 0">
+    <div id="noRunsMessage" class="col-md-12 text-right" ng-show="runs.length == 0">
         <b>There are currently no runs available.</b>
     </div>
 </div>
