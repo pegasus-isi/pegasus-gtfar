@@ -14,46 +14,9 @@
  *  limitations under the License.
  */
 
-.hide {
-    display: none;
-}
-
-.show {
-    display: block;
-}
-
-.gridStyle {
-    height : 500px;
-    border: 1px solid rgb(212,212,212);
-
-}
-
-.ngRow {
-    border: 1px solid rgb(212,212,212);
-}
-
-.hideScrollX * {
-    overflow : hidden;
-}
-
-.borderless td {
-    border : none;
-}
-
-.topBuffer {
-    margin-top: 20px;
-}
-
-.topBuffer-lg {
-    margin-top: 60px;
-}
-
-.logo {
-    font-family: Voltaire;
-    font-weight: bold;
-    font-size: 36px !important;
-    color: #EF8B01 !important;
-}
+/*
+ * Bootstrap Overrides
+ */
 
 body {
     font-family: "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -68,4 +31,49 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     ul.nav li.dropdown:hover > ul.dropdown-menu {
         display: block;
     }
+}
+
+/*
+ * Pegasus GTFAR
+ */
+
+.logo {
+    font-family: Voltaire;
+    font-weight: bold;
+    font-size: 36px !important;
+    color: #EF8B01 !important;
+}
+
+.hide {
+    display: none;
+}
+
+.show {
+    display: block;
+}
+
+.gridStyle {
+    height: 500px;
+    border: 1px solid rgb(212, 212, 212);
+
+}
+
+.ngRow {
+    border: 1px solid rgb(212, 212, 212);
+}
+
+.hideScrollX * {
+    overflow: hidden;
+}
+
+.borderless td {
+    border: none;
+}
+
+.topBuffer {
+    margin-top: 20px;
+}
+
+.topBuffer-lg {
+    margin-top: 60px;
 }
