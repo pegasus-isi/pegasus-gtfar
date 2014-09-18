@@ -1,9 +1,9 @@
 <div>
-    <alert ng-repeat="alert in alerts" type="{{ alert.type }}" close="closeAlert($index)"><i
-            ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{ alert.message }}</alert>
+    <alert ng-repeat="alert in alerts" type="{{ alert.type }}" close="closeAlert($index)">
+        <i ng-class="getAlertIcon(alert.type)"></i>&nbsp;{{ alert.message }}</alert>
     <div>
         <button class="btn btn-default" ng-click="createRun()">
-            <i class="fa fa-plus-square fa-fw"></i> Start New Run
+            <i class="fa fa-plus-square"></i> Start New Run
         </button>
         <button class="btn btn-primary" ng-click="refresh()">
             <i class="fa fa-refresh"></i> Refresh
@@ -20,7 +20,7 @@
     <div ng-if="runs.length > 0">
         <div class="gridStyle hideScrollX" ng-grid="runsGrid"></div>
     </div>
-    <div id="noRunsMessage" class="col-md-12 text-right" ng-show="runs.length == 0">
-        <b>There are currently no runs available.</b>
+    <div id="noRunsMessage" class="text-center" ng-show="runs.length == 0">
+        No runs found. <a style="cursor: pointer;" ng-click="createRun()">Start New Run</a>
     </div>
 </div>
