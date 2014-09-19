@@ -38,7 +38,7 @@ function split_reads {
 
         if [ ${fEXT} = fastq ] || [ ${fEXT} == fq ]; then
 
-            zcat ${READS} | awk '{if (NR%4==0) printf $1"\n"; else printf $1" "}' > ${READS}.tmp
+            gunzip --stdout ${READS} | awk '{if (NR%4==0) printf $1"\n"; else printf $1" "}' > ${READS}.tmp
 
         else
 
