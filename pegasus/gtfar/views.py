@@ -189,10 +189,10 @@ def create_config(result):
         conf.write(render_template('pegasus/pegasus.conf', base_dir=path))
 
     with open(os.path.join(path, 'config', 'tc.txt'), 'w') as tc_txt:
-        tc_txt.write(render_template('pegasus/tc.txt', bin_dir=app.config['GTFAR_BIN_DIR']))
+        tc_txt.write(render_template('pegasus/tc.txt', bin_dir=app.config['GTFAR_BIN_DIR'], os=app.config['OS_TYPE']))
 
     with open(os.path.join(path, 'config', 'sites.xml'), 'w') as sites_xml:
-        sites_xml.write(render_template('pegasus/sites.xml', base_dir=path))
+        sites_xml.write(render_template('pegasus/sites.xml', base_dir=path, os=app.config['OS_TYPE']))
 
     with open(os.path.join(path, 'config', 'om.txt'), 'w') as om_txt:
         om_txt.write(render_template('pegasus/om.txt', data_dir=app.config['GTFAR_DATA_DIR']))

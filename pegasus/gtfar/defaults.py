@@ -15,6 +15,15 @@
 __author__ = 'dcbriggs'
 
 import os
+import sys
+
+#
+# Set OS automatically.
+#
+
+
+OS_TYPE = 'MACOSX' if sys.platform.startswith('darwin') else 'LINUX'
+
 
 #
 # GTFAR Configuration
@@ -38,8 +47,6 @@ GTFAR_REF_GENOME_DIR = os.path.join(GTFAR_REF_DIR, 'genome')
 UPLOAD_FOLDER = '/tmp'
 
 
-
-
 #
 # Pegasus Configuration
 #
@@ -57,9 +64,11 @@ SERVER_HOST = '127.0.0.1'
 SERVER_PORT = 5000
 ENDPOINT = None
 
+
 #
 # Flask Configuration
 #
+
 
 DEBUG = False
 
