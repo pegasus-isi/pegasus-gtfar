@@ -59,13 +59,13 @@
                         <input ng-disabled="uploadProgress != null" type="file" name="file" id="inputFile" required
                                onchange="angular.element(this).scope().uploadFile()">
                         <span class="help-block">FastQ file must be compressed in gzip format</span>
-                    </div>
-                    <div class="progress-container col-md-offset-3 col-md-6">
-                        <div class="progress" ng-show="uploadProgress">
-                            <div class="progress-bar progress-bar-striped progress-bar-info active" role="progressbar"
-                                 aria-valuenow="{{ uploadProgress }}"
-                                 aria-valuemin="0" aria-valuemax="100" style="width:{{ uploadProgress }}%;">
-                                {{ uploadProgress }}%
+                        <div class="progress-container">
+                            <div class="progress" ng-show="uploadProgress">
+                                <div class="progress-bar progress-bar-striped progress-bar-info active" role="progressbar"
+                                     aria-valuenow="{{ uploadProgress }}"
+                                     aria-valuemin="0" aria-valuemax="100" style="width:{{ uploadProgress }}%;">
+                                    {{ uploadProgress }}%
+                                </div>
                             </div>
                         </div>
                     </div>
