@@ -20,8 +20,7 @@ class GtfFile:
         except TypeError:
             errorQuit("A GTF FILE IS NOT SUPPLIED")
 
-        self.prefix, self.readLen
-        self.findCands = prefix, readlen, findCands
+        self.prefix, self.readLen, self.findCands = prefix, readlen, findCands
 
         self.genes, self.seq = [], []
         self.open = True
