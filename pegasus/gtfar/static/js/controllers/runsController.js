@@ -119,7 +119,7 @@ function(moment) {
             columnDefs : [
                 {field : "name", displayName : "Name", cellTemplate : "<a class='gridCenter' ui-sref='runDetails({id : row.getProperty(\"id\")})'><div class='ngCellText'>{{row.getProperty(col.field)}}</div></a>" },
                 {field : "status", displayName : "Status", width : 60, cellTemplate : "<i class='ngCellText' ng-class='getExitCodeIcon(row.getProperty(col.field))'></i>" },
-                {field : "filename", displayName : "File", cellTemplate : "<a ng-href='{{getDownloadLink(row.getProperty(\"id\"), row.getProperty(col.field))}}'>{{row.getProperty(col.field)}}</a>" },
+                {field : "filename", displayName : "File", cellTemplate : "<i class='fa fa-file-text-o'></i> <a ng-href='{{getDownloadLink(row.getProperty(\"id\"), row.getProperty(col.field))}}'>{{row.getProperty(col.field)}}</a>" },
                 {field : "created", displayName : "Created On", cellTemplate : "<div class='ngCellText'>{{getFormattedDate(row.getProperty(col.field))}}</div>" }
             ],
             sortInfo : {fields : ['created'], directions : ['desc']},
