@@ -17,8 +17,8 @@
 /**
  * Created by dcbriggs on 7/14/14.
  */
-define([],
-function() {
+define(["moment"],
+function(moment) {
     "use strict"
 
     var runDetailsController = function($scope, $state, $stateParams, $http, $window) {
@@ -35,6 +35,13 @@ function() {
         $scope.outputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/output/";
 
 
+        $scope.getFormattedDate = function(dateString) {
+            var createdOn = moment.utc(dateString).local();
+            var s = createdOn.format('dddd MMMM DD, YYYY hh:mm:ss A');
+            s += ' (' + createdOn.fromNow() + ')';
+            return s;
+        };
+
         function getRun() {
             $http.get($window.apiLinks.runs + "/" + $stateParams.id).success(function(data) {
                 $scope.run = data;
@@ -46,7 +53,6 @@ function() {
                 console.error(data);
             });
         }
-
 
         function getStatus() {
             $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.status).success(function(data) {

@@ -17,8 +17,8 @@
 /**
  * Created by dcbriggs on 7/14/14.
  */
-define([],
-function() {
+define(["moment"],
+function(moment) {
     "use strict"
     var runsController = function($scope, $window, $http, $state) {
 
@@ -102,7 +102,10 @@ function() {
         };
 
         $scope.getFormattedDate = function(dateString) {
-            return new Date(dateString).toString();
+            var createdOn = moment.utc(dateString).local();
+            var s = createdOn.format('ddd MMM DD, YYYY hh:mm:ss A');
+            s += ' (' + createdOn.fromNow() + ')';
+            return s;
         };
 
 

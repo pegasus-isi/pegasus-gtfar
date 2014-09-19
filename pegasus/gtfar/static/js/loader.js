@@ -30,7 +30,8 @@ requirejs.config({
         uiRouter : "//cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.10/angular-ui-router",
         bootstrapUI : "//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.0/ui-bootstrap-tpls",
         angularGrid : '//cdnjs.cloudflare.com/ajax/libs/ng-grid/2.0.11/ng-grid.min',
-        jquery : "//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery"
+        jquery : "//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery",
+        "moment" : "//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.3/moment.min"
     },
     /*
      * Some libraries do not use requirejs, which means that any libraries they require are not guaranteed to be loaded
@@ -56,7 +57,6 @@ requirejs.config({
         jquery : {
             exports : "$"
         }
-
     }
 });
 

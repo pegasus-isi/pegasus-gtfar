@@ -21,7 +21,7 @@
  */
 // Keep angular files at the end because they do not export anything
 define(["angular", "js/controllers/runsController", "js/controllers/runDetailsController", "js/controllers/runCreationController",
-        "js/router", "uiRouter", "angularGrid", "bootstrapUI"],
+        "js/router", "uiRouter", "angularGrid", "bootstrapUI", "moment"],
 function(angular, runsController, runDetailsController, runCreationController,
          router) {
     'use strict'
