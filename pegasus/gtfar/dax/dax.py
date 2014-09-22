@@ -213,8 +213,8 @@ class FilterMixin(object):
             pre_filter.uses(fastq_t, link=Link.OUTPUT, transfer=False, register=False)
 
         pre_filter.uses(full_fastq, link=Link.OUTPUT, transfer=False, register=False)
-        pre_filter.uses(reject, link=Link.OUTPUT, transfer=True, register=False)
-        pre_filter.uses(stats, link=Link.OUTPUT, transfer=True, register=False)
+        pre_filter.uses(reject, link=Link.OUTPUT, transfer=False, register=False)
+        pre_filter.uses(stats, link=Link.OUTPUT, transfer=False, register=False)
 
         self.adag.addJob(pre_filter)
 
