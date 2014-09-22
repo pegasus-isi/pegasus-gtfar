@@ -16,14 +16,14 @@ tr annotate_gtf {
 
 tr perm {
     site local {
-        pfn "{{ bin_dir }}/perm"
+        pfn "{{ bin_dir }}/perm.{{ os | lower }}"
         arch "x86_64"
         os "{{ os | lower }}"
         type "INSTALLED"
     }
 
     site condorpool {
-        pfn "{{ bin_dir }}/perm"
+        pfn "{{ bin_dir }}/perm{{ os | lower }}"
         arch "x86_64"
         os "{{ os | lower }}"
         type "INSTALLED"
