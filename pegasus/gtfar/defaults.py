@@ -43,6 +43,8 @@ GTFAR_REF_DIR = os.path.join(GTFAR_DATA_DIR, 'reference')
 GTFAR_REF_GTF_DIR = os.path.join(GTFAR_REF_DIR, 'gtf')
 GTFAR_REF_GENOME_DIR = os.path.join(GTFAR_REF_DIR, 'genome')
 
+GTFAR_EXECUTION_SITE = 's3'
+
 # A Temporary directory to upload files into.
 UPLOAD_FOLDER = '/tmp'
 
