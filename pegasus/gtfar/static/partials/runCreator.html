@@ -32,23 +32,24 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="inputGTF" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">GTF File</label>
+                    <label for="inputGTF" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Annotation
+                        File</label>
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input type="text" class="form-control" id="inputGTF" placeholder="" ng-model="run.gtf"
                                name="gtf"
                                readonly>
-                        <span class="help-block">Description</span>
+                        <span class="help-block">Annotation File in GTF format</span>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputGenome" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Genome
-                        File</label>
+                        Version</label>
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input type="text" class="form-control" id="inputGenome" placeholder="" ng-model="run.genome"
                                name="genome" readonly>
-                        <span class="help-block">Description</span>
+                        <span class="help-block">Must macth the species and annotation file</span>
                     </div>
                 </div>
                 <div class="form-group">
@@ -59,9 +60,11 @@
                         <input ng-disabled="uploadProgress != null" type="file" name="file" id="inputFile" required
                                onchange="angular.element(this).scope().uploadFile()">
                         <span class="help-block">FastQ file must be compressed in gzip format</span>
+
                         <div class="progress-container">
                             <div class="progress" ng-show="uploadProgress">
-                                <div class="progress-bar progress-bar-striped progress-bar-info active" role="progressbar"
+                                <div class="progress-bar progress-bar-striped progress-bar-info active"
+                                     role="progressbar"
                                      aria-valuenow="{{ uploadProgress }}"
                                      aria-valuemin="0" aria-valuemax="100" style="width:{{ uploadProgress }}%;">
                                     {{ uploadProgress }}%
@@ -91,12 +94,12 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label" for="mapFiltered">Map
-                        Filtered</label>
+                    <label class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label" for="mapFiltered">Align QC
+                        Filtered Reads</label>
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input id="mapFiltered" type="checkbox" ng-model="run.mapFiltered">
-                        <span class="help-block">Description</span>
+                        <span class="help-block">Align recoverable portion of reads which contain adaptor sequence or low quality tails</span>
                     </div>
                 </div>
                 <div class="form-group">
@@ -105,7 +108,7 @@
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input id="genSplice" type="checkbox" ng-model="run.genSplice">
-                        <span class="help-block">Description</span>
+                        <span class="help-block">Used gapped alignment protocol to discover and confirm novel splice junctions</span>
                     </div>
                 </div>
                 <div class="form-group">
