@@ -67,6 +67,8 @@ function(angular) {
                 return;
             }
 
+            $scope.alerts = [];
+
             var fileData = new FormData(document.getElementById("runForm"));
             var xhr = new XMLHttpRequest();
             // TODO: disable the browse button
