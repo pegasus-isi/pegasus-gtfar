@@ -469,7 +469,7 @@ class AnalyzeMixin(object):
         analyze.addArguments(sam_file, '--prefix', self._prefix)
 
         # Uses
-        analyze.uses(input, link=Link.INPUT)
+        analyze.uses(sam_file, link=Link.INPUT)
         analyze.uses(genes_counts, link=Link.OUTPUT, transfer=True, register=False)
         analyze.uses(features_counts, link=Link.OUTPUT, transfer=True, register=False)
         analyze.uses(multi_genes_counts, link=Link.OUTPUT, transfer=True, register=False)
