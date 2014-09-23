@@ -23,7 +23,8 @@ from werkzeug import secure_filename
 
 from flask import render_template, request, redirect, url_for, json, jsonify, send_from_directory
 
-from pegasus.gtfar import app, apiManager
+from pegasus.gtfar import app, apiManager, __VERSION__
+
 from pegasus.gtfar.dax.dax import GTFAR
 from pegasus.gtfar.models import Run, isValidFile
 
@@ -192,7 +193,7 @@ def create_config(result):
     output_dir = os.path.join(path, 'output')
 
     with open(os.path.join(path, 'config', 'pegasus.conf'), 'w') as conf:
-        conf.write(render_template('pegasus/pegasus.conf', base_dir=path))
+        conf.write(render_template('pegasus/pegasus.conf', base_dir=path, version=__VERSION__))
 
     with open(os.path.join(path, 'config', 'tc.txt'), 'w') as tc_txt:
         tc_txt.write(render_template('pegasus/tc.txt', bin_dir=app.config['GTFAR_BIN_DIR'], os=app.config['OS_TYPE']))
