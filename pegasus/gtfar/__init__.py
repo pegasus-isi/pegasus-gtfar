@@ -14,7 +14,7 @@
 
 __author__ = 'Rajiv Mayani'
 
-__VERSION__ = 0.1
+__VERSION__ = '0.1-dev'
 
 from flask import Flask
 from flask.ext.cache import Cache
