@@ -41,8 +41,8 @@ def main():
     parser.add_argument('-i', '--splices', default=True, dest='splice', action='store_true')
     parser.add_argument('-c', '--clip-reads', default=False, dest='clip_reads', action='store_true')
     parser.add_argument('-s', '--strandrule', default='Unstranded', dest='strand_rule',
-                        choices=('Unstranded', 'Same', 'Opposite'),
-                        help='A rule for strandedness (None, Same or Opposite)')
+                        choices=('Unstranded', 'Sense', 'Anti-sense'),
+                        help='A rule for strandedness (Unstranded, Sense or Anti-sense)')
 
     # Pegasus
     parser.add_argument('-b', '--base-dir', default=None, required=True, help='Workflow run directory')
@@ -50,9 +50,6 @@ def main():
     parser.add_argument('-d', '--dax', default=None, help='GTF file')
     parser.add_argument('-u', '--url', default=None, help='Link to the results of the workflow')
     parser.add_argument('-e', '--email', default=None, help='Send Email notification on workflow completion')
-
-    # parser.add_argument('-c', '--cores', default=None, help='Number of cores')
-    # verbose        v          --verbose         TRUE            bool                  True or False
 
     args = parser.parse_args(sys.argv[1:])
     args = vars(args)
@@ -64,6 +61,7 @@ def main():
         gtfar.annotate()
         gtfar.option_filter()
         gtfar.iterative_map()
+        gtfar.analyze()
         gtfar.write_dax()
     else:
         for field, error in validation_results.iteritems():

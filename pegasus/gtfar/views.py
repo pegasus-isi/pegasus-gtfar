@@ -231,6 +231,7 @@ def generate_dax(result):
         gtfar.annotate()
         gtfar.option_filter()
         gtfar.iterative_map()
+        gtfar.analyze()
         gtfar.write_dax()
 
 

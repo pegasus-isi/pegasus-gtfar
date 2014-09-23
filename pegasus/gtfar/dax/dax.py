@@ -446,10 +446,40 @@ class IterativeMapMixin(object):
         self.adag.addJob(parse_alignment)
 
 
-class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin):
+class AnalyzeMixin(object):
+    def analyze(self):
+        self._analyze()
+
+    def _analyze(self):
+        analyze = Job(name='analyze_samfile')
+        analyze.invoke('all', self._state_update)
+
+        # Input files
+        sam_file = File('%s.sam' % self._prefix)
+
+        # Output files
+        genes_counts = File('%s.genes.cnts' % self._prefix)
+        features_counts = File('%s.features.cnts' % self._prefix)
+        multi_genes_counts = File('%s.multiGenes.cnts' % self._prefix)
+        summary_out = File('%s.summary.out' % self._prefix)
+
+        # Arguments
+        analyze.addArguments(sam_file, '--prefix', self._prefix)
+
+        # Uses
+        analyze.uses(input, link=Link.INPUT)
+        analyze.uses(genes_counts, link=Link.OUTPUT, transfer=True, register=False)
+        analyze.uses(features_counts, link=Link.OUTPUT, transfer=True, register=False)
+        analyze.uses(multi_genes_counts, link=Link.OUTPUT, transfer=True, register=False)
+        analyze.uses(summary_out, link=Link.OUTPUT, transfer=True, register=False)
+
+        self.adag.addJob(analyze)
+
+
+class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
     def __init__(self, gtf, genome, prefix, reads, base_dir, bin_dir, read_length=100, mismatches=3,
-                 is_trim_unmapped=False, is_map_filtered=False, splice=True, clip_reads=False, strand_rule='Unstranded', dax=None,
-                 url=None, email=None, splits=2, adag=None):
+                 is_trim_unmapped=False, is_map_filtered=False, splice=True, clip_reads=False, strand_rule='Unstranded',
+                 dax=None, url=None, email=None, splits=2, adag=None):
 
         # Reference
         self._gtf = gtf

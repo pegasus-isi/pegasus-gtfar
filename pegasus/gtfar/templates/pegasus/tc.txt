@@ -94,6 +94,22 @@ tr parse_alignment {
     }
 }
 
+tr analyze_samfile {
+    site local {
+        pfn "{{ bin_dir }}/gtfar_analyze_samfile.py"
+        arch "x86_64"
+        os "{{ os | lower }}"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/gtfar_analyze_samfile.py"
+        arch "x86_64"
+        os "{{ os | lower }}"
+        type "INSTALLED"
+    }
+}
+
 tr merge {
     site local {
         pfn "/bin/cat"
