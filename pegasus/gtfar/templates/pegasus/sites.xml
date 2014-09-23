@@ -11,7 +11,7 @@
     </site>
 
     <site  handle="condorpool" arch="x86_64" os="{{ os | upper }}">
-        <directory type="shared-scratch" path="{{ base_dir }}/scratch">
+        <directory type="local-scratch" path="{{ base_dir }}/scratch">
             <file-server operation="all" url="file://{{ base_dir }}/scratch" />
         </directory>
         <directory type="local-storage" path="{{ base_dir }}/outputs">
@@ -19,6 +19,16 @@
         </directory>
         <profile namespace="pegasus" key="style">condor</profile>
         <profile namespace="condor" key="universe">vanilla</profile>
+    </site>
+
+    <site  handle="s3" arch="x86_64" os="{{ os | upper }}">
+        <directory type="shared-scratch" path="/pegasus-gtfar/data/runs/{{ _id }}/scratch">
+            <file-server operation="all" url="s3://pegasus@amazon/pegasus-gtfar/data/runs/{{ _id }}/scratch" />
+        </directory>
+
+        <directory type="local-storage" path="/pegasus-gtfar/data/runs/{{ _id }}/output">
+            <file-server operation="all" url="s3://pegasus@amazon/pegasus-gtfar/data/runs/{{ _id }}/output" />
+        </directory>
     </site>
 
 </sitecatalog>

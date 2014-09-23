@@ -187,6 +187,7 @@ def create_run_directories(result):
 
 
 def create_config(result):
+    _id = str(result['id'])
     path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
     output_dir = os.path.join(path, 'output')
 
@@ -197,10 +198,10 @@ def create_config(result):
         tc_txt.write(render_template('pegasus/tc.txt', bin_dir=app.config['GTFAR_BIN_DIR'], os=app.config['OS_TYPE']))
 
     with open(os.path.join(path, 'config', 'sites.xml'), 'w') as sites_xml:
-        sites_xml.write(render_template('pegasus/sites.xml', base_dir=path, os=app.config['OS_TYPE']))
+        sites_xml.write(render_template('pegasus/sites.xml', _id=_id, base_dir=path, os=app.config['OS_TYPE']))
 
     with open(os.path.join(path, 'config', 'om.txt'), 'w') as om_txt:
-        om_txt.write(render_template('pegasus/om.txt', data_dir=app.config['GTFAR_DATA_DIR'], output_dir=output_dir))
+        om_txt.write(render_template('pegasus/om.txt', _id=_id, data_dir=app.config['GTFAR_DATA_DIR'], output_dir=output_dir))
 
     with open(os.path.join(path, 'config', 'notifications.conf'), 'w') as notf_conf:
         notf_conf.write(render_template('pegasus/notifications.conf', base_dir=path))

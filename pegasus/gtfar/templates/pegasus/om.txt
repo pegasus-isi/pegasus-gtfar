@@ -3,6 +3,7 @@
 #
 
 (h\-?[0-9]*)_.*\.index file://{{ data_dir }}/index/[1]/[0] regex="true" pool="local"
-(h\-?[0-9]*)_.*\.index file://{{ data_dir }}/index/[1]/[0] regex="true" pool="s3"
+(h\-?[0-9]*)_.*\.index s3://pegasus@amazon/pegasus-gtfar/data/runs/{{ _id }}/output/[1]/[0] regex="true" pool="s3"
 
 (.*) file://{{ output_dir }}/[0] regex="true" pool="local"
+(.*) s3://pegasus@amazon/pegasus-gtfar/data/runs/{{ _id }}/output/[0] regex="true" pool="s3"
