@@ -255,9 +255,9 @@ def plan_workflow(result):
         ('--dir', submit_dir),
         ('--relative-dir', '.'),
         ('--dax', dax_file),
-        ('--sites', 'condorpool'),
-        ('--staging-site', 'local'),
-        ('--output-site', 'local')
+        ('--sites', app.config['GTFAR_EXECUTION_SITE']),
+        ('--staging-site', app.config['GTFAR_STAGING_SITE']),
+        ('--output-site', app.config['GTFAR_STORAGE_SITE'])
     ]
 
     workflow.plan(args)
