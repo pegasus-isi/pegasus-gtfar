@@ -18,6 +18,8 @@ import os
 import sys
 import mmh3
 
+from pegasus.gtfar.dax.AutoADAG import AutoADAG
+
 from Pegasus.DAX3 import ADAG, Dependency, Job, File, Link, Executable, PFN, Transformation
 
 
@@ -518,7 +520,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
 
         self._range = get_range
 
-        self.adag = ADAG('gtfar_%s' % self._prefix) if adag is None else adag
+        self.adag = AutoADAG('gtfar_%s' % self._prefix) if adag is None else adag
 
         self._state_update = '%s/state_update.py %%r %%r %%r %%r' % self._bin_dir
 
