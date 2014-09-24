@@ -2,8 +2,8 @@
 <sitecatalog xmlns="http://pegasus.isi.edu/schema/sitecatalog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pegasus.isi.edu/schema/sitecatalog http://pegasus.isi.edu/schema/sc-4.0.xsd" version="4.0">
 
     <site  handle="local" arch="x86_64" os="{{ os | upper }}">
-        <directory type="shared-scratch" path="{{ base_dir }}/scratch">
-            <file-server operation="all" url="file://{{ base_dir }}/scratch" />
+        <directory type="shared-scratch" path="{{ base_dir }}">
+            <file-server operation="all" url="file://{{ base_dir }}" />
         </directory>
         <directory type="local-storage" path="{{ base_dir }}/outputs">
             <file-server operation="all" url="file://{{ base_dir }}/outputs" />
@@ -13,8 +13,8 @@
     </site>
 
     <site  handle="condorpool" arch="x86_64" os="{{ os | upper }}">
-        <directory type="local-scratch" path="{{ base_dir }}/scratch">
-            <file-server operation="all" url="file://{{ base_dir }}/scratch" />
+        <directory type="local-scratch" path="{{ base_dir }}">
+            <file-server operation="all" url="file://{{ base_dir }}" />
         </directory>
         <directory type="local-storage" path="{{ base_dir }}/outputs">
             <file-server operation="all" url="file://{{ base_dir }}/outputs" />
@@ -25,8 +25,8 @@
     </site>
 
     <site  handle="s3" arch="x86_64" os="{{ os | upper }}">
-        <directory type="shared-scratch" path="/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}/scratch">
-            <file-server operation="all" url="s3://pegasus@amazon/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}/scratch" />
+        <directory type="shared-scratch" path="/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}">
+            <file-server operation="all" url="s3://pegasus@amazon/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}" />
         </directory>
 
         <directory type="local-storage" path="/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}/output">
