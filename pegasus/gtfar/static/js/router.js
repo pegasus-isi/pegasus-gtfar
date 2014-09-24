@@ -22,25 +22,9 @@
 define(["./controllers/runsController", "./controllers/runDetailsController", "./controllers/runCreationController"],
 function(runsController, runDetailsController, runCreationController){
 
-    /*var routes = function($routeProvider) {
-        $routeProvider.when('/workflows', {
-            templateUrl : "partials/runs.html",
-            controller : "runsController"
-
-        }).when('/workflows/:Id', {
-            templateUrl : "partials/runDetails.html",
-            controller : "runDetailsController"
-        }).when('/createRun', {
-         templateUrl : "partials/runCreator.html",
-         controller : "runCreationController"
-         }).otherwise({
-            redirectTo : '/workflows'
-        });
-    };*/
-
     var routes = function($stateProvider, $urlRouterProvider) {
         //
-        // For any unmatched url, redirect to /state1
+        // For any unmatched url, redirect to /runs
         $urlRouterProvider.otherwise("/runs");
         //
         // Now set up the states
@@ -60,9 +44,14 @@ function(runsController, runDetailsController, runCreationController){
                 url: "/createRun",
                 templateUrl: "partials/runCreator.html",
                 controller : "runCreationController"
-            }).state('help', {
+            })
+            .state('help', {
                 url: "/help",
                 templateUrl : "partials/help.html"
+            })
+            .state('contact', {
+                url: "/contact",
+                templateUrl : "partials/contact.html"
             });
     };
 
