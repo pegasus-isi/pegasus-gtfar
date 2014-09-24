@@ -8,6 +8,8 @@
         <directory type="local-storage" path="{{ base_dir }}/outputs">
             <file-server operation="all" url="file://{{ base_dir }}/outputs" />
         </directory>
+
+        <profile namespace="env" key="PEGASUS_HOME">{{ config.PEGASUS_HOME }}</profile>
     </site>
 
     <site  handle="condorpool" arch="x86_64" os="{{ os | upper }}">
@@ -17,6 +19,7 @@
         <directory type="local-storage" path="{{ base_dir }}/outputs">
             <file-server operation="all" url="file://{{ base_dir }}/outputs" />
         </directory>
+
         <profile namespace="pegasus" key="style">condor</profile>
         <profile namespace="condor" key="universe">vanilla</profile>
     </site>
