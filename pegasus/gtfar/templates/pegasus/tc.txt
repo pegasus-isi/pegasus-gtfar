@@ -23,7 +23,7 @@ tr perm {
     }
 
     site condorpool {
-        pfn "{{ bin_dir }}/perm{{ os | lower }}"
+        pfn "{{ bin_dir }}/perm.{{ os | lower }}"
         arch "x86_64"
         os "{{ os | lower }}"
         type "INSTALLED"
