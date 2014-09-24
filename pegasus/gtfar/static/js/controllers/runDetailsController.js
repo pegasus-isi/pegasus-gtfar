@@ -134,21 +134,36 @@ function(moment) {
             return false; // Hides everything until we have data
         };
 
-        $scope.getStatusText = function() {
+        $scope.getStatusText = function(short) {
             if($scope.run && $scope.run.status > 0) {
-                return "Run stopped before completion";
+                if(short) {
+                    return "stopped"
+                }
+                return "Run stopped before completion!";
             }
             if($scope.status) { // We have to make sure we've gotten data back from the server
                 if($scope.status.state == 5) { // Failed
+                    if(short) {
+                        return "fail";
+                    }
                     return "Run Failed!";
                 }
                 if($scope.status.state == 4) { // Success
+                    if(short) {
+                        return "success";
+                    }
                     return "Run Succeeded!";
                 }
                 if($scope.status.failed > 0) { // Failing
+                    if(short) {
+                        return "failing";
+                    }
                     return "Failures found, but run still progressing.";
                 }
                 // Running
+                if(short) {
+                    return "running";
+                }
                 return "Still Running.";
             }
         };
