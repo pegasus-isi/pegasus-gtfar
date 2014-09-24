@@ -25,12 +25,12 @@
     </site>
 
     <site  handle="s3" arch="x86_64" os="{{ os | upper }}">
-        <directory type="shared-scratch" path="/pegasus-gtfar/data/runs/{{ _id }}/scratch">
-            <file-server operation="all" url="s3://pegasus@amazon/pegasus-gtfar/data/runs/{{ _id }}/scratch" />
+        <directory type="shared-scratch" path="/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}/scratch">
+            <file-server operation="all" url="s3://pegasus@amazon/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}/scratch" />
         </directory>
 
-        <directory type="local-storage" path="/pegasus-gtfar/data/runs/{{ _id }}/output">
-            <file-server operation="all" url="s3://pegasus@amazon/pegasus-gtfar/data/runs/{{ _id }}/output" />
+        <directory type="local-storage" path="/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}/output">
+            <file-server operation="all" url="s3://pegasus@amazon/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}/output" />
         </directory>
     </site>
 

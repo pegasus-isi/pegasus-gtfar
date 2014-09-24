@@ -47,6 +47,7 @@ GTFAR_EXECUTION_SITE = 'condorpool'
 GTFAR_STAGING_SITE = 'local'
 GTFAR_STORAGE_SITE = GTFAR_STAGING_SITE
 
+GTFAR_S3_BUCKET = 'pegasus-gtfar'
 
 # A Temporary directory to upload files into.
 UPLOAD_FOLDER = '/tmp'
