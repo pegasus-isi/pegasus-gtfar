@@ -49,6 +49,14 @@ function(moment) {
                 if($scope.run.email) {
                     $scope.run.emails = $scope.run.email.split(',');
                 }
+                // If the run was stopped then we don't need to get the status
+                if($scope.run.status <= 0) {
+                    setTimeout(getStatus, 500);
+
+                }
+                else {
+                    getOutputFiles();
+                }
             }).error(function(data) {
                 console.error(data);
             });
@@ -58,7 +66,6 @@ function(moment) {
             $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.status).success(function(data) {
                 if(statusChanged(data)) {
                     $scope.status = data;
-                    $scope.statusText =
                     getOutputFiles();
                 }
                 // We don't want the calls to continue when we leave this state
@@ -88,11 +95,14 @@ function(moment) {
                 $scope.outputFiles = data.objects;
                 // TODO: need to present links to download the output files
             }).error(function(data) {
-                console.error(data);
+                $scope.alerts.push({'type' : 'danger', 'message' : 'Error retrieving output files. Please contact the developers'});
             });
         }
 
         $scope.getStatusColor = function(prefix) {
+            if($scope.run && $scope.run.status > 0) {
+                return prefix + "-danger";
+            }
             if($scope.status) { // We have to make sure we've gotten data back from the server
                 if($scope.status.state == 5) { // Failed
                     return prefix + "-danger";
@@ -106,20 +116,28 @@ function(moment) {
                 // Running
                 return prefix + "-info";
             }
+            return prefix + "-danger";
 
         };
 
         // Pass in either the option 'bar' or 'alert'
         $scope.showBarOrAlert = function(option) {
+            if($scope.run && $scope.run.status > 0) {
+                return option == "alert";
+            }
             if($scope.status) {
                 if($scope.status.state > 3) {
                     return option == "alert";
                 }
                 return option == "bar";
             }
+            return false; // Hides everything until we have data
         };
 
         $scope.getStatusText = function() {
+            if($scope.run && $scope.run.status > 0) {
+                return "Run stopped before completion";
+            }
             if($scope.status) { // We have to make sure we've gotten data back from the server
                 if($scope.status.state == 5) { // Failed
                     return "Run Failed!";
@@ -137,20 +155,18 @@ function(moment) {
 
         $scope.stopRun = function() {
             $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.stop).success(function(data) {
-                $scope.alerts.push({
-                    'message' : data.reason,
-                    'type' : 'success'
-                });
+                $scope.run.status = 1;
                 $http.put($window.apiLinks.runs + "/" + $stateParams.id, {"status" : 1}).success(function(data) {
                     // No need to do anything
                 }).error(function(data){
-
+                    $scope.run.status = 0;
                 });
             }).error(function(data) {
                 $scope.alerts.push({
                     'message' : data.reason + "Error Code: " + data.status,
                     'type' : 'danger'
                 });
+                $scope.run.status = 0;
             });
         };
 
@@ -159,7 +175,6 @@ function(moment) {
         };
 
         getRun();
-        getStatus();
 
 
 

@@ -22,7 +22,7 @@
                 <label for="inputRunName" class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label">Workflow Name</label>
 
                 <div class="col-xs-6 col-sm-7 col-md-8 col-lg-9">
-                    <span class="help-block">{{ run.name }} <span class="label {{ getStatusColor('label') }}">{{ getStatusText() }}</span></span>
+                    <span class="help-block">{{ run.name }} <span class="label" ng-class="getStatusColor('label')">{{ getStatusText() }}</span></span>
                 </div>
             </div>
             <div class="form-group">

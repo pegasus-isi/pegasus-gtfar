@@ -163,9 +163,7 @@ function(angular) {
             $http.post($window.apiLinks.runs, $scope.run).success(function(data) {
                 $scope.addingRun = null;
                 $scope.alerts.push({'type' : 'success', 'message' : 'Run successfully created and starting now, please wait'});
-                setTimeout(function() {
-                    $state.go('runDetails', {id : data.id});
-                }, 1000);
+                $state.go('runDetails', {id : data.id});
              }).error(function(data) {
                 $scope.addingRun = null;
                 if(data.code && data.code == 503) {
