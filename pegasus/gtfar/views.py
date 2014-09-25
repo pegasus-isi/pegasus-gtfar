@@ -301,7 +301,7 @@ def run_workflow(result):
     workflow.run()
 
 
-def remove_run_directories(instance_id):
+def remove_run_directories(instance_id, **kw):
     try:
         #
         # Delete from file-system
@@ -312,6 +312,7 @@ def remove_run_directories(instance_id):
         #
         # Delete from S3
         #
+
         if IS_S3_USED:
             s3.delete_run_dir(str(instance_id))
 
