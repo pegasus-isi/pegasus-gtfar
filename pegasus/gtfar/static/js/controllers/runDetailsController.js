@@ -101,6 +101,9 @@ define(["moment"],
 
             $scope.getStatusColor = function (prefix) {
                 if ($scope.run && $scope.run.status > 0) {
+                    if ($scope.run.status == 256) {
+                        return prefix + "-warning";
+                    }
                     return prefix + "-danger";
                 }
                 if ($scope.status) { // We have to make sure we've gotten data back from the server
