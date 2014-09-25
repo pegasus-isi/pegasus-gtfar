@@ -254,7 +254,7 @@ def generate_dax(result):
                   dax=os.path.join(path, '%d' % result['id']),
                   url='%s#/createRun' % url_for('index'),
                   email=result['email'],
-                  splits=math.floor(filesize / app.config['SPLIT_DIVISOR']))
+                  splits=int(math.floor(filesize / app.config['SPLIT_DIVISOR'])))
 
     validation_results = gtfar.validate()
 
@@ -366,7 +366,7 @@ def download(file_path):
 @app.route('/api/runs/<int:_id>/outputs', methods=['GET'])
 def get_output_files(_id):
     files = {'objects': []}
-    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(id), 'output')
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'output')
 
     for filename in os.listdir(path):
         filesize = os.path.getsize(os.path.join(path, filename))
@@ -376,8 +376,8 @@ def get_output_files(_id):
     return jsonify(files)
 
 
-@app.route('/api/runs/<int:id>/logs', methods=['GET'])
-def get_logs(id):
+@app.route('/api/runs/<int:_id>/logs', methods=['GET'])
+def get_logs(_id):
     pass
 
 
