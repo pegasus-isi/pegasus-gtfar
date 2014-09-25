@@ -25,6 +25,8 @@ from werkzeug import secure_filename
 
 from flask import render_template, request, redirect, url_for, json, jsonify, send_from_directory
 
+import jinja2
+
 from pegasus.gtfar import app, apiManager, __VERSION__
 
 from pegasus.gtfar.dax.dax import GTFAR
@@ -338,7 +340,8 @@ def download(file):
 def getOutputFiles(id):
     files = {"objects": []}
     for filename in os.listdir(app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "output"):
-        files["objects"].append({"name": filename})
+        filesize = os.path.getsize(app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "output" + os.sep + filename)
+        files["objects"].append({"name": filename, "size" : jinja2.Template("{{size|filesizeformat}}").render(size=filesize)})
     return jsonify(files)
 
 
