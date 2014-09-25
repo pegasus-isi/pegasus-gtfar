@@ -31,7 +31,7 @@ from flask.ext.restless import ProcessingException
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from pegasus.gtfar import app, db, apiManager, __VERSION__
+from pegasus.gtfar import app, db, s3, api_manager, IS_S3_USED, __VERSION__
 
 from pegasus.gtfar.dax.dax import GTFAR
 from pegasus.gtfar.models import Run, isValidFile
@@ -301,34 +301,44 @@ def run_workflow(result):
     workflow.run()
 
 
-def remove_run_directories(instance_id, **kw):
+def remove_run_directories(instance_id):
     try:
+        #
+        # Delete from file-system
+        #
+
         shutil.rmtree(os.path.join(app.config['GTFAR_STORAGE_DIR'], str(instance_id)))
+
+        #
+        # Delete from S3
+        #
+        if IS_S3_USED:
+            s3.delete_run_dir(str(instance_id))
 
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
 
 
-apiManager.create_api(Run,
-                      methods=['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
-                      preprocessors={
-                          'POST': [
-                              validate_fields
-                          ],
-                          'DELETE': [
-                              remove_run_directories,
-                          ]
-                      },
-                      postprocessors={
-                          'POST': [
-                              create_run_directories,
-                              create_config,
-                              generate_dax,
-                              plan_workflow,
-                              run_workflow
-                          ]
-                      })
+api_manager.create_api(Run,
+                       methods=['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
+                       preprocessors={
+                           'POST': [
+                               validate_fields
+                           ],
+                           'DELETE': [
+                               remove_run_directories,
+                           ]
+                       },
+                       postprocessors={
+                           'POST': [
+                               create_run_directories,
+                               create_config,
+                               generate_dax,
+                               plan_workflow,
+                               run_workflow
+                           ]
+                       })
 
 #
 # Views
