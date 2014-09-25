@@ -375,11 +375,8 @@ def analyze(_id):
     workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
                                        os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'submit'))
     out = workflow.analyze()
-    log = ''
-    for line in out:
-        log += line
 
-    return log, 200
+    return out.read(), 200
 
 
 @app.route('/api/download/<path:file_path>')
