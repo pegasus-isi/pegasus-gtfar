@@ -389,13 +389,12 @@ def get_output_files(_id):
     files = {'objects': []}
 
     if IS_S3_USED and app.config['GTFAR_STORAGE_SITE'] == 's3':
-        files = s3.get_output_files(_id)
+        output_files = s3.get_output_files(_id)
 
-        for name, file_size in files:
+        for name, file_size in output_files:
             files['objects'].append({'name': name,
                                      'size': jinja2.Template('{{size|filesizeformat}}').render(size=file_size)})
 
-        print files
     else:
         path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'output')
 
