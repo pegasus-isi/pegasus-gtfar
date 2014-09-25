@@ -104,6 +104,7 @@ function(moment) {
                     .then(function() {
                         deleteCount++;
                         if(deleteCount == deleteTotal) {
+                            $scope.runsGrid.selectedItems.length = 0;
                             getRuns();
                         }
                     })
