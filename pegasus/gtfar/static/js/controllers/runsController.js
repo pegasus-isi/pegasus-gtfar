@@ -72,7 +72,16 @@ function(moment) {
         };
 
         $scope.getExitCodeIcon = function(status) {
-            return (status == 0) ? "text-success fa fa-check-circle" : (status == -1) ? "text-primary fa fa-exclamation-circle" : "text-danger fa fa-exclamation-triangle";
+            switch (status) {
+                case -1:
+                    return "text-primary fa fa-check-circle";
+                case 0:
+                    return "text-success fa fa-check-circle";
+                case 256:
+                    return "text-warning fa fa-warning";
+                default:
+                    return "text-danger fa fa-exclamation-triangle";
+            }
         };
 
         $scope.createRun = function() {
