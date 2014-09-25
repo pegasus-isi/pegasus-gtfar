@@ -21,15 +21,17 @@ import math
 
 import shutil
 
+import jinja2
+
 from werkzeug import secure_filename
 
 from flask import render_template, request, redirect, url_for, json, jsonify, send_from_directory
 
 from flask.ext.restless import ProcessingException
 
-import jinja2
+from sqlalchemy.orm.exc import NoResultFound
 
-from pegasus.gtfar import app, apiManager, __VERSION__
+from pegasus.gtfar import app, db, apiManager, __VERSION__
 
 from pegasus.gtfar.dax.dax import GTFAR
 from pegasus.gtfar.models import Run, isValidFile
@@ -390,13 +392,29 @@ def stop_run(_id):
         'reason': 'Run stopped successfully.'
     }
     try:
+        session = db.session
+        run = session.query(Run).filter(Run.id == _id).one()
+
+        # pegasus-remove
         workflow.stop()
+
+        # Update status in database
+        run.status = 256
+        session.add(run)
+        session.commit()
+
+    except NoResultFound:
+        response = {
+            'status': 400,
+            'reason': 'Run (%d) not found'
+        }
     except StopException:
         response = {
             'status': 500,
             'reason': 'Unable to stop the requested run.'
         }
-    return jsonify(response)
+
+    return jsonify(response), response['status']
 
 
 @app.route('/tests')

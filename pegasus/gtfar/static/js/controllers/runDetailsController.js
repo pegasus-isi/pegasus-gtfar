@@ -170,12 +170,8 @@ define(["moment"],
 
             $scope.stopRun = function () {
                 $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.stop).success(function (data) {
-                    $scope.run.status = 1;
-                    $http.put($window.apiLinks.runs + "/" + $stateParams.id, {"status": 1}).success(function (data) {
-                        // No need to do anything
-                    }).error(function (data) {
-                        $scope.run.status = 0;
-                    });
+                    $scope.run.status = 256;
+
                 }).error(function (data) {
                     $scope.alerts.push({
                         'message': data.reason + "Error Code: " + data.status,
@@ -190,8 +186,6 @@ define(["moment"],
             };
 
             getRun();
-
-
         };
 
         // Return the array so the dependecy injections are accounted for
