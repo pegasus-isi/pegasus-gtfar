@@ -82,7 +82,6 @@ setup(
         'mmh3==2.3',
         'argparse==1.2.1',
         'Flask==0.10.1',
-        'WTForms==2.0.1',
         'Flask-Cache==0.13.1',
         'Flask-SQLAlchemy==1.0',
         'Flask-Restless==0.13.1',
