@@ -34,7 +34,7 @@ function(angular) {
         };
         $scope.uploadProgress = null;
         $scope.addingRun = null;
-        $scope.strandRuleOptions = [{rule: "unstranded"},{rule: "same"},{rule: "opposite"}];
+        $scope.strandRuleOptions = [{rule: "unstranded"},{rule: "sense"},{rule: "anti-sense"}];
         // Defaults
 
         // We have to define this out of the run object becaues we need to link it to .rule in the end
@@ -166,14 +166,19 @@ function(angular) {
                 $state.go('runDetails', {id : data.id});
              }).error(function(data) {
                 $scope.addingRun = null;
-                if(data.code && data.code == 503) {
+                if(data.message && data.message == "400: Bad Request") {
+                    $http.get($window.apiLinks.errors).success(function(data) {
+                        if(data.errors) {
+                            for (var i = 0; i < data.errors.length; i++) {
+                                $scope.alerts.push({'type': 'danger', 'message': data.errors[i].message});
+                            }
+                        }
+                    }).error(function(data){});
+                }
+                else if(data.code && data.code == 503) {
                     $scope.alerts.push({'type' : 'danger', 'message' : 'Could not connect to server, please check your connection.'});
                 }
-                else if(data[0].message) {
-                    for(var i = 0; i < data.length; i++) {
-                        $scope.alerts.push({'type' : 'danger', 'message' : data[i].message});
-                    }
-                }
+
              });
 
 

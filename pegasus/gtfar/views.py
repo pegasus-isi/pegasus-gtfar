@@ -25,6 +25,8 @@ from werkzeug import secure_filename
 
 from flask import render_template, request, redirect, url_for, json, jsonify, send_from_directory
 
+from flask.ext.restless import ProcessingException
+
 import jinja2
 
 from pegasus.gtfar import app, apiManager, __VERSION__
@@ -99,7 +101,7 @@ def before_first_request():
 # Flask Restless
 #
 
-strandRuleOptions = set(['unstranded', 'same', 'opposite'])
+strandRuleOptions = set(['unstranded', 'sense', 'anti-sense'])
 
 validExtensions = set(['gz'])
 
@@ -118,57 +120,58 @@ def matchesAny(set, string):
 def isValidFile(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
 
-
+validationErrorMessages = []
 def validate_fields(data):
+    global validationErrorMessages
     validationErrorMessages = []
 
     if not 'name' in data:
-        validationErrorMessages.append({'field' : 'Name', 'error' : 'You must provide a name for the run'})
+        validationErrorMessages.append({'field' : 'Name', 'message' : 'You must provide a name for the run'})
     elif not data['name'].isalnum():
-        validationErrorMessages.append({'field' : 'Name', 'error' : 'Name must be an alphanumeric value'})
+        validationErrorMessages.append({'field' : 'Name', 'message' : 'Name must be an alphanumeric value'})
 
     if not 'filename' in data:
-        validationErrorMessages.append({'field' : 'File', 'error' : 'You must provide a file for the run'})
+        validationErrorMessages.append({'field' : 'File', 'message' : 'You must provide a file for the run'})
     elif not isValidFile(data['filename']):
-        validationErrorMessages.append({'field' : 'File', 'error' : 'File must be a GZIPPED file. (.gz)'})
+        validationErrorMessages.append({'field' : 'File', 'message' : 'File must be a GZIPPED file. (.gz)'})
 
     if not 'readLength' in data:
-        validationErrorMessages.append({'field' : 'Read Length', 'error' : 'You must provide a read length for the run'})
+        validationErrorMessages.append({'field' : 'Read Length', 'message' : 'You must provide a read length for the run'})
     elif not type(data['readLength']) == int or not str(data['readLength']).isdigit() or not int(data['readLength']) >= 50 or not int(data['readLength']) <= 128:
-        validationErrorMessages.append({'field' : 'Read Length', 'error' : 'Read length must be an integer between 50 and 128 (inclusive)'})
+        validationErrorMessages.append({'field' : 'Read Length', 'message' : 'Read length must be an integer between 50 and 128 (inclusive)'})
     elif 'genSplice' in data and data['genSplice'] == True:
         if not int(data['readLength']) == 75 or not int(data['readLength']) >= 100 or not int(data['readLength']) <= 128:
-            validationErrorMessages.append({'field' : 'Read Length', 'error' : 'When the generate new splice candidate option is true the read length must be either 75 or between 100 and 128 (inclusive)'})
+            validationErrorMessages.append({'field' : 'Read Length', 'message' : 'When the generate new splice candidate option is true the read length must be either 75 or between 100 and 128 (inclusive)'})
 
 
     if not 'mismatches' in data:
-        validationErrorMessages.append({'field' : 'Mismatches Allowed', 'error' : 'You must provide the number of mismatches allowed for the run'})
+        validationErrorMessages.append({'field' : 'Mismatches Allowed', 'message' : 'You must provide the number of mismatches allowed for the run'})
     elif not type(data['mismatches']) == int or not str(data['mismatches']).isdigit() or not int(data['mismatches']) >= 0 or not int(data['mismatches']) <= 8:
-        validationErrorMessages.append({'field' : 'Mismatches Allowed', 'error' : 'Mismatches allowed must be an integer between 0 and 8 (inclusive)'})
+        validationErrorMessages.append({'field' : 'Mismatches Allowed', 'message' : 'Mismatches allowed must be an integer between 0 and 8 (inclusive)'})
 
     if not 'strandRule' in data:
-        validationErrorMessages.append({'field' : 'Strand Rule', 'error' : 'You must provide a strand rule for the run.'})
+        validationErrorMessages.append({'field' : 'Strand Rule', 'message' : 'You must provide a strand rule for the run.'})
     elif not matchesAny(strandRuleOptions, data['strandRule']):
-        validationErrorMessages.append({'field' : 'Strand Rule', 'error' : 'Strand Rule must be either "unstranded", "same", or "opposite".'})
+        validationErrorMessages.append({'field' : 'Strand Rule', 'message' : 'Strand Rule must be either "unstranded", "sense", or "anti-sense".'})
 
     if not 'genSplice' in data:
-        validationErrorMessages.append({'field' : 'Generate New Splice Candidates', 'error' : 'You must specify whether or not you want the run to generate new splice candidates.'})
+        validationErrorMessages.append({'field' : 'Generate New Splice Candidates', 'message' : 'You must specify whether or not you want the run to generate new splice candidates.'})
     elif not type(data['genSplice']) == bool:
-        validationErrorMessages.append({'field' : 'Generate New Splice Candidates', 'error' : 'Generate New Splice Candidates must be a boolean.'})
+        validationErrorMessages.append({'field' : 'Generate New Splice Candidates', 'message' : 'Generate New Splice Candidates must be a boolean.'})
 
     if not 'mapFiltered' in data:
-        validationErrorMessages.append({'field' : 'Map Filtered', 'error' : 'You must specify whether or not you want the run to be map filtered.'})
+        validationErrorMessages.append({'field' : 'Map Filtered', 'message' : 'You must specify whether or not you want the run to be map filtered.'})
     elif not type(data['mapFiltered']) == bool:
-        validationErrorMessages.append({'field' : 'Map Filtered', 'error' : 'Map Filtered must be a boolean.'})
+        validationErrorMessages.append({'field' : 'Map Filtered', 'message' : 'Map Filtered must be a boolean.'})
 
     if 'email' in data:
         emails = data['email'].split(',')
         for email in emails:
             if not '@' in email:
-                validationErrorMessages.append({'field' : 'Email', 'error' : 'You must use a real, properly formatted email address'})
+                validationErrorMessages.append({'field' : 'Email', 'message' : 'You must use a real, properly formatted email address'})
 
     if validationErrorMessages:
-        raise ValidationException(jsonify(validationErrorMessages))
+        raise ProcessingException()
 
 
 def create_run_directories(result):
@@ -321,6 +324,12 @@ def upload():
         file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         return redirect(url_for("index"))
 
+@app.route("/api/errors", methods=["GET"])
+def getErrors():
+    global validationErrorMessages
+    errors = { 'errors' : validationErrorMessages}
+    return jsonify(errors)
+
 
 @app.route("/api/runs/<int:id>/status", methods=["GET"])
 def getStatus(id):
@@ -390,6 +399,7 @@ def index():
         'runs': url_for(runs_prefix),
         'upload': url_for('upload'),
         'download': '/api/download',
+        'errors' : '/api/errors',
         'status': '/status',
         'outputs': '/outputs',
         'stop' : '/stop'
