@@ -247,15 +247,13 @@ class IterativeMapMixin(object):
     def iterative_map(self):
         self._clip_and_parse_reads('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES.fastq', 'full')
 
-        self._map_and_parse_reads('reads%d_full.fastq', 'full')
-        unmapped = 'reads%s_full_unmapped.fastq'
+        unmapped_reads = self._map_and_parse_reads('reads%d_full.fastq', 'full')
 
         for trim in self._trims:
             self._read_length = trim
 
             if (self._is_trim_unmapped):
-                self._map_and_parse_reads(unmapped, 'trim%d' % trim)
-                unmapped = 'reads*unmapped.fastq'
+                unmapped_reads = self._map_and_parse_reads(unmapped_reads, 'trim%d' % trim)
 
             if (self._is_map_filtered):
                 self._map_and_parse_reads('reads%%d_%d.fastq' % trim, 'filter%d' % trim)
@@ -263,15 +261,15 @@ class IterativeMapMixin(object):
         cat = UNIXUtils.cat(self._vis_files, '%s.sam' % self._prefix, o_transfer=True)
         cat.invoke('all', self._state_update)
         self.adag.addJob(cat)
-        '''
+
         if self._is_trim_unmapped:
             cat = UNIXUtils.cat([2], '%s.unmapped.fastq')
         else:
-            cat = UNIXUtils.cat(['reads%d_full_unmapped.fastq' % i for i in self._range()], '%s.unmapped.fastq')
+            merged_unmapped = '%s.unmapped.fastq' % self._prefix
+            cat = UNIXUtils.cat([unmapped_reads % i for i in self._range()], merged_unmapped, o_transfer=True)
 
         cat.invoke('all', self._state_update)
         self.adag.addJob(cat)
-        '''
 
     def _map_and_parse_reads(self, reads, tag):
         self._setup_perm_seeds()
@@ -279,12 +277,19 @@ class IterativeMapMixin(object):
         self._map_and_parse_reads_to_features(reads, tag)
 
         path, file_name, ext = GTFAR._get_filename_parts(reads)
-        reads = '%s_miss_FEATURES%s' % (file_name, ext)
-        self._map_and_parse_reads_to_genome(reads, tag)
+
+        miss_features = '%s_miss_FEATURES%s' % (file_name, ext)
+        self._map_and_parse_reads_to_genome(miss_features, tag)
+
+        miss_genome = '%s_miss_GENOME%s' % os.path.splitext(miss_features)
 
         if self._splice:
-            reads = '%s_miss_GENOME%s' % os.path.splitext(reads)
             self._map_and_parse_reads_to_splices(reads, tag)
+            miss_splices = '%s_miss_SPLICES%s' % os.path.splitext(miss_genome)
+
+            return miss_splices
+
+        return miss_genome
 
     def _setup_perm_seeds(self):
         self._seed = self._mismatches
