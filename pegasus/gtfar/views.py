@@ -370,6 +370,18 @@ def get_status(_id):
     return jsonify(status)
 
 
+@app.route('/api/runs/<int:_id>/analyze', methods=['GET'])
+def analyze(_id):
+    workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
+                                       os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'submit'))
+    out = workflow.analyze()
+    log = ''
+    for line in out:
+        log += line
+
+    return log, 200
+
+
 @app.route('/api/download/<path:file_path>')
 def download(file_path):
     return send_from_directory(app.config['GTFAR_STORAGE_DIR'], file_path)
