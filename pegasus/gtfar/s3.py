@@ -48,17 +48,17 @@ class S3Utils(object):
 
     def delete_run_dir(self, _id):
         prefix = 'data/runs/%s/' % _id
-        self.delete_key(prefix)
+        self._delete_key(prefix)
 
     def delete_staging_dir(self, _id):
         prefix = 'data/runs/%s/scratch/' % _id
-        self.delete_key(prefix)
+        self._delete_key(prefix)
 
     def delete_output_dir(self, _id):
         prefix = 'data/runs/%s/output/' % _id
-        self.delete_key(prefix)
+        self._delete_key(prefix)
 
-    def delete_key(self, key):
+    def _delete_key(self, key):
 
         # Is the key a directory?
         if key.endswith('/'):
@@ -83,7 +83,8 @@ class S3Utils(object):
                 self._bucket.delete_keys(del_list)
 
             for i in range(0, len(dir_list), S3Utils.MAX_DELETE):
-                self._bucket.delete_keys(dir_list[i:i + S3Utils.MAX_DELETE])
+                l = dir_list[i:i + S3Utils.MAX_DELETE]
+                self._bucket.delete_keys(l)
 
         else:
             self._bucket.delete_key(key)
