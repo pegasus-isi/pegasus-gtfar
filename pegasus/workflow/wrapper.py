@@ -162,6 +162,8 @@ class PegasusWorkflow(Workflow):
         if ec != 0:
             raise AnalyzerException(exit_code=ec)
 
+        return out
+
     def stop(self):
         executable = self.__get_abs_exec_path('pegasus-remove')
         ec, out, err = self.__exec_command(executable, [self.dag_dir])
@@ -185,13 +187,14 @@ class PegasusWorkflow(Workflow):
     def __arg_to_str(self, args):
         args_list = []
 
-        for arg in args:
-            if isinstance(arg, tuple):
-                args_list.append('%s' % str(arg[0]))
-                for item in arg[1:]:
-                    args_list.append('%s' % str(item))
-            else:
-                args_list.append('%s' % str(arg))
+        if args:
+            for arg in args:
+                if isinstance(arg, tuple):
+                    args_list.append('%s' % str(arg[0]))
+                    for item in arg[1:]:
+                        args_list.append('%s' % str(item))
+                else:
+                    args_list.append('%s' % str(arg))
 
         return args_list
 
