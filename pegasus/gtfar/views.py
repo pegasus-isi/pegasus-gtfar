@@ -120,57 +120,73 @@ def matchesAny(set, string):
 def isValidFile(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
 
-validationErrorMessages = []
+
+validation_error_messages = []
+
+
 def validate_fields(data):
-    global validationErrorMessages
-    validationErrorMessages = []
+    global validation_error_messages
+    validation_error_messages = []
 
     if not 'name' in data:
-        validationErrorMessages.append({'field' : 'Name', 'message' : 'You must provide a name for the run'})
+        validation_error_messages.append({'field': 'Name', 'message': 'You must provide a name for the run'})
     elif not data['name'].isalnum():
-        validationErrorMessages.append({'field' : 'Name', 'message' : 'Name must be an alphanumeric value'})
+        validation_error_messages.append({'field': 'Name', 'message': 'Name must be an alphanumeric value'})
 
     if not 'filename' in data:
-        validationErrorMessages.append({'field' : 'File', 'message' : 'You must provide a file for the run'})
+        validation_error_messages.append({'field': 'File', 'message': 'You must provide a file for the run'})
     elif not isValidFile(data['filename']):
-        validationErrorMessages.append({'field' : 'File', 'message' : 'File must be a GZIPPED file. (.gz)'})
+        validation_error_messages.append({'field': 'File', 'message': 'File must be a GZIPPED file. (.gz)'})
 
     if not 'readLength' in data:
-        validationErrorMessages.append({'field' : 'Read Length', 'message' : 'You must provide a read length for the run'})
-    elif not type(data['readLength']) == int or not str(data['readLength']).isdigit() or not int(data['readLength']) >= 50 or not int(data['readLength']) <= 128:
-        validationErrorMessages.append({'field' : 'Read Length', 'message' : 'Read length must be an integer between 50 and 128 (inclusive)'})
+        validation_error_messages.append(
+            {'field': 'Read Length', 'message': 'You must provide a read length for the run'})
+    elif not type(data['readLength']) == int or not str(data['readLength']).isdigit() or not int(
+            data['readLength']) >= 50 or not int(data['readLength']) <= 128:
+        validation_error_messages.append(
+            {'field': 'Read Length', 'message': 'Read length must be an integer between 50 and 128 (inclusive)'})
     elif 'genSplice' in data and data['genSplice'] == True:
-        if not int(data['readLength']) == 75 or not int(data['readLength']) >= 100 or not int(data['readLength']) <= 128:
-            validationErrorMessages.append({'field' : 'Read Length', 'message' : 'When the generate new splice candidate option is true the read length must be either 75 or between 100 and 128 (inclusive)'})
-
+        if not int(data['readLength']) == 75 or not int(data['readLength']) >= 100 or not int(
+                data['readLength']) <= 128:
+            validation_error_messages.append({'field': 'Read Length',
+                                              'message': 'When the generate new splice candidate option is true the read length must be either 75 or between 100 and 128 (inclusive)'})
 
     if not 'mismatches' in data:
-        validationErrorMessages.append({'field' : 'Mismatches Allowed', 'message' : 'You must provide the number of mismatches allowed for the run'})
-    elif not type(data['mismatches']) == int or not str(data['mismatches']).isdigit() or not int(data['mismatches']) >= 0 or not int(data['mismatches']) <= 8:
-        validationErrorMessages.append({'field' : 'Mismatches Allowed', 'message' : 'Mismatches allowed must be an integer between 0 and 8 (inclusive)'})
+        validation_error_messages.append(
+            {'field': 'Mismatches Allowed', 'message': 'You must provide the number of mismatches allowed for the run'})
+    elif not type(data['mismatches']) == int or not str(data['mismatches']).isdigit() or not int(
+            data['mismatches']) >= 0 or not int(data['mismatches']) <= 8:
+        validation_error_messages.append({'field': 'Mismatches Allowed',
+                                          'message': 'Mismatches allowed must be an integer between 0 and 8 (inclusive)'})
 
     if not 'strandRule' in data:
-        validationErrorMessages.append({'field' : 'Strand Rule', 'message' : 'You must provide a strand rule for the run.'})
+        validation_error_messages.append(
+            {'field': 'Strand Rule', 'message': 'You must provide a strand rule for the run.'})
     elif not matchesAny(strandRuleOptions, data['strandRule']):
-        validationErrorMessages.append({'field' : 'Strand Rule', 'message' : 'Strand Rule must be either "unstranded", "sense", or "anti-sense".'})
+        validation_error_messages.append(
+            {'field': 'Strand Rule', 'message': 'Strand Rule must be either "Unstranded", "Sense", or "Anti-Sense".'})
 
     if not 'genSplice' in data:
-        validationErrorMessages.append({'field' : 'Generate New Splice Candidates', 'message' : 'You must specify whether or not you want the run to generate new splice candidates.'})
+        validation_error_messages.append({'field': 'Generate New Splice Candidates',
+                                          'message': 'You must specify whether or not you want the run to generate new splice candidates.'})
     elif not type(data['genSplice']) == bool:
-        validationErrorMessages.append({'field' : 'Generate New Splice Candidates', 'message' : 'Generate New Splice Candidates must be a boolean.'})
+        validation_error_messages.append(
+            {'field': 'Generate New Splice Candidates', 'message': 'Generate New Splice Candidates must be a boolean.'})
 
     if not 'mapFiltered' in data:
-        validationErrorMessages.append({'field' : 'Map Filtered', 'message' : 'You must specify whether or not you want the run to be map filtered.'})
+        validation_error_messages.append({'field': 'Map Filtered',
+                                          'message': 'You must specify whether or not you want the run to be map filtered.'})
     elif not type(data['mapFiltered']) == bool:
-        validationErrorMessages.append({'field' : 'Map Filtered', 'message' : 'Map Filtered must be a boolean.'})
+        validation_error_messages.append({'field': 'Map Filtered', 'message': 'Map Filtered must be a boolean.'})
 
     if 'email' in data:
         emails = data['email'].split(',')
         for email in emails:
             if not '@' in email:
-                validationErrorMessages.append({'field' : 'Email', 'message' : 'You must use a real, properly formatted email address'})
+                validation_error_messages.append(
+                    {'field': 'Email', 'message': 'You must use a real, properly formatted email address'})
 
-    if validationErrorMessages:
+    if validation_error_messages:
         raise ProcessingException()
 
 
@@ -209,7 +225,8 @@ def create_config(result):
         sites_xml.write(render_template('pegasus/sites.xml', _id=_id, base_dir=path, os=app.config['OS_TYPE']))
 
     with open(os.path.join(path, 'config', 'om.txt'), 'w') as om_txt:
-        om_txt.write(render_template('pegasus/om.txt', _id=_id, data_dir=app.config['GTFAR_DATA_DIR'], output_dir=output_dir))
+        om_txt.write(
+            render_template('pegasus/om.txt', _id=_id, data_dir=app.config['GTFAR_DATA_DIR'], output_dir=output_dir))
 
     with open(os.path.join(path, 'config', 'notifications.conf'), 'w') as notf_conf:
         notf_conf.write(render_template('pegasus/notifications.conf', base_dir=path))
@@ -219,7 +236,7 @@ def create_config(result):
 
 def generate_dax(result):
     path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
-    filesize = os.path.getsize(path + os.sep + 'input' + os.sep + result['filename'])
+    filesize = os.path.getsize(os.path.join(path, 'input', result['filename']))
 
     gtfar = GTFAR(result['gtf'],
                   result['genome'],
@@ -316,78 +333,82 @@ apiManager.create_api(Run,
 #
 
 
-@app.route("/api/upload", methods=["POST"])
+@app.route('/api/upload', methods=['POST'])
 def upload():
-    file = request.files["file"]
-    if file and isValidFile(file.filename):
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        return redirect(url_for("index"))
+    upload_file = request.files['file']
+    if upload_file and isValidFile(upload_file.filename):
+        filename = secure_filename(upload_file.filename)
+        upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return redirect(url_for('index'))
 
-@app.route("/api/errors", methods=["GET"])
-def getErrors():
-    global validationErrorMessages
-    errors = { 'errors' : validationErrorMessages}
+
+@app.route('/api/errors', methods=['GET'])
+def get_errors():
+    global validation_error_messages
+    errors = {'errors': validation_error_messages}
     return jsonify(errors)
 
 
-@app.route("/api/runs/<int:id>/status", methods=["GET"])
-def getStatus(id):
-    workflow = wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"],
-                                       app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "submit")
+@app.route('/api/runs/<int:_id>/status', methods=['GET'])
+def get_status(_id):
+    workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
+                                       os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'submit'))
     status = workflow.monitor(['-l'])
     # we have to change the state to be a basic data type
     return jsonify(status)
 
 
-@app.route("/api/download/<path:file>")
-def download(file):
-    return send_from_directory(app.config["GTFAR_STORAGE_DIR"], file)
+@app.route('/api/download/<path:file_path>')
+def download(file_path):
+    return send_from_directory(app.config['GTFAR_STORAGE_DIR'], file_path)
 
 
-@app.route("/api/runs/<int:id>/outputs", methods=["GET"])
-def getOutputFiles(id):
-    files = {"objects": []}
-    for filename in os.listdir(app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "output"):
-        filesize = os.path.getsize(app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "output" + os.sep + filename)
-        files["objects"].append({"name": filename, "size" : jinja2.Template("{{size|filesizeformat}}").render(size=filesize)})
+@app.route('/api/runs/<int:_id>/outputs', methods=['GET'])
+def get_output_files(_id):
+    files = {'objects': []}
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(id), 'output')
+
+    for filename in os.listdir(path):
+        filesize = os.path.getsize(os.path.join(path, filename))
+        files['objects'].append(
+            {'name': filename, 'size': jinja2.Template('{{size|filesizeformat}}').render(size=filesize)})
+
     return jsonify(files)
 
 
-@app.route("/api/runs/<int:id>/logs", methods=["GET"])
-def getLogs(id):
+@app.route('/api/runs/<int:id>/logs', methods=['GET'])
+def get_logs(id):
     pass
 
-@app.route("/api/runs/<int:id>/stop")
-def stopRun(id):
-    workflow = wrapper.PegasusWorkflow(app.config["PEGASUS_HOME"],
-                                       app.config["GTFAR_STORAGE_DIR"] + os.sep + str(id) + os.sep + "submit")
+
+@app.route('/api/runs/<int:_id>/stop')
+def stop_run(_id):
+    workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
+                                       os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'submit'))
     response = {
-        'status' : 200,
-        'reason' : 'Run stopped successfully.'
+        'status': 200,
+        'reason': 'Run stopped successfully.'
     }
     try:
         workflow.stop()
     except StopException:
         response = {
-            'status' : 500,
-            'reason' : 'Unable to stop the requested run.'
+            'status': 500,
+            'reason': 'Unable to stop the requested run.'
         }
     return jsonify(response)
 
 
-
-
-@app.route("/tests")
+@app.route('/tests')
 def tests():
     """
     Loads up the testing environment
     :return: the template for the test page
     """
-    return render_template("testRunner.html")
+    return render_template('testRunner.html')
 
 
-@app.route("/")
+@app.route('/')
 def index():
     """
     Loads up the main page
@@ -399,10 +420,10 @@ def index():
         'runs': url_for(runs_prefix),
         'upload': url_for('upload'),
         'download': '/api/download',
-        'errors' : '/api/errors',
+        'errors': '/api/errors',
         'status': '/status',
         'outputs': '/outputs',
-        'stop' : '/stop'
+        'stop': '/stop'
     }
 
     return render_template('mainView.html', apiLinks=json.dumps(api_links))
