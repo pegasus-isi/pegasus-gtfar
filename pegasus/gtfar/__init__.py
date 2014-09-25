@@ -56,17 +56,18 @@ from pegasus.gtfar import filters
 api_manager = APIManager(app, flask_sqlalchemy_db=db)
 
 #
+# S3 Utils Initialization
+#
+
+IS_S3_USED = (app.config['GTFAR_STAGING_SITE'] == 's3' or app.config['GTFAR_STORAGE_SITE'] == 's3')
+
+if IS_S3_USED:
+    from pegasus.gtfar.s3 import S3Utils
+    s3 = S3Utils()
+
+#
 # Routes initialization
 #
 
 from pegasus.gtfar import views
 
-#
-# S3 Util Initialization
-#
-
-IS_S3_USED = app.config['GTFAR_STAGING_SITE'] == 's3' or app.config['GTFAR_OUTPUT_SITE'] == 's3'
-
-if IS_S3_USED:
-    from pegasus.gtfar.s3 import S3Utils
-    s3 = S3Utils()
