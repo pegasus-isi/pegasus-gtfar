@@ -17,6 +17,8 @@ __author__ = 'dcbriggs'
 import os
 import errno
 
+import math
+
 import shutil
 
 from werkzeug import secure_filename
@@ -212,6 +214,7 @@ def create_config(result):
 
 def generate_dax(result):
     path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
+    filesize = os.path.getsize(path + os.sep + 'input' + os.sep + result['filename'])
 
     gtfar = GTFAR(result['gtf'],
                   result['genome'],
@@ -229,7 +232,7 @@ def generate_dax(result):
                   dax=os.path.join(path, '%d' % result['id']),
                   url='%s#/createRun' % url_for('index'),
                   email=result['email'],
-                  splits=2)
+                  splits=math.floor(filesize / app.config['SPLIT_DIVISOR']))
 
     validation_results = gtfar.validate()
 

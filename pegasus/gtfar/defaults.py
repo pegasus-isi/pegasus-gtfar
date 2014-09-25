@@ -52,6 +52,8 @@ GTFAR_S3_BUCKET = 'pegasus-gtfar'
 # A Temporary directory to upload files into.
 UPLOAD_FOLDER = '/tmp'
 
+# Divisor for the split size for the Dax to use
+SPLIT_DIVISOR = 750000000 # 0.75 GB
 
 #
 # Pegasus Configuration
