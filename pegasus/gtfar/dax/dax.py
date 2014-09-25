@@ -529,6 +529,8 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
 
         self._state_update = '%s/state_update.py %%r %%r %%r %%r' % self._bin_dir
 
+        self.adag.invoke('all', self._state_update)
+
         if self._email:
             email_script = '%s/gtfar-email --id %r --from %r --to %r --subject %r --url %r --config %r' % (
                 self._bin_dir,
