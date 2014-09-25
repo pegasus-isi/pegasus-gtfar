@@ -102,6 +102,7 @@ class S3Utils(object):
 
         for key in files_rs:
             if not key.name.endswith('/'):
-                files.append(key.name.replace(prefix, ''))
+                file_size = key.size
+                files.append((key.name.replace(prefix, ''), file_size))
 
         return files
