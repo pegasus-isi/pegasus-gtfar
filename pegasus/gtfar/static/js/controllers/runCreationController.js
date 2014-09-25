@@ -59,7 +59,13 @@ function(angular) {
              * the default behavior.  Refer to the link below
              * http://uncorkedstudios.com/blog/multipartformdata-file-upload-with-angularjs
              */
-            if( document.getElementById("inputFile").files[0].size > FIVE_GIGABYTES) {
+            var  inputFile = document.getElementById("inputFile");
+
+            if (inputFile && !inputFile.value) {
+                return;
+            }
+
+            if( inputFile.files[0].size > FIVE_GIGABYTES) {
                 $scope.alerts.push({
                     "type" : "danger",
                     "message" : "That file is too large, please select one smaller than five gigabytes"
