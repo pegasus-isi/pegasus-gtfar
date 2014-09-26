@@ -22,14 +22,13 @@ import StringIO
 
 import ConfigParser
 
-from pegasus.gtfar import app
-
 from boto.exception import S3CreateError
 from boto.s3.connection import S3Connection
 
 
 class S3Utils(object):
     MAX_DELETE = 999
+    GTFAR_S3_BUCKET_PREFIX = 'pegasus-gtfar'
 
     def __init__(self, s3_cfg=None):
         if s3_cfg is None:
@@ -47,7 +46,7 @@ class S3Utils(object):
         self._secret_key = config.get('pegasus@amazon', 'secret_key')
 
         self._conn = S3Connection(self._access_key, self._secret_key)
-        self._bucket = self._init_bucket(app.config['GTFAR_S3_BUCKET'])
+        self._bucket = self._init_bucket(S3Utils.GTFAR_S3_BUCKET_PREFIX)
 
     def _init_bucket(self, bucket_prefix):
         buckets = self._conn.get_all_buckets()
