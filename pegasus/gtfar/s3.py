@@ -16,12 +16,15 @@ __author__ = 'Rajiv Mayani'
 
 import os
 
+import uuid
+
 import StringIO
 
 import ConfigParser
 
 from pegasus.gtfar import app
 
+from boto.exception import S3CreateError
 from boto.s3.connection import S3Connection
 
 
@@ -44,7 +47,22 @@ class S3Utils(object):
         self._secret_key = config.get('pegasus@amazon', 'secret_key')
 
         self._conn = S3Connection(self._access_key, self._secret_key)
-        self._bucket = self._conn.get_bucket(app.config['GTFAR_S3_BUCKET'])
+        self._bucket = self._init_bucket(app.config['GTFAR_S3_BUCKET'])
+
+    def _init_bucket(self, bucket_prefix):
+        buckets = self._conn.get_all_buckets()
+
+        for bucket in buckets:
+            if bucket.name.startswith(bucket_prefix):
+                return self._conn.get_bucket(bucket.name)
+        else:
+            while True:
+                try:
+                    bucket_name = '%s-%s' % (bucket_prefix, str(uuid.uuid4()).split('-')[-1])
+                    bucket = self._conn.create_bucket(bucket_name)
+                    return bucket
+                except S3CreateError:
+                    pass
 
     def delete_run_dir(self, _id):
         prefix = 'data/runs/%s/' % _id
@@ -107,3 +125,11 @@ class S3Utils(object):
                 files.append((key.name.replace(prefix, ''), file_size))
 
         return files
+
+
+def main():
+    s3 = S3Utils()
+
+
+if __name__ == '__main__':
+    main()
