@@ -64,6 +64,9 @@ class S3Utils(object):
                 except S3CreateError:
                     pass
 
+    def get_bucket_name(self):
+        return self._bucket.name
+
     def delete_run_dir(self, _id):
         prefix = 'data/runs/%s/' % _id
         self._delete_key(prefix)
@@ -125,11 +128,3 @@ class S3Utils(object):
                 files.append((key.name.replace(prefix, ''), file_size))
 
         return files
-
-
-def main():
-    s3 = S3Utils()
-
-
-if __name__ == '__main__':
-    main()
