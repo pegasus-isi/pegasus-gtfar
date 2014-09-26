@@ -24,6 +24,7 @@
         <profile namespace="condor" key="universe">vanilla</profile>
     </site>
 
+    {% if 'GTFAR_S3_BUCKET' in config %}
     <site  handle="s3" arch="x86_64" os="{{ os | upper }}">
         <directory type="shared-scratch" path="/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}">
             <file-server operation="all" url="s3://pegasus@amazon/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}" />
@@ -33,5 +34,5 @@
             <file-server operation="all" url="s3://pegasus@amazon/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}/output" />
         </directory>
     </site>
-
+    {% endif %}
 </sitecatalog>

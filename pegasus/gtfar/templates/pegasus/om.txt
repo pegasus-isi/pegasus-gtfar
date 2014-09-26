@@ -1,9 +1,15 @@
 #
-# Pre Computed Index Files
+# Local Site
 #
 
 (h\-?[0-9]*)_.*\.index file://{{ data_dir }}/index/[1]/[0] regex="true" pool="local"
-(h\-?[0-9]*)_.*\.index s3://pegasus@amazon/{{ config.GTFAR_S3_BUCKET }}/data/index/[1]/[0] regex="true" pool="s3"
+(.*) file://{{ output_dir }}/[0]                           regex="true" pool="local"
 
-(.*) file://{{ output_dir }}/[0] regex="true" pool="local"
-(.*) s3://pegasus@amazon/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}/output/[0] regex="true" pool="s3"
+#
+# S3 Site
+#
+
+{% if 'GTFAR_S3_BUCKET' in config %}
+(h\-?[0-9]*)_.*\.index s3://pegasus@amazon/{{ config.GTFAR_S3_BUCKET }}/data/index/[1]/[0] regex="true" pool="s3"
+(.*) s3://pegasus@amazon/{{ config.GTFAR_S3_BUCKET }}/data/runs/{{ _id }}/output/[0]       regex="true" pool="s3"
+{% endif %}
