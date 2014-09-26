@@ -1,0 +1,175 @@
+# !/usr/bin/env python
+
+# Copyright 2007-2014 University Of Southern California
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+__author__ = 'Rajiv Mayani'
+
+import os
+import sys
+import time
+import atexit
+import logging
+import argparse
+
+from pegasus.gtfar.defaults import SQLALCHEMY_DATABASE_URI
+
+if SQLALCHEMY_DATABASE_URI.startswith('sqlite://'):
+    import sqlite3 as driver
+elif SQLALCHEMY_DATABASE_URI.startswith('mysql://'):
+    import MySQLdb as driver
+
+
+def init():
+    global start_time
+
+    FORMAT = '%(asctime)s: %(message)s'
+    logging.basicConfig(format=FORMAT)
+
+    start_time = int(time.time())
+
+
+def on_exit():
+    logging.error('total time %d secs' % (int(time.time()) - start_time))
+    logging.error('finished')
+
+
+def validate_env_var(key):
+    if not key in os.environ:
+        raise RuntimeError(key + ' is not defined in the current environment')
+
+
+def update_state(gtfar_id, job_name):
+    # Status values
+    status_dict = {
+        # -1 Running
+        ('workflow', -1): -1,
+        # 0 Passed
+        ('workflow', 0): 0,
+        # 1 Failed
+        ('workflow', 1): 1,
+        # -1 Running
+        ('job', -1): -1,
+        # 0 Passed
+        ('job', 0): 0
+        # Others Failed
+    }
+
+    try:
+        db = driver.connect(SQLALCHEMY_DATABASE_URI)
+        cursor = db.cursor()
+    except driver.Error, e:
+        logging.error('Connection to database failed. Check your connection parameters: %s' % e)
+        sys.exit(3)
+
+    wf_id = os.getenv('PEGASUS_WFID', None)
+    job_id = os.getenv('PEGASUS_JOBID', None)
+    event = os.getenv('PEGASUS_EVENT')
+    iso_timestamp = os.environ['PEGASUS_EVENT_TIMESTAMP_ISO']
+    status = os.getenv('PEGASUS_STATUS', None)
+    status = int(status) if status else status
+
+    is_workflow_event = 'ID' not in job_id
+
+    if status is not None:
+
+        if is_workflow_event:
+            # Workflow End
+            logging.info('Workflow %s - completed with status code %d.' % (gtfar_id, status))
+            db_status = status_dict.get(('workflow', status), 1)  # if status mapping not found, then return 1
+
+            sql = 'UPDATE runs SET status=%d WHERE id=%d' % (db_status, gtfar_id)
+
+        else:
+            # Job End
+            logging.info('Job %s in Workflow %s - completed with status code %d.' % (job_name, gtfar_id, status))
+            # DB status code is set to same value as pegasus status when mapping is not specified
+            db_status = status_dict.get(('job', status), status)
+
+            sql = 'INSERT INTO status (id, job_name, status) VALUES (%d, %r, %d)' % (gtfar_id, job_name, db_status)
+
+    else:
+
+        if is_workflow_event:
+            # Workflow Start
+            logging.info('Workflow %s - has started.' % gtfar_id)
+            db_status = status_dict[('workflow', -1)]
+
+            sql = 'UPDATE runs SET status=%d WHERE id=%d' % (db_status, gtfar_id)
+
+        else:
+            # Job Start
+            logging.info('Job %s in Workflow %s - has started.' % (job_name, gtfar_id))
+            db_status = status_dict[('job', -1)]
+
+            sql = 'INSERT INTO status (id, job_name, status) VALUES (%d, %r, %d)' % (gtfar_id, job_name, db_status)
+
+    # Execute query to update workflow state
+    try:
+        logging.info('Query: %s' % sql)
+        count = cursor.execute(sql)
+
+        if count is None or count == 0:
+            db.close()
+            logging.error('Database not updated %s' % sql)
+            sys.exit(4)
+
+    except driver.Error, e:
+        db.rollback()
+        db.close()
+        logging.error('MySQL error during query execution: %s' % e)
+        sys.exit(5)
+
+    db.commit()
+    db.close()
+
+
+def main():
+    parser = argparse.ArgumentParser(description='GTFAR status update utility')
+
+    parser.add_argument('-i', '--id', required=True, type=int, help='Workflow run ID')
+    parser.add_argument('-j', '--job-name', required=True, help='Job name for which to update the state')
+
+    args = parser.parse_args(sys.argv[1:])
+
+    atexit.register(on_exit)
+
+    # Initialize logger
+    init()
+
+    logging.error('started')
+
+    try:
+        logging.error('checking for required environment variables')
+        validate_env_var('PEGASUS_SUBMIT_DIR')
+        validate_env_var('PEGASUS_EVENT')
+        validate_env_var('PEGASUS_EVENT_TIMESTAMP_ISO')
+        validate_env_var('PEGASUS_JOBID')
+        validate_env_var('PEGASUS_STATUS')
+    except RuntimeError, err:
+        logging.error(err)
+        sys.exit(3)
+
+    gtfar_id = args.id
+    job_name = args.job_name
+
+    logging.error('updating workflow state')
+    update_state(gtfar_id, job_name)
+
+    logging.error('total time %d secs' % (int(time.time()) - start_time))
+    logging.error('finished')
+
+
+if __name__ == '__main__':
+    main()
