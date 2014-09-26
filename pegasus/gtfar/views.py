@@ -254,7 +254,7 @@ def generate_dax(result):
                   splice=True,
                   strand_rule=result['strandRule'],
                   dax=os.path.join(path, '%d' % result['id']),
-                  url='%s#/createRun' % url_for('index'),
+                  url='%s#/createRun' % url_for('index', _external=True),
                   email=result['email'],
                   splits=int(math.floor(filesize / app.config['SPLIT_DIVISOR'])))
 
