@@ -64,6 +64,7 @@ IS_S3_USED = (app.config['GTFAR_STAGING_SITE'] == 's3' or app.config['GTFAR_STOR
 if IS_S3_USED:
     from pegasus.gtfar.s3 import S3Utils
     s3 = S3Utils()
+    app.config['GTFAR_S3_BUCKET'] = s3.get_bucket_name()
 
 #
 # Routes initialization
