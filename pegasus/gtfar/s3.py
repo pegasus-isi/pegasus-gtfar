@@ -116,7 +116,7 @@ class S3Utils(object):
     def get_output_files(self, _id):
         prefix = 'data/runs/%s/output' % _id
         files = self._get_files(prefix)
-        return [(os.path.basename(name, size)) for name, size in files if size > 0]
+        return [(os.path.basename(name), size) for name, size in files if size > 0]
 
     def _get_files(self, prefix):
         files_rs = self._bucket.list(prefix)
