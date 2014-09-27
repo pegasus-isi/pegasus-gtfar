@@ -240,6 +240,8 @@ def generate_dax(result):
     path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
     filesize = os.path.getsize(os.path.join(path, 'input', result['filename']))
 
+    splits = max(1, int(math.floor(filesize / app.config['SPLIT_DIVISOR'])))
+
     gtfar = GTFAR(result['gtf'],
                   result['genome'],
                   result['id'],
@@ -256,7 +258,7 @@ def generate_dax(result):
                   dax=os.path.join(path, '%d' % result['id']),
                   url='%s#/createRun' % url_for('index', _external=True),
                   email=result['email'],
-                  splits=int(math.floor(filesize / app.config['SPLIT_DIVISOR'])))
+                  splits=splits)
 
     validation_results = gtfar.validate()
 
