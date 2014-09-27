@@ -117,13 +117,14 @@ class S3Utils(object):
         prefix = 'data/runs/%s/output' % _id
         return self._get_files(prefix)
 
-    def _get_files(self, prefix):
+    def _get_files(self, prefix, ignore_zero_byte=True):
         files_rs = self._bucket.list(prefix)
         files = []
 
         for key in files_rs:
             if not key.name.endswith('/'):
                 file_size = key.size
-                files.append((key.name.replace(prefix, ''), file_size))
+                if not ignore_zero_byte or (ignore_zero_byte and file_size > 0):
+                    files.append((key.name.replace(prefix, ''), file_size))
 
         return files
