@@ -125,6 +125,6 @@ class S3Utils(object):
             if not key.name.endswith('/'):
                 file_size = key.size
                 if not ignore_zero_byte or (ignore_zero_byte and file_size > 0):
-                    files.append((key.name.replace(prefix, ''), file_size))
+                    files.append((key.name, file_size))
 
         return files
