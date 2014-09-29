@@ -51,7 +51,7 @@ define(["moment"],
                     }
                     // If the run was stopped then we don't need to get the status
                     if ($scope.run.status <= 0) {
-                        setTimeout(getStatus, 500);
+                        setTimeout(getStatus, 1000);
 
                     }
                     else {
@@ -172,6 +172,10 @@ define(["moment"],
             };
 
             $scope.stopRun = function () {
+                var doubleCheck = confirm("Are you sure you want to stop " + $scope.run.name + "?  You will not be able to restart it.");
+                if(!doubleCheck){
+                    return;
+                }
                 $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.stop).success(function (data) {
                     $scope.run.status = 256;
 
