@@ -245,7 +245,8 @@ class FilterMixin(object):
 
 class IterativeMapMixin(object):
     def iterative_map(self):
-        self._clip_and_parse_reads('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES.fastq', 'full')
+        if self._clip_reads:
+            self._clip_and_parse_reads('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES.fastq', 'full')
 
         unmapped_reads = self._map_and_parse_reads('reads%d_full.fastq', 'full')
 
@@ -425,7 +426,7 @@ class IterativeMapMixin(object):
         # Uses
         clip_reads.uses(index, link=Link.INPUT)
         clip_reads.uses(reads_txt, link=Link.INPUT)
-        # TODO: Set Trand=fer to False for log File.
+        # TODO: Set Transfer to False for log File.
         clip_reads.uses(log, link=Link.OUTPUT, transfer=True, register=False)
 
         self.adag.addJob(clip_reads)
