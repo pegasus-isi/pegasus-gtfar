@@ -284,7 +284,7 @@ class IterativeMapMixin(object):
         miss_genome = '%s_miss_GENOME%s' % os.path.splitext(miss_features)
 
         if self._splice:
-            self._map_and_parse_reads_to_splices(reads, tag)
+            self._map_and_parse_reads_to_splices(miss_genome, tag)
             miss_splices = '%s_miss_SPLICES%s' % os.path.splitext(miss_genome)
 
             return miss_splices
@@ -425,7 +425,8 @@ class IterativeMapMixin(object):
         # Uses
         clip_reads.uses(index, link=Link.INPUT)
         clip_reads.uses(reads_txt, link=Link.INPUT)
-        clip_reads.uses(log, link=Link.OUTPUT, transfer=False, register=False)
+        # TODO: Set Trand=fer to False for log File.
+        clip_reads.uses(log, link=Link.OUTPUT, transfer=True, register=False)
 
         self.adag.addJob(clip_reads)
 
@@ -486,7 +487,7 @@ class AnalyzeMixin(object):
 class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
     def __init__(self, gtf, genome, prefix, reads, base_dir, bin_dir, read_length=100, mismatches=3,
                  is_trim_unmapped=False, is_map_filtered=False, splice=True, clip_reads=False, strand_rule='Unstranded',
-                 dax=None, url=None, email=None, splits=2, adag=None):
+                 dax=None, url=None, email=None, splits=1, adag=None):
 
         # Reference
         self._gtf = gtf
