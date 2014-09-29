@@ -39,7 +39,7 @@ tr clipR {
     }
 
     site condorpool {
-        pfn "{{ bin_dir }}/clipR
+        pfn "{{ bin_dir }}/clipR"
         arch "x86_64"
         os "{{ os | lower }}"
         type "INSTALLED"
