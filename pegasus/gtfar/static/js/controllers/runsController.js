@@ -89,8 +89,18 @@ function(moment) {
         };
 
         $scope.deleteSelected = function() {
+
             var selected = $scope.runsGrid.selectedItems;
             var deleteTotal = $scope.runsGrid.selectedItems.length;
+            var runName = selected[0].name;
+            if(deleteTotal > 1) {
+                runName = "these " + deleteTotal + " runs"
+            }
+            var doubleCheck = confirm("Are you sure you want to delete " + runName + "?  This will delete all output files as well.");
+            if(!doubleCheck){
+                return;
+            }
+
             var deleteCount = 0;
             for(var i = 0; i < deleteTotal; i++) {
                 $http.delete($window.apiLinks.runs + "/" + selected[i].id)
