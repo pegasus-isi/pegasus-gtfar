@@ -93,6 +93,45 @@ def before_first_request():
             session.commit()
 
         #
+        # Register Index Files available locally with JDBCRC
+        #
+
+        for path, dir_name, files in os.walk(app.config['GTFAR_DATA_DIR']  + '/index'):
+
+            for file_name in files:
+
+                if file_name.startswith('.'):
+                    continue
+
+                replica = ReplicaEntry(file_name,
+                                       'file://%s' % os.path.abspath(os.path.join(path, file_name)),
+                                       'local',
+                                       attributes=[ReplicaAttribute('genome', 'true')])
+
+                session.add(replica)
+
+            session.commit()
+
+        #
+        # Register Index Files from S3 with JDBCRC
+        #
+
+        if IS_S3_USED:
+            index_files = s3.get_index_files()
+
+            for index_file in index_files:
+                file_name = os.path.basename(index_file[0])
+
+                replica = ReplicaEntry(file_name,
+                                       's3://pegasus@amazon/%s' % index_file[0],
+                                       's3',
+                                       attributes=[ReplicaAttribute('index', 'true')])
+
+                session.add(replica)
+
+            session.commit()
+
+        #
         # Create a marker file to indicate that
         # the reference GTF and GENOME files have been registered with the JDBCRC
         #
