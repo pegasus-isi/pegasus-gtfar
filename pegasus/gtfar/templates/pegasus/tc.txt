@@ -30,6 +30,22 @@ tr perm {
     }
 }
 
+tr clipR {
+    site local {
+        pfn "{{ bin_dir }}/cipR"
+        arch "x86_64"
+        os "{{ os | lower }}"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/clipR
+        arch "x86_64"
+        os "{{ os | lower }}"
+        type "INSTALLED"
+    }
+}
+
 tr fastq-split {
     site local {
         pfn "{{ bin_dir }}/fastq-split.sh"
