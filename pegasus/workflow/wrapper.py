@@ -238,6 +238,10 @@ class WorkflowException(Exception):
     def __init__(self, exit_code=None):
         self._exit_code = exit_code
 
+    @property
+    def exit_code(self):
+        return self._exit_code
+
 
 class DAXGeneratorException(WorkflowException):
     pass
