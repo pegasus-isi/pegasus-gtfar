@@ -42,6 +42,8 @@ define(["moment"],
                 return s;
             };
 
+            $scope.GTFAR_S3_BUCKET = $window.GTFAR_S3_BUCKET;
+
             function getRun() {
                 $http.get($window.apiLinks.runs + "/" + $stateParams.id).success(function (data) {
                     $scope.run = data;

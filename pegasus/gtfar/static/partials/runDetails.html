@@ -140,9 +140,14 @@
                             No output files available.
                         </div>
                         <ul class="list-unstyled">
+                            <li ng-show="GTFAR_S3_BUCKET != ''" class="list-group-item" style="border: none;">
+                                <i class="fa fa-info-circle fa-lg"> </i>
+                                Output files are hosted on <a ng-href="http://aws.amazon.com/s3/">Amazon S3</a> under the bucket {{ GTFAR_S3_BUCKET }}. To view/download the output files login to Amazon S3.
+                            </li>
                             <li ng-repeat="file in outputFiles" class="list-group-item" style="border: none;">
                                 <i class="fa fa-file-text-o fa-lg"> </i>
-                                <a ng-href="{{ outputDownload + file.name }}">{{ file.name }} ({{file.size}})</a>
+                                <a ng-show="GTFAR_S3_BUCKET == ''" ng-href="{{ outputDownload + file.name }}">{{ file.name }} ({{file.size}})</a>
+                                <span ng-show="GTFAR_S3_BUCKET != ''" class="text-muted"> {{ file.name }} ({{file.size}})</span>
                             </li>
                         </ul>
                     </tab>

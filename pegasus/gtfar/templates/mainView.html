@@ -25,5 +25,6 @@
     <div id="apiLinks" style="display:none">{{ apiLinks }}</div>
     <script>
         window.apiLinks = JSON.parse(document.getElementById("apiLinks").textContent);
+        window.GTFAR_S3_BUCKET = '{{ config.GTFAR_S3_BUCKET }}';
     </script>
 {%- endblock content %}
