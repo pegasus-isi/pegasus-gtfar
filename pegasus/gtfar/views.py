@@ -513,7 +513,8 @@ def index():
         'download': '/api/download',
         'status': '/status',
         'outputs': '/outputs',
-        'stop': '/stop'
+        'stop': '/stop',
+        'sample': url_for('static', filename='sample/sample.fastq.gz')
     }
 
     return render_template('mainView.html', apiLinks=json.dumps(api_links))

@@ -52,6 +52,8 @@ function(angular) {
             genSplice : false
         };
 
+        $scope.sample = $window.apiLinks.sample;
+
         $scope.uploadFile = function() {
             /*
              * Upload the file
