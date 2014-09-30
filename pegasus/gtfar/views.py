@@ -148,7 +148,12 @@ validExtensions = set(['gz'])
 
 
 class ValidationException(Exception):
-    pass
+    def __init__(self, errors=None):
+        self._errors = errors
+
+    @property
+    def errors(self):
+        return self._errors
 
 
 def matchesAny(set, string):
@@ -162,11 +167,7 @@ def isValidFile(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
 
 
-validation_error_messages = []
-
-
 def validate_fields(data):
-    global validation_error_messages
     validation_error_messages = []
 
     if not 'name' in data:
@@ -228,7 +229,7 @@ def validate_fields(data):
                     {'field': 'Email', 'message': 'You must use a real, properly formatted email address'})
 
     if validation_error_messages:
-        raise ProcessingException()
+        raise ValidationException(errors=validation_error_messages)
 
 
 def create_run_directories(result):
@@ -394,13 +395,6 @@ def upload():
         filename = secure_filename(upload_file.filename)
         upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return redirect(url_for('index'))
-
-
-@app.route('/api/errors', methods=['GET'])
-def get_errors():
-    global validation_error_messages
-    errors = {'errors': validation_error_messages}
-    return jsonify(errors)
 
 
 @app.route('/api/runs/<int:_id>/status', methods=['GET'])
