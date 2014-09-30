@@ -502,7 +502,6 @@ def index():
         'runs': url_for(runs_prefix),
         'upload': url_for('upload'),
         'download': '/api/download',
-        'errors': '/api/errors',
         'status': '/status',
         'outputs': '/outputs',
         'stop': '/stop'
