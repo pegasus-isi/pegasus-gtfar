@@ -72,3 +72,9 @@ if IS_S3_USED:
 
 from pegasus.gtfar import views
 
+#
+# Error Handlers initialization
+#
+
+from pegasus.gtfar import errors
+
