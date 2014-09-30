@@ -51,7 +51,7 @@ define(["moment"],
                     }
                     // If the run was stopped then we don't need to get the status
                     if ($scope.run.status <= 0) {
-                        setTimeout(getStatus, 1000);
+                        setTimeout(getStatus, 1500);
 
                     }
                     else {

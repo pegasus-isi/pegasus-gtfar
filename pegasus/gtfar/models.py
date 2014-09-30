@@ -47,6 +47,7 @@ class Run(db.Model):
     name = Column(Text)
     userName = Column(Text)
     filename = Column(Text)
+    uploadFolder = Column(Text)
     # Should this be text or a foreign key to a list of jobs? jobName = Column(Text, )
     status = Column(Integer)
     readLength = Column(Integer)

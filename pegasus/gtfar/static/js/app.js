@@ -72,10 +72,12 @@ function(angular, runsController, runDetailsController, runCreationController,
 
     app.config(router.getFullConstructor());
 
-    /*app.run(["$window", function($window) {
-        console.log($window.apiLinks.runs);
-        $window.apiLinksJSON = JSON.parse($window.apiLinks);
-    }]);*/
+    app.run(["$window", function($window) {
+        $window.tempFolder = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+            return v.toString(16);
+        });
+    }]);
 
     app.controller("runsController", runsController.getFullConstructor());
     app.controller("runDetailsController", runDetailsController);

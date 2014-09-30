@@ -201,9 +201,8 @@ def create_run_directories(result):
         os.mkdir(os.path.join(path, 'output'))
         os.mkdir(os.path.join(path, 'submit'))
         os.mkdir(os.path.join(path, 'scratch'))
-
-        shutil.move(os.path.join(app.config['UPLOAD_FOLDER'], str(result['filename'])),
-                    os.path.join(path, 'input', str(result['filename'])))
+        shutil.move(os.path.join(app.config['UPLOAD_FOLDER'], str(result['uploadFolder']), str(result['filename'])),
+                    os.path.join(path, 'input', str(result['filename']))) # There should always be one slash for the upload file name
 
     except OSError as exception:
         if exception.errno != errno.EEXIST:
@@ -348,13 +347,18 @@ api_manager.create_api(Run,
 #
 
 
-@app.route('/api/upload', methods=['POST'])
-def upload():
+@app.route('/api/upload/<path:upload_folder>', methods=['POST'])
+def upload(upload_folder):
     upload_file = request.files['file']
+    print upload_file
     if upload_file and isValidFile(upload_file.filename):
+        if not os.path.isdir(os.path.join(app.config['UPLOAD_FOLDER'], upload_folder)):
+            os.mkdir(os.path.join(app.config['UPLOAD_FOLDER'], upload_folder))
         filename = secure_filename(upload_file.filename)
-        upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], upload_folder, filename))
         return redirect(url_for('index'))
+    else:
+        return jsonify({"code" : 403, "message" : "Bad file type or no file presented"})
 
 
 @app.route('/api/errors', methods=['GET'])
@@ -467,7 +471,7 @@ def index():
 
     api_links = {
         'runs': url_for(runs_prefix),
-        'upload': url_for('upload'),
+        'upload': '/api/upload',
         'download': '/api/download',
         'errors': '/api/errors',
         'status': '/status',

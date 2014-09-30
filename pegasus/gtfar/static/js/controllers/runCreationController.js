@@ -94,7 +94,6 @@ function(angular) {
                         "type" : "success",
                         "message" : "File uploaded successfully"
                     });
-                    // TODO: make the browse button clickable again
                 });
             };
 
@@ -105,11 +104,10 @@ function(angular) {
                         "type" : "danger",
                         "message" : "File failed to upload"
                     });
-                    // TODO: make the browse button clickable again
                 });
             };
 
-            xhr.open('POST', $window.apiLinks.upload);
+            xhr.open('POST', $window.apiLinks.upload + "/" + $window.tempFolder);
             xhr.send(fileData);
 
         };
@@ -156,6 +154,7 @@ function(angular) {
             }
 
             $scope.run["strandRule"] = $scope.strandRule.rule;
+            $scope.run["uploadFolder"] = $window.tempFolder;
             $scope.run.email = $scope.form.email.$viewValue;
             try {
                 $scope.run["filename"] = document.getElementById("inputFile").files[0].name;
