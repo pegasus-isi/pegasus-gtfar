@@ -55,7 +55,7 @@ def planner_exception(error):
 
 
 @app.errorhandler(Exception)
-def planner_exception(error):
+def fail_safe_exception(error):
     error_response = {
         'code': 'UNKNOWN_ERROR',
         'message': 'An unknown error occurred %s' % error
