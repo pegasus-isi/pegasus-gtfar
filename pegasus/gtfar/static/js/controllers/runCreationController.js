@@ -37,7 +37,7 @@ function(angular) {
         $scope.strandRuleOptions = [{rule: "unstranded"},{rule: "sense"},{rule: "anti-sense"}];
         // Defaults
 
-        // We have to define this out of the run object becaues we need to link it to .rule in the end
+        // We have to define this out of the run object because we need to link it to .rule in the end
         $scope.strandRule = $scope.strandRuleOptions[0];
 
         $scope.run = {
@@ -169,16 +169,12 @@ function(angular) {
                 $scope.addingRun = null;
                 $scope.alerts.push({'type' : 'success', 'message' : 'Run successfully created and starting now, please wait'});
                 $state.go('runDetails', {id : data.id});
-             }).error(function(data) {
+             }).error(function(data, status) {
                 $scope.addingRun = null;
-                if(data.message && data.message == "400: Bad Request") {
-                    $http.get($window.apiLinks.errors).success(function(data) {
-                        if(data.errors) {
-                            for (var i = 0; i < data.errors.length; i++) {
-                                $scope.alerts.push({'type': 'danger', 'message': data.errors[i].message});
-                            }
-                        }
-                    }).error(function(data){});
+                if(status == 400) {
+                    for (var i = 0; i < data.errors.length; i++) {
+                        $scope.alerts.push({'type': 'danger', 'message': data.errors[i].message});
+                    }
                 }
                 else if(data.code && data.code == 503) {
                     $scope.alerts.push({'type' : 'danger', 'message' : 'Could not connect to server, please check your connection.'});

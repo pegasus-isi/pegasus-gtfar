@@ -93,6 +93,45 @@ def before_first_request():
             session.commit()
 
         #
+        # Register Index Files available locally with JDBCRC
+        #
+
+        for path, dir_name, files in os.walk(app.config['GTFAR_DATA_DIR']  + '/index'):
+
+            for file_name in files:
+
+                if file_name.startswith('.'):
+                    continue
+
+                replica = ReplicaEntry(file_name,
+                                       'file://%s' % os.path.abspath(os.path.join(path, file_name)),
+                                       'local',
+                                       attributes=[ReplicaAttribute('genome', 'true')])
+
+                session.add(replica)
+
+            session.commit()
+
+        #
+        # Register Index Files from S3 with JDBCRC
+        #
+
+        if IS_S3_USED:
+            index_files = s3.get_index_files()
+
+            for index_file in index_files:
+                file_name = os.path.basename(index_file[0])
+
+                replica = ReplicaEntry(file_name,
+                                       's3://pegasus@amazon/%s' % index_file[0],
+                                       's3',
+                                       attributes=[ReplicaAttribute('index', 'true')])
+
+                session.add(replica)
+
+            session.commit()
+
+        #
         # Create a marker file to indicate that
         # the reference GTF and GENOME files have been registered with the JDBCRC
         #
@@ -109,7 +148,12 @@ validExtensions = set(['gz'])
 
 
 class ValidationException(Exception):
-    pass
+    def __init__(self, errors=None):
+        self._errors = errors
+
+    @property
+    def errors(self):
+        return self._errors
 
 
 def matchesAny(set, string):
@@ -123,11 +167,7 @@ def isValidFile(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
 
 
-validation_error_messages = []
-
-
 def validate_fields(data):
-    global validation_error_messages
     validation_error_messages = []
 
     if not 'name' in data:
@@ -189,7 +229,7 @@ def validate_fields(data):
                     {'field': 'Email', 'message': 'You must use a real, properly formatted email address'})
 
     if validation_error_messages:
-        raise ProcessingException()
+        raise ValidationException(errors=validation_error_messages)
 
 
 def create_run_directories(result):
@@ -361,13 +401,6 @@ def upload(upload_folder):
         return jsonify({"code" : 403, "message" : "Bad file type or no file presented"})
 
 
-@app.route('/api/errors', methods=['GET'])
-def get_errors():
-    global validation_error_messages
-    errors = {'errors': validation_error_messages}
-    return jsonify(errors)
-
-
 @app.route('/api/runs/<int:_id>/status', methods=['GET'])
 def get_status(_id):
     workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
@@ -473,7 +506,6 @@ def index():
         'runs': url_for(runs_prefix),
         'upload': '/api/upload',
         'download': '/api/download',
-        'errors': '/api/errors',
         'status': '/status',
         'outputs': '/outputs',
         'stop': '/stop'
