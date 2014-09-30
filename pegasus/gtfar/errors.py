@@ -48,7 +48,7 @@ def validation_exception(error):
 def planner_exception(error):
     error_response = {
         'code': 'PLANNING_FAILED',
-        'message': 'Pegasus planner failed with exitcode %d' % error.exit_code()
+        'message': 'Pegasus planner failed with exitcode %d' % error.exit_code
     }
 
     return jsonify(error_response), 500, JSON_HEADERS
