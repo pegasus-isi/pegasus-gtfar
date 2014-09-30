@@ -16,38 +16,25 @@ __author__ = 'Rajiv Mayani'
 
 from datetime import datetime
 
-from flask import jsonify
-from sqlalchemy import Column, Integer, Boolean, Text, DateTime
-from sqlalchemy.orm import validates
+from sqlalchemy import Column, Integer, Boolean, DateTime
 
 from pegasus.gtfar import db
 
-strandRuleOptions = set(['unstranded', 'same', 'opposite'])
 
 validExtensions = set(['gz'])
 
-def matchesAny(set, string):
-    for item in set:
-        if item == string:
-            return 1
-    return 0
 
 def isValidFile(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
 
 
-
-
-validationErrors = []
-
 class Run(db.Model):
-    global validationErrors
     __tablename__ = 'runs'
     id = Column(Integer, primary_key=True)
-    name = Column(Text)
-    userName = Column(Text)
-    filename = Column(Text)
-    uploadFolder = Column(Text)
+    name = Column(db.String(64))
+    userName = Column(db.String(64))
+    filename = Column(db.String(255))
+    uploadFolder = Column(db.String(64))
     # Should this be text or a foreign key to a list of jobs? jobName = Column(Text, )
     status = Column(Integer)
     readLength = Column(Integer)
@@ -55,11 +42,22 @@ class Run(db.Model):
     trimUnmapped = Column(Boolean)
     mapFiltered = Column(Boolean)
     genSplice = Column(Boolean)
-    strandRule = Column(Text)
-    email = Column(Text)
-    gtf = Column(Text)
-    genome = Column(Text)
+    strandRule = Column(db.String(15))
+    email = Column(db.String(255))
+    gtf = Column(db.String(64))
+    genome = Column(db.String(64))
     created = Column(DateTime, default=datetime.utcnow)
+
+
+class Status(db.Model):
+    __tablename__ = 'status'
+
+    id = Column(Integer, primary_key=True)
+    wf_id = Column(Integer)
+    job_name = Column(db.String(64))
+    status = Column(Integer)
+    log = Column(db.String(255))
+
 
 #
 # Pegasus Database bases replica catalog.
