@@ -155,7 +155,7 @@
                             No output files available.
                         </div>
                         <ul class="list-unstyled">
-                            <li ng-show="GTFAR_S3_BUCKET != ''" class="list-group-item" style="border: none;">
+                            <li ng-show="GTFAR_S3_BUCKET != '' && outputFiles.length > 0" class="list-group-item" style="border: none;">
                                 <i class="fa fa-info-circle fa-lg"> </i>
                                 Output files are hosted on <a ng-href="http://aws.amazon.com/s3/">Amazon S3</a> under
                                 the bucket {{ GTFAR_S3_BUCKET }}. To view/download the output files login to Amazon S3.
