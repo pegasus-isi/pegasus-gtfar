@@ -530,7 +530,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
         self.adag = AutoADAG('gtfar_%s' % self._prefix) if adag is None else adag
 
         notifications_conf = os.path.join(self._base_dir, 'config', 'notifications.conf')
-        self._state_update = '%s/state_update.py --id %r --config %r' % (self._bin_dir,
+        self._state_update = '%s/gtfar-state-update --id %r --config %r' % (self._bin_dir,
                                                                          self._prefix,
                                                                          notifications_conf)
 
