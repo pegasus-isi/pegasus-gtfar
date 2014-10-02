@@ -80,6 +80,8 @@ class S3Utils(object):
         if key:
             return key.generate_url(expires_in=60)
 
+        return None
+
     def get_bucket_name(self):
         return self._bucket.name
 
