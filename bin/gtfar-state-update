@@ -104,7 +104,7 @@ def update_state(gtfar_id, config_file, log_message=None):
             logging.info('Workflow %s - completed with status code %d.' % (gtfar_id, status))
             db_status = status_dict.get(('workflow', status), 1)  # if status mapping not found, then return 1
 
-            sql = 'UPDATE runs SET status=%d WHERE id=%d AND status != 256' % (db_status, gtfar_id)
+            sql = 'UPDATE runs SET status=%d WHERE id=%r AND status != 256' % (db_status, gtfar_id)
 
         else:
             # Job End
@@ -112,7 +112,7 @@ def update_state(gtfar_id, config_file, log_message=None):
             # DB status code is set to same value as pegasus status when mapping is not specified
             db_status = status_dict.get(('job', status), status)
 
-            sql = 'INSERT INTO status (wf_id, job_name, status, log) VALUES (%d, %r, %d, %r)' % (gtfar_id, job_name,
+            sql = 'INSERT INTO status (wf_id, job_name, status, log) VALUES (%r, %r, %d, %r)' % (gtfar_id, job_name,
                                                                                           db_status, log_message)
 
     else:
@@ -122,14 +122,14 @@ def update_state(gtfar_id, config_file, log_message=None):
             logging.info('Workflow %s - has started.' % gtfar_id)
             db_status = status_dict[('workflow', -1)]
 
-            sql = 'UPDATE runs SET status=%d WHERE id=%d' % (db_status, gtfar_id)
+            sql = 'UPDATE runs SET status=%d WHERE id=%r' % (db_status, gtfar_id)
 
         else:
             # Job Start
             logging.info('Job %s in Workflow %s - has started.' % (job_name, gtfar_id))
             db_status = status_dict[('job', -1)]
 
-            sql = 'INSERT INTO status (wf_id, job_name, status, log) VALUES (%d, %r, %d, %r)' % (gtfar_id, job_name,
+            sql = 'INSERT INTO status (wf_id, job_name, status, log) VALUES (%r, %r, %d, %r)' % (gtfar_id, job_name,
                                                                                           db_status, log_message)
 
     # Execute query to update workflow state
@@ -155,7 +155,7 @@ def update_state(gtfar_id, config_file, log_message=None):
 def main():
     parser = argparse.ArgumentParser(description='GTFAR status update utility')
 
-    parser.add_argument('-i', '--id', required=True, type=int, help='Workflow run ID')
+    parser.add_argument('-i', '--id', required=True, help='Workflow run ID')
     parser.add_argument('-c', '--config', required=True, help='Notification config file')
     parser.add_argument('-l', '--log-message', default=None, help='Job name for which to update the state')
 

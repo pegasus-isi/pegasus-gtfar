@@ -649,7 +649,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
                 self._write_reads_file('reads%%d_%d_miss_FEATURES_miss_GENOME.fastq' % trim,
                                        'filter%d_splices_reads.txt' % trim)
 
-        if isinstance(self._dax, str):
+        if isinstance(self._dax, str) or isinstance(self._dax, unicode):
             with open(self._dax, 'w') as dax:
                 self.adag.writeXML(dax)
         else:
