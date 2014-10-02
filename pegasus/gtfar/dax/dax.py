@@ -187,7 +187,7 @@ class FilterMixin(object):
 
     def _pre_filter_fastq(self, index, suffix_len):
         pre_filter = Job(name='pre_filter_fastq.py')
-        pre_filter.invoke('all', self._state_update % 'Pre-filter reads part %d file' % (index + 1))
+        pre_filter.invoke('all', self._state_update % 'Pre-filter reads file part %d' % (index + 1))
         prefix = 'reads%d' % index
 
         # Inputs
