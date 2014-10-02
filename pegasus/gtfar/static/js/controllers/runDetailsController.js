@@ -72,6 +72,9 @@ define(["moment"],
                         if($scope.status.failed) {
                             getErrorReport();
                         }
+                        else {
+                            clearErrorReport();
+                        }
                     }
                     // We don't want the calls to continue when we leave this state
                     if ($state.includes("runDetails")) {
@@ -114,6 +117,10 @@ define(["moment"],
                 }).error(function(data) {
                     $scope.alerts.push({'type': 'danger', 'message': 'Error retrieving error analysis.  Please contact the developers'});
                 });
+            }
+
+            function clearErrorReport() {
+                $scope.errorReport = [];
             }
 
             $scope.getStatusColor = function (prefix) {

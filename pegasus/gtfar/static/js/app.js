@@ -50,7 +50,7 @@ function(angular, runsController, runDetailsController, runCreationController,
         };
     });
 
-    var ALPHANUM_REGEX = /^\w+$/i;
+    var ALPHANUM_REGEX = /^[\w_]+$/i;
     app.directive('alphanumeric', function() {
         return {
             require: 'ngModel',

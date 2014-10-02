@@ -17,6 +17,8 @@ __author__ = 'dcbriggs'
 import os
 import errno
 
+import re
+
 import math
 
 import shutil
@@ -172,7 +174,7 @@ def validate_fields(data):
 
     if not 'name' in data:
         validation_error_messages.append({'field': 'Name', 'message': 'You must provide a name for the run'})
-    elif not data['name'].isalnum():
+    elif not re.match(r'\w+$', data['name']):
         validation_error_messages.append({'field': 'Name', 'message': 'Name must be an alphanumeric value'})
 
     if not 'filename' in data:

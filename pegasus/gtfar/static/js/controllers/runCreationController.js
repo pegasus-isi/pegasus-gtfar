@@ -124,7 +124,7 @@ function(angular) {
             if($scope.form.$invalid) {
                 if($scope.form.name.$invalid) {
                     invalid = true;
-                    $scope.alerts.push({'type' : 'danger', 'message' : 'The name field is required and must be an alphanumeric value'});
+                    $scope.alerts.push({'type' : 'danger', 'message' : 'The name field is required and must be an alphanumeric value (underscores acceptable)'});
                 }
                 if($scope.form.mismatches.$invalid) {
                     invalid = true;
