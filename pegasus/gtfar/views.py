@@ -96,7 +96,7 @@ def before_first_request():
         # Register Index Files available locally with JDBCRC
         #
 
-        for path, dir_name, files in os.walk(app.config['GTFAR_DATA_DIR']  + '/index'):
+        for path, dir_name, files in os.walk(app.config['GTFAR_DATA_DIR'] + '/index'):
 
             for file_name in files:
 
@@ -123,7 +123,7 @@ def before_first_request():
                 file_name = os.path.basename(index_file[0])
 
                 replica = ReplicaEntry(file_name,
-                                       's3://pegasus@amazon/%s' % index_file[0],
+                                       's3://pegasus@amazon/%s/%s' % (app.config['GTFAR_S3_BUCKET'], index_file[0]),
                                        's3',
                                        attributes=[ReplicaAttribute('index', 'true')])
 
