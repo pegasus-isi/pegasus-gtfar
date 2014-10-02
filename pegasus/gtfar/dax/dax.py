@@ -527,9 +527,13 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
 
         self._range = get_range
 
+        notifications_conf = os.path.join(self._base_dir, 'config', 'notifications.conf')
+
         self.adag = AutoADAG('gtfar_%s' % self._prefix) if adag is None else adag
 
-        self._state_update = '%s/gtfar-state-update %%r %%r %%r %%r' % self._bin_dir
+        self._state_update = '%s/gtfar-state-update --id %s --config %s' % (self._bin_dir,
+                                                                            self._prefix,
+                                                                            notifications_conf)
 
         self.adag.invoke('all', self._state_update)
 
@@ -541,9 +545,11 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
                 self._email,
                 'GTFAR Workflow finished running',
                 self._url,
-                os.path.join(self._base_dir, 'config', 'notifications.conf'))
+                notifications_conf)
 
             self.adag.invoke('at_end', email_script)
+
+        self._state_update = '%s --job-name %%r --log-message %%r' % self._state_update
 
         self._seed = None
         self._vis_files = []
