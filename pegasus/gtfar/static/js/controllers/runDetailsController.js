@@ -31,8 +31,8 @@ define(["moment"],
                 $scope.alerts.splice(index, 1);
             };
 
-            $scope.inputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/input/";
-            $scope.outputDownload = $window.apiLinks.download + "/" + $stateParams.id + "/output/";
+            $scope.inputDownload = $window.apiLinks.download + "/" + $stateParams.name + "/input/";
+            $scope.outputDownload = $window.apiLinks.download + "/" + $stateParams.name + "/output/";
 
 
             $scope.getFormattedDate = function (dateString) {
@@ -45,7 +45,7 @@ define(["moment"],
             $scope.GTFAR_S3_BUCKET = $window.GTFAR_S3_BUCKET;
 
             function getRun() {
-                $http.get($window.apiLinks.runs + "/" + $stateParams.id).success(function (data) {
+                $http.get($window.apiLinks.runs + "/" + $stateParams.name).success(function (data) {
                     $scope.run = data;
                     $scope.run.emails = null;
                     if ($scope.run.email) {
@@ -65,7 +65,7 @@ define(["moment"],
             }
 
             function getStatus() {
-                $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.status).success(function (data) {
+                $http.get($window.apiLinks.runs + "/" + $stateParams.name + $window.apiLinks.status).success(function (data) {
                     if (statusChanged(data)) {
                         $scope.status = data;
                         getOutputFiles();
@@ -99,7 +99,7 @@ define(["moment"],
             }
 
             function getOutputFiles() {
-                $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.outputs).success(function (data) {
+                $http.get($window.apiLinks.runs + "/" + $stateParams.name + $window.apiLinks.outputs).success(function (data) {
                     $scope.outputFiles = data.objects;
                     // TODO: need to present links to download the output files
                 }).error(function (data) {
@@ -108,7 +108,7 @@ define(["moment"],
             }
 
             function getErrorReport() {
-                $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.analyze).success(function(data) {
+                $http.get($window.apiLinks.runs + "/" + $stateParams.name + $window.apiLinks.analyze).success(function(data) {
                     $scope.errorReport = [];
                     var errors = data.split('\n');
                     for(var i = 0; i < errors.length; i++) {
@@ -200,7 +200,7 @@ define(["moment"],
                 if(!doubleCheck){
                     return;
                 }
-                $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.stop).success(function (data) {
+                $http.get($window.apiLinks.runs + "/" + $stateParams.name + $window.apiLinks.stop).success(function (data) {
                     $scope.run.status = 256;
 
                 }).error(function (data) {

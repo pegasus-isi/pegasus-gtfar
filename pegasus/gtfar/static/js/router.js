@@ -36,7 +36,7 @@ function(runsController, runDetailsController, runCreationController){
 
             })
             .state('runDetails', {
-                url: "/runs/details/{id:[^/]*}",
+                url: "/runs/details/{name:[^/]*}",
                 templateUrl: "partials/runDetails.html",
                 controller: "runDetailsController"
             })
