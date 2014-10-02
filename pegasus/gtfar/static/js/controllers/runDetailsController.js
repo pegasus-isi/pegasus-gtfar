@@ -52,7 +52,7 @@ define(["moment"],
                         $scope.run.emails = $scope.run.email.split(',');
                     }
                     // If the run was stopped then we don't need to get the status
-                    if ($scope.run.status <= 0) {
+                    if ($scope.run.status != 256) {
                         setTimeout(getStatus, 1500);
 
                     }
@@ -162,7 +162,7 @@ define(["moment"],
             };
 
             $scope.getStatusText = function (short) {
-                if ($scope.run && $scope.run.status > 0) {
+                if ($scope.run && $scope.run.status == 256) {
                     if (short) {
                         return "Aborted"
                     }
