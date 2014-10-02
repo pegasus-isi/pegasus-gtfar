@@ -104,7 +104,7 @@ def update_state(gtfar_id, config_file, log_message=None):
             logging.info('Workflow %s - completed with status code %d.' % (gtfar_id, status))
             db_status = status_dict.get(('workflow', status), 1)  # if status mapping not found, then return 1
 
-            sql = 'UPDATE runs SET status=%d WHERE id=%r AND status != 256' % (db_status, gtfar_id)
+            sql = 'UPDATE runs SET status=%d WHERE name=%r AND status != 256' % (db_status, gtfar_id)
 
         else:
             # Job End
@@ -122,7 +122,7 @@ def update_state(gtfar_id, config_file, log_message=None):
             logging.info('Workflow %s - has started.' % gtfar_id)
             db_status = status_dict[('workflow', -1)]
 
-            sql = 'UPDATE runs SET status=%d WHERE id=%r' % (db_status, gtfar_id)
+            sql = 'UPDATE runs SET status=%d WHERE name=%r' % (db_status, gtfar_id)
 
         else:
             # Job Start
