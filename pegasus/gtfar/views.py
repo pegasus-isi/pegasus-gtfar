@@ -29,14 +29,12 @@ from werkzeug import secure_filename
 
 from flask import render_template, request, redirect, url_for, json, jsonify, send_from_directory
 
-from flask.ext.restless import ProcessingException
-
 from sqlalchemy.orm.exc import NoResultFound
 
 from pegasus.gtfar import app, db, s3, api_manager, IS_S3_USED, __VERSION__
 
 from pegasus.gtfar.dax.dax import GTFAR
-from pegasus.gtfar.models import Run, isValidFile
+from pegasus.gtfar.models import Run, Status, isValidFile
 
 from pegasus.workflow import wrapper
 from pegasus.workflow.wrapper import PegasusWorkflow, StopException
@@ -387,6 +385,16 @@ def remove_run_directories(instance_id, **kw):
             raise
 
 
+def remove_status(instance_id, **kw):
+    session = db.session
+    logs = session.query(Status).filter(Status.wf_id == instance_id)
+
+    for status in logs:
+        session.delete(status)
+    else:
+        session.commit()
+
+
 api_manager.create_api(Run,
                        methods=['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
                        preprocessors={
@@ -395,6 +403,7 @@ api_manager.create_api(Run,
                            ],
                            'DELETE': [
                                remove_run_directories,
+                               remove_status
                            ]
                        },
                        postprocessors={
@@ -491,7 +500,7 @@ def stop_run(_id):
     }
     try:
         session = db.session
-        run = session.query(Run).filter(Run.id == _id).one()
+        run = session.query(Run).filter(Run.name == _id).one()
 
         # pegasus-remove
         workflow.stop()
