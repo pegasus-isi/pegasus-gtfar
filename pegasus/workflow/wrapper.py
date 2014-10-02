@@ -158,7 +158,7 @@ class PegasusWorkflow(Workflow):
 
         ec, out, err = self.__exec_command(executable, args)
 
-        if ec != 0:
+        if ec != 0 and ec != 2:
             raise AnalyzerException(exit_code=ec)
 
         return out
