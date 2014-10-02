@@ -31,8 +31,8 @@ define(["moment"],
                 $scope.alerts.splice(index, 1);
             };
 
-            $scope.inputDownload = $window.apiLinks.download + "/" + $stateParams.name + "/input/";
-            $scope.outputDownload = $window.apiLinks.download + "/" + $stateParams.name + "/output/";
+            $scope.inputDownload = $window.apiLinks.runs + "/" + $stateParams.name + "/input/";
+            $scope.outputDownload = $window.apiLinks.runs + "/" + $stateParams.name + "/output/";
 
 
             $scope.getFormattedDate = function (dateString) {

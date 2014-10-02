@@ -162,10 +162,7 @@
                             </li>
                             <li ng-repeat="file in outputFiles" class="list-group-item" style="border: none;">
                                 <i class="fa fa-file-text-o fa-lg"> </i>
-                                <a ng-show="GTFAR_S3_BUCKET == ''"
-                                   ng-href="{{ outputDownload + file.name }}">{{ file.name }} ({{ file.size }})</a>
-                                <span ng-show="GTFAR_S3_BUCKET != ''"
-                                      class="text-muted"> {{ file.name }} ({{ file.size }})</span>
+                                <a ng-href="{{ outputDownload + file.name }}">{{ file.name }} ({{ file.size }})</a>
                             </li>
                         </ul>
                     </tab>

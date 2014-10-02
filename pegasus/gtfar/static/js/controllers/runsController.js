@@ -149,7 +149,7 @@ function(moment) {
 
 
         $scope.getDownloadLink = function(id, filename) {
-            return $window.apiLinks.download + "/" + id + "/input/" + filename;
+            return $window.apiLinks.runs + "/" + id + "/input/" + filename;
         };
 
     };

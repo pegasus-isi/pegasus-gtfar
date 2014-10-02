@@ -458,9 +458,23 @@ def analyze(_id):
     return out.read(), 200
 
 
-@app.route('/api/download/<path:file_path>')
-def download(file_path):
-    return send_from_directory(app.config['GTFAR_STORAGE_DIR'], file_path)
+@app.route('/api/runs/<string:name>/input/<string:file_name>')
+def download_input(name, file_name):
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], name, 'input')
+    return send_from_directory(path, file_name)
+
+
+@app.route('/api/runs/<string:name>/output/<string:file_name>')
+def download_output(name, file_name):
+    if IS_S3_USED:
+        redirect_to = s3.get_download_url(name, file_name)
+        if redirect_to:
+            return redirect(redirect_to)
+        else:
+            return '', 404
+    else:
+        path = os.path.join(app.config['GTFAR_STORAGE_DIR'], name, 'output')
+        return send_from_directory(path, file_name)
 
 
 @app.route('/api/runs/<string:_id>/outputs', methods=['GET'])
@@ -544,12 +558,13 @@ def index():
     api_links = {
         'runs': url_for(runs_prefix),
         'upload': '/api/upload',
-        'download': '/api/download',
+        'download_input': '/input',
+        'download_output': '/output',
         'status': '/status',
         'outputs': '/outputs',
         'stop': '/stop',
         'sample': url_for('static', filename='sample/sample.fastq.gz'),
-        'analyze' : '/analyze'
+        'analyze': '/analyze'
     }
 
     return render_template('mainView.html', apiLinks=json.dumps(api_links))
