@@ -206,7 +206,7 @@ class PegasusWorkflow(Workflow):
         stdout = tempfile.SpooledTemporaryFile()
         stderr = tempfile.SpooledTemporaryFile()
         exit_code = subprocess.call(command, stdout=stdout, stderr=stderr)
-        print exit_code != 0 and (not ignore_exit_codes or (ignore_exit_codes and exit_code not in ignore_exit_codes))
+
         if exit_code != 0 and (not ignore_exit_codes or (ignore_exit_codes and exit_code not in ignore_exit_codes)):
             sys.stderr.write(' '.join(command) + '\n')
 
