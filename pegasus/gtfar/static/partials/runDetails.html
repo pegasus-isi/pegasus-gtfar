@@ -125,8 +125,17 @@
                  ng-class="getStatusColor('alert')">{{ getStatusText() }}
             </div>
         </div>
-    </div>
 
+    </div>
+    <div class="row form-horizontal" ng-show="status && status.failed != 0">
+        <div class="form-group">
+            <b class="col-xs-6 col-sm-5 col-md-4 col-lg-3 control-label">Error Report</b>
+            <div class=" col-xs-6 col-sm-7 col-md-8 col-lg-9">
+                <p ng-show="errorReport.length == 0">Error report returned with no contents.</p>
+                <p  ng-repeat="error in errorReport">{{error.text}}</p>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-xs-12">
             <div class="outputFileSection">

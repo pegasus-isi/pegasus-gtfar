@@ -67,6 +67,9 @@ define(["moment"],
                     if (statusChanged(data)) {
                         $scope.status = data;
                         getOutputFiles();
+                        if($scope.status.failed) {
+                            getErrorReport();
+                        }
                     }
                     // We don't want the calls to continue when we leave this state
                     if ($state.includes("runDetails")) {
@@ -96,6 +99,18 @@ define(["moment"],
                     // TODO: need to present links to download the output files
                 }).error(function (data) {
                     $scope.alerts.push({'type': 'danger', 'message': 'Error retrieving output files. Please contact the developers'});
+                });
+            }
+
+            function getErrorReport() {
+                $http.get($window.apiLinks.runs + "/" + $stateParams.id + $window.apiLinks.analyze).success(function(data) {
+                    $scope.errorReport = [];
+                    var errors = data.split('\n');
+                    for(var i = 0; i < errors.length; i++) {
+                        $scope.errorReport.push({'text' : errors[i]});
+                    }
+                }).error(function(data) {
+                    $scope.alerts.push({'type': 'danger', 'message': 'Error retrieving error analysis.  Please contact the developers'});
                 });
             }
 

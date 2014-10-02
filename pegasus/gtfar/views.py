@@ -415,7 +415,6 @@ def analyze(_id):
     workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
                                        os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'submit'))
     out = workflow.analyze()
-
     return out.read(), 200
 
 
@@ -508,7 +507,8 @@ def index():
         'download': '/api/download',
         'status': '/status',
         'outputs': '/outputs',
-        'stop': '/stop'
+        'stop': '/stop',
+        'analyze' : '/analyze'
     }
 
     return render_template('mainView.html', apiLinks=json.dumps(api_links))

@@ -529,7 +529,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
 
         self.adag = AutoADAG('gtfar_%s' % self._prefix) if adag is None else adag
 
-        self._state_update = '%s/state_update.py %%r %%r %%r %%r' % self._bin_dir
+        self._state_update = '%s/gtfar-state-update %%r %%r %%r %%r' % self._bin_dir
 
         self.adag.invoke('all', self._state_update)
 

@@ -132,7 +132,8 @@ function(angular) {
                     invalid = true;
                     $scope.alerts.push({'type' : 'danger', 'message' : 'The read length field is required and must be an integer between 50 and 128 (inclusive)'});
                 }
-                if($scope.form.email.$invalid) {
+                // Check for the empty string because we could have a case where the user enters and then erases an email
+                if($scope.form.email.$invalid && $scope.form.email.$viewValue != "") {
                     if($scope.form.email.$viewValue.indexOf(',') != -1) { // Multiple emails input
                         var emails = $scope.form.email.$viewValue.split(",");
                         for(var i = 0; i < emails.length; i++) {

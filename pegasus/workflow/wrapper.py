@@ -152,7 +152,6 @@ class PegasusWorkflow(Workflow):
     def analyze(self, args=None):
         if not self.__valid_args(args):
             raise AnalyzerException
-
         executable = self.__get_abs_exec_path('pegasus-analyzer')
         args = self.__arg_to_str(args)
         args.append(self.dag_dir)
