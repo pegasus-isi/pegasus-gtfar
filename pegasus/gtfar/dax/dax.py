@@ -70,13 +70,12 @@ class AnnotateMixin(object):
 
     def _annotate_gtf(self, read_length):
         annotate_gtf = Job(name='annotate_gtf')
-        annotate_gtf.invoke('all', self._state_update)
+        annotate_gtf.invoke('all', self._state_update % 'Generating annotation FASTA files')
 
         prefix = self._get_index_hash(read_length, exclude_genome=True)
 
         # Inputs
         gtf = File(self._gtf)
-        #genome = File(self._genome)
 
         chromosomes = [str(i) for i in range(1, 23)]
         chromosomes.extend(['X', 'Y', 'R', 'M'])
@@ -98,7 +97,6 @@ class AnnotateMixin(object):
 
         # Uses
         annotate_gtf.uses(gtf, link=Link.INPUT)
-        #annotate_gtf.uses(genome, link=Link.INPUT)
         annotate_gtf.uses(features, link=Link.OUTPUT, transfer=False, register=False)
         annotate_gtf.uses(chrs, link=Link.OUTPUT, transfer=False, register=False)
         annotate_gtf.uses(splices, link=Link.OUTPUT, transfer=False, register=False)
@@ -120,7 +118,7 @@ class AnnotateMixin(object):
 
     def _perm_index(self, index_type, read_length, read_format='fastq', seed='F2'):
         perm_index = Job(name='perm')
-        perm_index.invoke('all', self._state_update)
+        perm_index.invoke('all', self._state_update % 'Pre-computing %s index file' % index_type.capitalize())
 
         prefix = self._get_index_hash(read_length, exclude_genome=True)
 
@@ -161,14 +159,14 @@ class FilterMixin(object):
 
         # Merge rejects
         cat = UNIXUtils.cat(rejects, '%s.reject.fastq' % self._prefix, o_transfer=True)
-        cat.invoke('all', self._state_update)
+        cat.invoke('all', self._state_update % 'Merge rejected reads file')
         self.adag.addJob(cat)
 
         self._merge_stats()
 
     def _fastq_split(self, splits=2, suffix_len=2):
         fastq_split = Job(name='fastq-split')
-        fastq_split.invoke('all', self._state_update)
+        fastq_split.invoke('all', self._state_update % 'Splitting input reads file into %d parts' % splits)
 
         # Inputs
         reads = File(self._reads)
@@ -189,7 +187,7 @@ class FilterMixin(object):
 
     def _pre_filter_fastq(self, index, suffix_len):
         pre_filter = Job(name='pre_filter_fastq.py')
-        pre_filter.invoke('all', self._state_update)
+        pre_filter.invoke('all', self._state_update % 'Pre-filter reads part %d file' % (index + 1))
         prefix = 'reads%d' % index
 
         # Inputs
@@ -222,7 +220,7 @@ class FilterMixin(object):
 
     def _merge_stats(self):
         merge_stats = Job(name='merge-stats')
-        merge_stats.invoke('all', self._state_update)
+        merge_stats.invoke('all', self._state_update % 'Merging adaptor stats file')
 
         # Outputs
         adaptor_stats = File('%s.adaptor.stats' % self._prefix)
@@ -253,14 +251,14 @@ class IterativeMapMixin(object):
         for trim in self._trims:
             self._read_length = trim
 
-            if (self._is_trim_unmapped):
+            if self._is_trim_unmapped:
                 unmapped_reads = self._map_and_parse_reads(unmapped_reads, 'trim%d' % trim)
 
-            if (self._is_map_filtered):
+            if self._is_map_filtered:
                 self._map_and_parse_reads('reads%%d_%d.fastq' % trim, 'filter%d' % trim)
 
         cat = UNIXUtils.cat(self._vis_files, '%s.sam' % self._prefix, o_transfer=True)
-        cat.invoke('all', self._state_update)
+        cat.invoke('all', self._state_update % 'Merge all vis files into a single SAM file')
         self.adag.addJob(cat)
 
         if self._is_trim_unmapped:
@@ -269,7 +267,7 @@ class IterativeMapMixin(object):
             merged_unmapped = '%s.unmapped.fastq' % self._prefix
             cat = UNIXUtils.cat([unmapped_reads % i for i in self._range()], merged_unmapped, o_transfer=True)
 
-        cat.invoke('all', self._state_update)
+        cat.invoke('all', self._state_update % 'Merge all unmapped reads')
         self.adag.addJob(cat)
 
     def _map_and_parse_reads(self, reads, tag):
@@ -335,7 +333,7 @@ class IterativeMapMixin(object):
 
     def _perm(self, index_type, map_to, reads, tag, output_sam=False):
         perm = Job(name='perm')
-        perm.invoke('all', self._state_update)
+        perm.invoke('all', self._state_update % 'Map reads to %s' % map_to.capitalize())
 
         # Input files
         hash_v = self._get_index_hash(self._read_length, 'F%d' % self._seed)
@@ -388,7 +386,7 @@ class IterativeMapMixin(object):
         anchor = self._compute_clip_seed(self._read_length)
 
         clip_reads = Job(name='clipR')
-        clip_reads.invoke('all', self._state_update)
+        clip_reads.invoke('all', self._state_update % 'Generate new splice candidates')
 
         seed = 'F1'
         mismatches = 1
@@ -433,7 +431,7 @@ class IterativeMapMixin(object):
 
     def _parse_alignment(self, input_file, tag):
         parse_alignment = Job(name='parse_alignment')
-        parse_alignment.invoke('all', self._state_update)
+        parse_alignment.invoke('all', self._state_update % 'Parse alignment')
 
         # Input files
         input_file = File(input_file)
@@ -461,7 +459,7 @@ class AnalyzeMixin(object):
 
     def _analyze(self):
         analyze = Job(name='analyze_samfile')
-        analyze.invoke('all', self._state_update)
+        analyze.invoke('all', self._state_update % 'Analyzing SAM file')
 
         # Input files
         sam_file = File('%s.sam' % self._prefix)
@@ -549,7 +547,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
 
             self.adag.invoke('at_end', email_script)
 
-        self._state_update = '%s --job-name %%r --log-message %%r' % self._state_update
+        self._state_update = '%s --log-message %%r' % self._state_update
 
         self._seed = None
         self._vis_files = []
