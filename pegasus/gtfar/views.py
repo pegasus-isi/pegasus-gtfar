@@ -390,15 +390,20 @@ api_manager.create_api(Run,
 @app.route('/api/upload/<path:upload_folder>', methods=['POST'])
 def upload(upload_folder):
     upload_file = request.files['file']
-    print upload_file
+
     if upload_file and isValidFile(upload_file.filename):
+        # Remove old uploaded files
+        shutil.rmtree(os.path.join(app.config['UPLOAD_FOLDER'], upload_folder), ignore_errors=True)
+
         if not os.path.isdir(os.path.join(app.config['UPLOAD_FOLDER'], upload_folder)):
             os.mkdir(os.path.join(app.config['UPLOAD_FOLDER'], upload_folder))
+
         filename = secure_filename(upload_file.filename)
         upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], upload_folder, filename))
+
         return redirect(url_for('index'))
     else:
-        return jsonify({"code" : 403, "message" : "Bad file type or no file presented"})
+        return jsonify({"code": 403, "message": "Bad file type or no file presented"}), 403
 
 
 @app.route('/api/runs/<int:_id>/status', methods=['GET'])
@@ -415,6 +420,7 @@ def analyze(_id):
     workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
                                        os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'submit'))
     out = workflow.analyze()
+
     return out.read(), 200
 
 
@@ -508,6 +514,7 @@ def index():
         'status': '/status',
         'outputs': '/outputs',
         'stop': '/stop',
+        'sample': url_for('static', filename='sample/sample.fastq.gz'),
         'analyze' : '/analyze'
     }
 

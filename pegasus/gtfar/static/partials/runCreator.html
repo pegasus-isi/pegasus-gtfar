@@ -19,15 +19,14 @@
     <div class="row">
         <div class="col-xs-12">
             <form id="runForm" name="form" class="form-horizontal" role="form" enctype="multipart/form-data"
-                  method="post"
-                  action="">
+                  method="post" action="">
                 <div class="form-group">
                     <label for="inputRunName" class="col-xs-12 col-sm-5 col-md-4 col-lg-3 control-label">Workflow
-                        Name</label>
+                        Name *</label>
 
                     <div class="col-xs-12 col-sm-7 col-md-8 col-lg-9">
                         <input type="text" class="form-control" id="inputRunName" placeholder="62H2EAAXX_7_HSB_135"
-                               ng-model="run.name" name="name" required alphanumeric>
+                               ng-model="run.name" name="name" required alphanumeric tabindex="1" autofocus>
                         <span class="help-block">Description</span>
                     </div>
                 </div>
@@ -43,8 +42,9 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="inputGenome" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Genome
-                        Version</label>
+                    <label for="inputGenome" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">
+                        Genome Version
+                    </label>
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input type="text" class="form-control" id="inputGenome" placeholder="" ng-model="run.genome"
@@ -54,12 +54,13 @@
                 </div>
                 <div class="form-group">
                     <label for="inputFile" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Reads
-                        File</label>
+                        File *</label>
                     <!-- Use onChange instead of ng-change because the people who write Angular don't think they should support file uploading-->
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input ng-disabled="uploadProgress != null" type="file" name="file" id="inputFile" required
-                               onchange="angular.element(this).scope().uploadFile()">
-                        <span class="help-block">FastQ file must be compressed in gzip format</span>
+                               onchange="angular.element(this).scope().uploadFile()" tabindex="2">
+                        <span class="help-block">FastQ file must be compressed in gzip format. <a href="{{ sample }}"><i
+                                class="fa fa-file-text-o"> </i> Sample File</a></span>
 
                         <div class="progress-container">
                             <div class="progress" ng-show="uploadProgress">
@@ -79,7 +80,7 @@
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input type="number" class="form-control" id="inputReadLength" ng-model="run.readLength"
-                               name="readLength" maxlength="3" required integer min="50" max="128">
+                               name="readLength" maxlength="3" required integer min="50" max="128" tabindex="3">
                         <span class="help-block">Should be between 50 and 128 inclusive</span>
                     </div>
                 </div>
@@ -89,7 +90,7 @@
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input type="number" class="form-control" id="inputMismatches" ng-model="run.mismatches"
-                               name="mismatches" maxlength="1" required integer min="0" max="8">
+                               name="mismatches" maxlength="1" required integer min="0" max="8" tabindex="4">
                         <span class="help-block">Should be between 0 and 8 inclusive</span>
                     </div>
                 </div>
@@ -98,7 +99,7 @@
                         Filtered Reads</label>
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
-                        <input id="mapFiltered" type="checkbox" ng-model="run.mapFiltered">
+                        <input id="mapFiltered" type="checkbox" ng-model="run.mapFiltered" tabindex="5">
                         <span class="help-block">Align recoverable portion of reads which contain adaptor sequence or low quality tails</span>
                     </div>
                 </div>
@@ -107,7 +108,7 @@
                         Splice Candidates</label>
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
-                        <input id="genSplice" type="checkbox" ng-model="run.genSplice">
+                        <input id="genSplice" type="checkbox" ng-model="run.genSplice" tabindex="6">
                         <span class="help-block">Uses gapped alignment protocol to discover and confirm novel splice junctions</span>
                     </div>
                 </div>
@@ -117,7 +118,7 @@
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <select class="form-control text-capitalize" id="inputStrandRule" ng-model="strandRule"
-                                ng-options="option.rule for option in strandRuleOptions"></select>
+                                ng-options="option.rule for option in strandRuleOptions" tabindex="7"></select>
                         <span class="help-block">If a stranded sequencing protocol was used, select the expected read/gene orientation (sense/anti-sense) else select unstranded</span>
                     </div>
                 </div>
@@ -127,18 +128,19 @@
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input type="email" class="form-control" id="inputEmail" placeholder="example@domain.com"
-                               ng-model="run.email" name="email" multiple>
+                               ng-model="run.email" name="email" multiple tabindex="8">
                         <span class="help-block">Separate multiple emails by commas</span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <div class="col-xs-6 col-md-offset-3 col-md-2">
+                    <div class="col-xs-6 col-md-offset-4 col-md-2 col-lg-offset-3">
                         <button type="submit" ng-disabled="addingRun != null" class="btn btn-primary btn-block"
-                                ng-click="addRun()">Submit <i class="fa fa-long-arrow-right"></i>
+                                ng-click="addRun()" tabindex="9">Submit <i class="fa fa-long-arrow-right"></i>
                         </button>
                     </div>
                     <div class="col-xs-6 col-md-2">
-                        <button class="btn btn-warning btn-block" ng-click="cancel()">Cancel <i class="fa fa-close"></i>
+                        <button class="btn btn-warning btn-block" ng-click="cancel()" tabindex="10">Cancel <i
+                                class="fa fa-close"></i>
                         </button>
                     </div>
                 </div>
