@@ -373,14 +373,14 @@ def remove_run_directories(instance_id, **kw):
         # Delete from file-system
         #
 
-        shutil.rmtree(os.path.join(app.config['GTFAR_STORAGE_DIR'], str(instance_id)))
+        shutil.rmtree(os.path.join(app.config['GTFAR_STORAGE_DIR'], instance_id), ignore_errors=True)
 
         #
         # Delete from S3
         #
 
         if IS_S3_USED:
-            s3.delete_run_dir(str(instance_id))
+            s3.delete_run_dir(instance_id)
 
     except OSError as exception:
         if exception.errno != errno.EEXIST:
