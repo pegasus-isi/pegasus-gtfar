@@ -23,6 +23,53 @@ fi
 TRIMSTR=$(echo $TRIMS | awk '{$1=$1}1' OFS=",")
 TRIMARRAY=($TRIMS)
 
+
+function just_split_reads {
+
+    OUTDIR=$1; READS=$2; myPREFIX=$3
+    CORES=$((  $(nproc) - 1 ))
+    myEXT=${READS##*.}
+    FILENAME=$(echo $READS | awk -F\. '{print $1}')
+
+    if [ $OUTDIR == "NONE" ]; then OUTDIR="gtfar_$FILENAME"; fi 
+        
+    mkdir -p $OUTDIR; mkdir -p $OUTDIR"/filterDir" ; 
+    if [ $myEXT = gz ]; then 
+    	myREADS=$(basename $READS ".$myEXT"); fEXT=${myREADS##*.}
+    	if [ $fEXT = fastq ] || [ $fEXT == fq ]; then
+		    ln -fns $(readlink -m $READS) $OUTDIR/filterDir/READS.init 
+		    cd $OUTDIR/filterDir   		
+		    zcat READS.init | awk '{if (NR%4==0) printf $1"\n"; else printf $1" "}' > READS.tmp
+        else 
+		    error_quit "NEED FASTQ FILE OR FASTQ.GZ"; fi
+
+    elif [ $myEXT == fastq ] || [ $myEXT == fq ]; then 
+	    ln -fns $(readlink -m $READS) $OUTDIR/filterDir/READS.init 
+	    cd $OUTDIR/filterDir   		
+        cat READS.init | awk '{if (NR%4==0) printf $1"\n"; else printf $1" "}' > READS.tmp 
+    else
+        echo "Need read file extension to be fastq fq or fastq.gz or fq.gz"; exit; fi 
+   
+    LINE_CNT=$(wc -l READS.tmp | awk '{print $1}')
+    SPLIT_VAL=$(( $(( $LINE_CNT/$CORES )) + 1 ))
+    split -d -l $SPLIT_VAL READS.tmp
+    k=0
+    printf "Splitting reads..."
+    while [ $k -lt $CORES ]; do 
+        awk '{print $1; print $2; print $3; print $4}' "x"${NUMS[$k]}  > reads"$k"".fastq" & 
+        k=$(( $k + 1 ))
+    done 
+    wait
+	printf "Success\n" 
+    cd ../../
+}
+
+
+
+
+    
+
+
 function count_and_split_reads {
 
     OUTDIR=$1; READS=$2; myPREFIX=$3
