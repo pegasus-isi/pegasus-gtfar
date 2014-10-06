@@ -84,6 +84,7 @@ function(angular) {
                 $scope.$apply(function() {
                     if (e.lengthComputable) {
                         $scope.uploadProgress = Math.round(e.loaded / e.total * 100);
+                        $scope.uploadProgressStyle = {width: $scope.uploadProgress + '%'};
                     }
                 });
             };
