@@ -68,6 +68,8 @@ define(["moment"],
                 $http.get($window.apiLinks.runs + "/" + $stateParams.name + $window.apiLinks.status).success(function (data) {
                     if (statusChanged(data)) {
                         $scope.status = data;
+                        $scope.progressStyle = {width: $scope.status.progress + '%'};
+
                         getOutputFiles();
                         if($scope.status.failed) {
                             getErrorReport();
