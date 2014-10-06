@@ -547,7 +547,7 @@ def tests():
     return render_template('testRunner.html')
 
 
-@app.route('/')
+@app.route('/gtfar/')
 def index():
     """
     Loads up the main page
@@ -568,3 +568,8 @@ def index():
     }
 
     return render_template('mainView.html', apiLinks=json.dumps(api_links))
+
+
+@app.route('/')
+def home():
+    return render_template('home.html')

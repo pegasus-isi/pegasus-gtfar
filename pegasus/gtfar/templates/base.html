@@ -15,13 +15,8 @@
 ~  limitations under the License.
 -->
 
-<!--
-~ All templates should inherit from this main template and simply overwrite the title and content blocks.  This will
-~ make it so that we only have to load up all the css and Javascript files once and the routes within Angular and
-~ Flask will make sure all the data and views are properly synced up.
--->
 <html>
-<head lang="en">
+<head lang="en" ng-app="gtfarEC2App">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -30,7 +25,6 @@
     <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto Sans:400,700">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/ng-grid/2.0.11/ng-grid.css">
     <link rel="stylesheet" href="/css/main.css">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -40,15 +34,18 @@
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
 
-    <!-- Setup require and tell it where to go to load the libraries and our main application-->
-    <script data-main="/js/loader" style="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js"></script>
-
     <title>{% block title %}{% endblock title %}</title>
 </head>
-<body>
+<body ng-controller="GTFARCtrl">
     {%include 'header.html' %}
+    <div class="container">
     {% block content %}
     {% endblock content %}
+    </div>
     {% include 'footer.html' %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    {% block js_includes %}{% endblock %}
+    {% block js %}{% endblock %}
 </body>
 </html>

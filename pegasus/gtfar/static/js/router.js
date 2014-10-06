@@ -31,27 +31,27 @@ function(runsController, runDetailsController, runCreationController){
         $stateProvider
             .state('runs', {
                 url: "/runs",
-                templateUrl: "partials/runs.html",
+                templateUrl: "/partials/runs.html",
                 controller: "runsController"
 
             })
             .state('runDetails', {
                 url: "/runs/details/{name:[^/]*}",
-                templateUrl: "partials/runDetails.html",
+                templateUrl: "/partials/runDetails.html",
                 controller: "runDetailsController"
             })
             .state('createRun', {
                 url: "/createRun",
-                templateUrl: "partials/runCreator.html",
+                templateUrl: "/partials/runCreator.html",
                 controller : "runCreationController"
             })
             .state('help', {
                 url: "/help",
-                templateUrl : "partials/help.html"
+                templateUrl : "/partials/help.html"
             })
             .state('contact', {
                 url: "/contact",
-                templateUrl : "partials/contact.html"
+                templateUrl : "/partials/contact.html"
             });
     };
 
