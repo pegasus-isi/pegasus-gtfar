@@ -32,41 +32,58 @@ function map_and_parse_reads {
     fi
     cd ..
 }
-
 function clip_and_parse_reads {
-    CLIPDIR=$1; READS=$2; SEED="F1"
+    CLIPDIR=$1;
+    setup_clip_reads $CLIPDIR
     setup_clip_seed
-    setup_clip_reads $CLIPDIR $READS
     setup_clip_refs
     cd $CLIPDIR
-    clipR $myGENES gene_reads.txt --seed $SEED --anchorL $anchor -e -v $MISMATCHES -s -u --noSamHeader --ignoreDummyR 40 --ignoreRepeatR 15 > clip.log &
-    wait
-    ls
+    terminal_talk "Performing Gapped Alignment to Genes..."
+    #clipR $myGENES gene_reads.txt --seed $SEED --anchorL $anchor -e -v $MISMATCHES -s -u --noSamHeader --ignoreDummyR 40 --ignoreRepeatR 15 > clip_genes.log 
+    terminal_talk "Success\n" 
+    terminal_talk  "Parsing read alignments.."
+    for i in *.sam; do parse_clipped_alignment.py $i > "$i".info & done 
+    wait 
+    check_progress $?
+    terminal_talk ".Sucess\n"
+    terminal_talk "Performing Gapped Alignment to Genome..."
+    #clipR $myGENOME genome_reads.txt --seed $SEED --anchorL $anchor -e -v $MISMATCHES -s -u --noSamHeader --ignoreDummyR 40 --ignoreRepeatR 15 > clip_genome.log 
+    terminal_talk ".Sucess\n"
+    terminal_talk  "Parsing read alignments.."
+    for i in GENOME*.sam; do parse_clipped_alignment.py $i > "$i".info & done 
+    wait 
+    check_progress $?
+    terminal_talk ".Sucess\n"
     cd ..
-
 }
 
 
 function setup_clip_seed {
     SEED="F1"; MISMATCHES=1;
-    if [ $LENGTH>=100 ]; then anchor=35
-    elif [ $LENGTH==75 ]; then anchor=25
-    else echo "UNSUPPORTED LEN"; fi 
+    if [ $LENGTH -gt 99 ]; 
+        then anchor=35
+    elif [ $LENGTH -gt 74 ]; 
+        then anchor=25
+        SEED="F0"
+        MISMATCHES=0
+    else echo "UNSUPPORTED LEN"; exit; fi 
 }
 
 
 function setup_clip_reads {
-    CLIPDIR=$1; READS=$2
+    CLIPDIR=$1;
     mkdir -p $CLIPDIR 
     rm -f $CLIPDIR/gene_reads.txt; rm -f $CLIPDIR/genome_reads.txt
     for f in $READS; do 
         if [ ! -e $f ]; then echo "ERROR: FASTQ FILES NOT SUPPLIED" $f; exit; fi 
         rEXT=${f##*.} ; FNAME=$(readlink -m $f); FLINK=$CLIPDIR/$(basename $FNAME)
         if [ $rEXT != "fastq" ]; then echo "ERROR: FASTQ FILES NEEDED"; exit; fi 
+        if [ $(head $FNAME | awk '{if (NR==2) print length($1)}') != $LENGTH ]; then 
+            #echo $(head $FNAME | awk '{if (NR==2) print length($1)}') 
+            echo "ERROR: Incorrect Read Length Supplied ($LENGTH)"; exit; fi 
         ln -fns $FNAME $FLINK; 
         printf $(basename $FNAME)"\n" >> $CLIPDIR/gene_reads.txt  
         printf $(basename $FNAME "."$rEXT)"_miss_GENES.fastq\n" >> $CLIPDIR/genome_reads.txt
-    
     done
 }
 

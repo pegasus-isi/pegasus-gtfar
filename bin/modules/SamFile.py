@@ -105,7 +105,7 @@ class SamFile:
                 self.multiLoc+=1
                 if className.split(":")[0] in ["EXON","FILTER","KJXN","NJXN"]:
                     self.geneData[geneName+','+altName][idx]+=1
-                elif className.split(":")[0] in ["ITRN"]:
+                elif className.split(":")[0] in ["ITRN","IJXN"]:
                     self.intronData[geneName+','+altName][idx]+=1
                 #self.geneData[geneName+','+altName][idx]+=1
                 self.chrData[readLines[0][2]][idx]+=1
@@ -175,6 +175,12 @@ class SamFile:
 
             geneOut.write('%s %s %s %s %s\n' % (g,tmpData[0],tmpData[1],tmpData[2],tmpData[3]))
         geneOut.close()
+        intOut = open(self.prefix+'.introns.cnts','w')
+        for i in self.intronData:
+            tmpData=self.intronData[i]
+            intOut.write('%s %s %s %s %s\n' % (i,tmpData[0],tmpData[1],tmpData[2],tmpData[3]))
+        intOut.close()
+
 
 
         featOut = open(self.prefix+'.features.cnts','w')
