@@ -243,9 +243,6 @@ class FilterMixin(object):
 
 class IterativeMapMixin(object):
     def iterative_map(self):
-        if self._clip_reads:
-            self._clip_and_parse_reads('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES.fastq', 'full')
-
         unmapped_reads = self._map_and_parse_reads('reads%d_full.fastq', 'full')
 
         for trim in self._trims:
@@ -374,61 +371,6 @@ class IterativeMapMixin(object):
 
         self.adag.addJob(perm)
 
-    def _compute_clip_seed(self, read_length):
-        if read_length >= 100:
-            anchor = 35
-        elif read_length == 75:
-            anchor = 25
-
-        return anchor
-
-    def _clip_and_parse_reads(self, reads, tag):
-        anchor = self._compute_clip_seed(self._read_length)
-
-        clip_reads = Job(name='clipR')
-        clip_reads.invoke('all', self._state_update % 'Generate new splice candidates')
-
-        seed = 'F1'
-        mismatches = 1
-
-        # Input files
-        hash_v = self._get_index_hash(self._read_length, seed)
-        index = File('h%d_%s_F%d_%d.index' % (hash_v, 'GENE', 1, self._read_length))
-        reads_txt = File('%s_%s_reads.txt' % (tag, 'gene'))
-
-        for i in self._range():
-            # Input files
-            reads_i = File(reads % i)
-
-            # Output files
-            """
-            file_type = 'sam' if output_sam else 'mapping'
-            path, file_name, ext = GTFAR._get_filename_parts(reads_i.name)
-            sam_mapping = '%s_B_%d_%d_%s.%s' % (map_to.upper(), self._seed, self._mismatches, file_name, file_type)
-            fastq_out = File('%s_miss_%s%s' % (file_name, map_to, ext))
-            """
-            # Uses
-            clip_reads.uses(reads_i, link=Link.INPUT)
-            #clip_reads.uses(fastq_out, link=Link.OUTPUT, transfer=False, register=False)
-            #clip_reads.uses(sam_mapping, link=Link.OUTPUT, transfer=False, register=False)
-
-        # Output files
-        log = File('%s_%s.log' % (tag, 'GENE'))
-
-        # Arguments
-        clip_reads.addArguments(index, reads_txt, '--seed %s' % seed, '--anchorL %d' % anchor, '-e', '-v %d' % mismatches)
-        clip_reads.addArguments('-s', '-u', '--noSamHeader', '--ignoreDummyR %d' % 40, '--ignoreRepeatR %d' % 15)
-
-        clip_reads.setStdout(log)
-
-        # Uses
-        clip_reads.uses(index, link=Link.INPUT)
-        clip_reads.uses(reads_txt, link=Link.INPUT)
-        # TODO: Set Transfer to False for log File.
-        clip_reads.uses(log, link=Link.OUTPUT, transfer=True, register=False)
-
-        self.adag.addJob(clip_reads)
-
     def _parse_alignment(self, input_file, tag):
         parse_alignment = Job(name='parse_alignment')
         parse_alignment.invoke('all', self._state_update % 'Parse alignment')
@@ -451,6 +393,121 @@ class IterativeMapMixin(object):
         parse_alignment.uses(vis, link=Link.OUTPUT, transfer=False, register=False)
 
         self.adag.addJob(parse_alignment)
+
+
+class ClipParseMixin(object):
+    def clip_and_parse(self):
+        if self._clip_reads:
+            self._clip_and_parse('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES.fastq', 'clip')
+
+            cat = UNIXUtils.cat(self._info_files, '%s.splice_candidates.gtf' % self._prefix, o_transfer=True)
+            cat.invoke('all', self._state_update % 'Merge all info files into a single GTF file')
+            self.adag.addJob(cat)
+
+    def _clip_and_parse(self, reads, tag):
+        self._clip_and_parse_reads_to_gene(reads, tag)
+
+        path, file_name, ext = GTFAR._get_filename_parts(reads)
+
+        miss_gene = '%s_miss_GENE%s' % (file_name, ext)
+        self._clip_and_parse_reads_to_genome(miss_gene, tag)
+
+        miss_genome = '%s_miss_GENOME%s' % os.path.splitext(miss_gene)
+
+        return miss_genome
+
+    def _clip_and_parse_reads_to_gene(self, reads, tag):
+        self._clipr('GENE', reads, tag)
+
+        reads = os.path.basename(reads)
+        for i in self._range():
+            reads_i = os.path.splitext(reads)[0] % i
+            mapping_file = 'GENE_B_%d_%d_%s.sam' % (self._clip_seed, self._clip_mismatches, reads_i)
+            self._parse_clipped_alignment(mapping_file)
+
+    def _clip_and_parse_reads_to_genome(self, reads, tag):
+        self._clipr('GENOME', reads, tag)
+
+        reads = os.path.basename(reads)
+        for i in self._range():
+            reads_i = os.path.splitext(reads)[0] % i
+            sam_file = 'GENOME_B_%d_%d_%s.sam' % (self._clip_seed, self._clip_mismatches, reads_i)
+            self._parse_clipped_alignment(sam_file)
+
+    def _compute_clip_seed(self, read_length):
+        if read_length >= 100:
+            anchor = 35
+        elif read_length >= 75:
+            anchor = 25
+
+        return anchor
+
+    def _clipr(self, clip_to, reads, tag):
+        anchor = self._compute_clip_seed(self._read_length)
+
+        clip_reads = Job(name='clipR')
+        clip_reads.invoke('all', self._state_update % 'Generate new splice candidates')
+
+        seed = 'F%s' % self._clip_seed
+        mismatches = self._clip_mismatches
+
+        # Input files
+        hash_v = self._get_index_hash(self._read_length, seed)
+        index = File('h%d_%s_F%d_%d.index' % (hash_v, clip_to.upper(), self._clip_seed, self._read_length))
+        reads_txt = File('%s_%s_reads.txt' % (tag, clip_to.lower()))
+
+        for i in self._range():
+            # Input files
+            reads_i = File(reads % i)
+
+            # Output files
+            file_type = 'sam'
+            path, file_name, ext = GTFAR._get_filename_parts(reads_i.name)
+            sam_mapping = '%s_B_%d_%d_%s.%s' % (clip_to.upper(), self._clip_seed, mismatches, file_name, file_type)
+            fastq_out = File('%s_miss_%s%s' % (file_name, clip_to, ext))
+
+            # Uses
+            clip_reads.uses(reads_i, link=Link.INPUT)
+            clip_reads.uses(fastq_out, link=Link.OUTPUT, transfer=False, register=False)
+            clip_reads.uses(sam_mapping, link=Link.OUTPUT, transfer=False, register=False)
+
+        # Output files
+        log = File('%s_%s.log' % (tag, clip_to.lower()))
+
+        # Arguments
+        clip_reads.addArguments(index, reads_txt, '--seed %s' % seed, '--anchorL %d' % anchor, '-e', '-v %d' % mismatches)
+        clip_reads.addArguments('-s', '-u', '--noSamHeader', '--ignoreDummyR %d' % 40, '--ignoreRepeatR %d' % 15)
+
+        clip_reads.setStdout(log)
+
+        # Uses
+        clip_reads.uses(index, link=Link.INPUT)
+        clip_reads.uses(reads_txt, link=Link.INPUT)
+        clip_reads.uses(log, link=Link.OUTPUT, transfer=False, register=False)
+
+        self.adag.addJob(clip_reads)
+
+    def _parse_clipped_alignment(self, input_file):
+        parse_clipped_alignment = Job(name='parse_clipped_alignment')
+        parse_clipped_alignment.invoke('all', self._state_update % 'Parse clipped alignment')
+
+        # Input files
+        input_file = File(input_file)
+
+        # Output files
+        info = File('%s.info' % input_file.name)
+
+        self._info_files.append(info.name)
+
+        # Arguments
+        parse_clipped_alignment.addArguments(input_file)
+        parse_clipped_alignment.setStdout(info)
+
+        # Uses
+        parse_clipped_alignment.uses(input_file, link=Link.INPUT)
+        parse_clipped_alignment.uses(info, link=Link.OUTPUT, transfer=False, register=False)
+
+        self.adag.addJob(parse_clipped_alignment)
 
 
 class AnalyzeMixin(object):
@@ -483,7 +540,7 @@ class AnalyzeMixin(object):
         self.adag.addJob(analyze)
 
 
-class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
+class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, ClipParseMixin, AnalyzeMixin):
     def __init__(self, gtf, genome, prefix, reads, base_dir, bin_dir, read_length=100, mismatches=3,
                  is_trim_unmapped=False, is_map_filtered=False, splice=True, clip_reads=False, strand_rule='Unstranded',
                  dax=None, url=None, email=None, splits=1, adag=None):
@@ -550,7 +607,17 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
         self._state_update = '%s --log-message %%r' % self._state_update
 
         self._seed = None
+
+        if self._clip_reads:
+            if self._read_length >= 100:
+                self._clip_seed = 1
+                self._clip_mismatches = 1
+            elif self._read_length >= 75:
+                self._clip_seed = 0
+                self._clip_mismatches = 0
+
         self._vis_files = []
+        self._info_files = []
 
     def validate(self):
         errors = {}
@@ -588,8 +655,8 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
         except ValueError:
             errors['mismatches'] = 'Mismatches must be a valid integer'
 
-        if self._clip_reads and self._read_length != 75 and not self._read_length >= 100:
-            errors['common'] = 'With clip-reads, read-length must be 75 or >= 100'
+        if self._clip_reads and not self._read_length >= 75:
+            errors['common'] = 'With clip-reads, read-length must be >= 75'
 
         return True if len(errors) == 0 else errors
 
@@ -640,7 +707,8 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, AnalyzeMixin):
         self._write_reads_file('reads%d_full_miss_FEATURES_miss_GENOME.fastq', 'full_splices_reads.txt')
 
         if self._clip_reads:
-            self._write_reads_file('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES.fastq', 'full_gene_reads.txt')
+            self._write_reads_file('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES.fastq', 'clip_gene_reads.txt')
+            self._write_reads_file('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES_miss_GENE.fastq', 'clip_genome_reads.txt')
 
         if self._is_map_filtered:
             for trim in self._trims:
