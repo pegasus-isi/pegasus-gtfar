@@ -53,29 +53,42 @@ def planner_exception(error):
 
     return jsonify(error_response), 500, JSON_HEADERS
 
+
 @app.errorhandler(RunnerException)
 def runner_exception(error):
     error_response = {
-        'code' : 'RUN_FAILED',
-        'message' : 'Pegasus runner failed with exitcode %d' % error.exit_code
+        'code': 'RUN_FAILED',
+        'message': 'Pegasus runner failed with exitcode %d' % error.exit_code
     }
 
     return jsonify(error_response), 500, JSON_HEADERS
+
+
+@app.errorhandler(MonitoringException)
+def runner_exception(error):
+    error_response = {
+        'code': 'MONITOR_FAILED',
+        'message': 'Pegasus status failed with exitcode %d' % error.exit_code
+    }
+
+    return jsonify(error_response), 500, JSON_HEADERS
+
 
 @app.errorhandler(StopException)
 def stop_exception(error):
     error_response = {
-        'code' : 'STOP_FAILED',
-        'message' : 'Pegasus stop failed with exitcode %d' % error.exit_code
+        'code': 'STOP_FAILED',
+        'message': 'Pegasus stop failed with exitcode %d' % error.exit_code
     }
 
     return jsonify(error_response), 500, JSON_HEADERS
 
+
 @app.errorhandler(AnalyzerException)
 def analyzer_exception(error):
     error_response = {
-        'code' : 'ANALYZER_FAILED',
-        'message' : 'Pegasus analyzer failed with exitcode %d' % error.exit_code
+        'code': 'ANALYZER_FAILED',
+        'message': 'Pegasus analyzer failed with exitcode %d' % 1
     }
 
     return jsonify(error_response), 500, JSON_HEADERS
