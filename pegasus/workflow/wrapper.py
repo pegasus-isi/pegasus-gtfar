@@ -262,5 +262,5 @@ class AnalyzerException(WorkflowException):
     pass
 
 
-class StopException(Exception):
+class StopException(WorkflowException):
     pass
