@@ -206,23 +206,23 @@ def validate_fields(data):
     if not 'readLength' in data:
         validation_error_messages.append(
             {'field': 'Read Length', 'message': 'The read length field is required and must be an integer between 50 and 128 (inclusive)'})
-    elif not type(data['readLength']) == int or not str(data['readLength']).isdigit() or not int(
-            data['readLength']) >= 50 or not int(data['readLength']) <= 128:
+    elif not type(data['readLength']) == int or not str(data['readLength']).isdigit():
+        validation_error_messages.append(
+            {'field': 'Read Length', 'message': 'The read length field is required and must be an integer between 50 and 128 (inclusive)'})
+    elif not int(data['readLength']) >= 50 and not int(data['readLength']) <= 128:
         validation_error_messages.append(
             {'field': 'Read Length', 'message': 'The read length field is required and must be an integer between 50 and 128 (inclusive)'})
     elif 'genSplice' in data and data['genSplice'] == True:
-        if not int(data['readLength']) == 75 or not int(data['readLength']) >= 100 or not int(
-                data['readLength']) <= 128:
-            validation_error_messages.append({'field': 'Read Length',
-                                              'message': 'When the generate new splice candidate option is true the read length must be either 75 or between 100 and 128 (inclusive)'})
+        if not int(data['readLength']) == 75 and not int(data['readLength']) >= 100 and not int(data['readLength']) <= 128:
+            validation_error_messages.append({'field': 'Read Length', 'message': 'When the generate new splice candidate option is true the read length must be either 75 or between 100 and 128 (inclusive)'})
 
     if not 'mismatches' in data:
         validation_error_messages.append(
             {'field': 'Mismatches Allowed', 'message': 'The mismatches field is required and must be an integer between 0 and 8 (inclusive)'})
-    elif not type(data['mismatches']) == int or not str(data['mismatches']).isdigit() or not int(
-            data['mismatches']) >= 0 or not int(data['mismatches']) <= 8:
-        validation_error_messages.append({'field': 'Mismatches Allowed',
-                                          'message': 'The mismatches field is required and must be an integer between 0 and 8 (inclusive)'})
+    elif not type(data['mismatches']) == int or not str(data['mismatches']).isdigit():
+        validation_error_messages.append({'field': 'Mismatches Allowed', 'message': 'The mismatches field is required and must be an integer between 0 and 8 (inclusive)'})
+    elif not int(data['mismatches']) >= 0 or not int(data['mismatches']) <= 8:
+        validation_error_messages.append({'field': 'Mismatches Allowed', 'message': 'The mismatches field is required and must be an integer between 0 and 8 (inclusive)'})
 
     if not 'strandRule' in data:
         validation_error_messages.append(
@@ -247,7 +247,7 @@ def validate_fields(data):
     if 'email' in data:
         emails = data['email'].split(',')
         for email in emails:
-            if not email == "" or not '@' in email:
+            if not email == "" and not '@' in email:
                 validation_error_messages.append(
                     {'field': 'Email', 'message': 'Emails must be properly formatted example@domain.com'})
 

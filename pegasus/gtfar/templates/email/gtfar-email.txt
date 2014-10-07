@@ -4,14 +4,14 @@
 {{ header }}
 
 {{ 'Request ID' | ljust(width=20) }}: {{ uid | safe }}
-{{ 'Run Name' | ljust(width=20) }}: {{ run.name }}
-{{ 'Filename' | ljust(width=20) }}: {{ run.filename }}
-{{ 'Read Length' | ljust(width=20) }} : {{ run.readLength }}
-{{ 'Align QC Filtered Reads' | ljust(width=20) }} : {{ run.mapFiltered }}
-{{ 'Generate New Splice Candidates' | ljust(width=20) }} : {{ run.genSplice }}
-{{ 'Strand Rule' | ljust(width=20) }} : {{ run.strandRule }}
-{{ 'Mismatches Allowed' | ljust(width=20) }} : {{ run.mismatches }}
-{{ 'Created On" | ljust(width=20) }} : {{run.created }}
+{{ 'Filename' | ljust(width=20) }}: {{ run[2] }}
+{{ 'Read Length' | ljust(width=20) }} : {{ run[5] }}
+{{ 'Mismatches Allowed' | ljust(width=20) }} : {{ run[6]}}
+{{ 'Align QC Filtered Reads' | ljust(width=20) }} : {{ run[8] }}
+{{ 'Generate New Splice Candidates' | ljust(width=20) }} : {{ run[9] }}
+{{ 'Strand Rule' | ljust(width=20) }} : {{ run[10] }}
+
+{{ 'Created On' | ljust(width=20) }} : {{run[14] }}
 
 {{ 'Link' | ljust(width=20) }}: {{ url }}
 
