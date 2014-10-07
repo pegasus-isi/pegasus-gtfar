@@ -174,13 +174,22 @@ function(angular) {
                 $state.go('runDetails', {name : data.name});
              }).error(function(data, status) {
                 $scope.addingRun = null;
-                if(status == 400) {
+                if(data.code && data.message) {
+                    $scope.alerts.push({
+                        'message': data.message + ".  Error Code: " + data.code,
+                        'type': 'danger'
+                    });
+                }
+                else if(status == 400) {
                     for (var i = 0; i < data.errors.length; i++) {
                         $scope.alerts.push({'type': 'danger', 'message': data.errors[i].message});
                     }
                 }
                 else if(data.code && data.code == 503) {
                     $scope.alerts.push({'type' : 'danger', 'message' : 'Could not connect to server, please check your connection.'});
+                }
+                else {
+                    $scope.alerts.push({'type': 'danger', 'message': 'Unknown error occurred while retrieving error analysis.  Please contact the developers'});
                 }
 
              });
