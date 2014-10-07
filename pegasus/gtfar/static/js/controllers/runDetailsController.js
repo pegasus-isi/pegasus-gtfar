@@ -86,7 +86,15 @@ define(["moment"],
                     }
 
                 }).error(function (data) {
-                    console.error(data);
+                    if(data.code && data.message) {
+                        $scope.alerts.push({
+                            'message': data.message + ".  Error Code: " + data.code,
+                            'type': 'danger'
+                        });
+                    }
+                    else {
+                        $scope.alerts.push({'type': 'danger', 'message': 'Unknown error occurred while retrieving run status.  Please contact the developers'});
+                    }
                 });
             }
 
@@ -117,7 +125,15 @@ define(["moment"],
                         $scope.errorReport.push({'text' : errors[i]});
                     }
                 }).error(function(data) {
-                    $scope.alerts.push({'type': 'danger', 'message': 'Error retrieving error analysis.  Please contact the developers'});
+                    if(data.code && data.message) {
+                        $scope.alerts.push({
+                            'message': data.message + ".  Error Code: " + data.code,
+                            'type': 'danger'
+                        });
+                    }
+                    else {
+                        $scope.alerts.push({'type': 'danger', 'message': 'Unknown error occurred while retrieving error analysis.  Please contact the developers'});
+                    }
                 });
             }
 
@@ -206,10 +222,18 @@ define(["moment"],
                     $scope.run.status = 256;
 
                 }).error(function (data) {
-                    $scope.alerts.push({
-                        'message': data.reason + "Error Code: " + data.status,
-                        'type': 'danger'
-                    });
+                    if(data.code && data.message){
+                        $scope.alerts.push({
+                            'message': data.message + ".  Error Code: " + data.code,
+                            'type': 'danger'
+                        });
+                    }
+                    else {
+                        $scope.alerts.push({
+                            'message': "Unknown error occurred while attempting to stop the run.  Please contact the development team",
+                            'type': 'danger'
+                        });
+                    }
                     $scope.run.status = 0;
                 });
             };

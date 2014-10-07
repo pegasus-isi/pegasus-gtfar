@@ -526,13 +526,8 @@ def stop_run(_id):
 
     except NoResultFound:
         response = {
-            'status': 400,
-            'reason': 'Run not found'
-        }
-    except StopException:
-        response = {
-            'status': 500,
-            'reason': 'Unable to stop the requested run.'
+            'code': 400,
+            'message': 'Run not found'
         }
 
     return jsonify(response), response['status']
