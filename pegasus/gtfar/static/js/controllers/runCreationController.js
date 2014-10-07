@@ -141,14 +141,14 @@ function(angular) {
                         for(var i = 0; i < emails.length; i++) {
                             if(emails[i].indexOf("@") == -1) {
                                 invalid = true;
-                                $scope.alerts.push({'type' : 'danger', 'message' : 'Emails must be properly formatted user@location.domain'});
+                                $scope.alerts.push({'type' : 'danger', 'message' : 'Emails must be properly formatted example@domain.com'});
                                 return;
                             }
                         }
                     }
                     else {
                         invalid = true;
-                        $scope.alerts.push({'type' : 'danger', 'message' : 'Emails must be properly formatted user@location.domain'});
+                        $scope.alerts.push({'type' : 'danger', 'message' : 'Emails must be properly formatted example@domain.com'});
                     }
                 }
                 if(invalid) {
@@ -164,7 +164,7 @@ function(angular) {
             }
             catch(error)
             {
-                return; // An error message should show to the user so we just ned to return
+                return; // An error message should show to the user so we just need to return
             }
             $scope.addingRun = true;
             // Add the run to the database, the runId will be used to create the folder

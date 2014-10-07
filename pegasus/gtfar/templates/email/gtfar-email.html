@@ -73,6 +73,72 @@ style="{{ ['display: inline-block',
                                                         {{ uid | safe }}
                                                     </td>
                                                     </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Run Name
+                                                        </th>
+                                                        <td>
+                                                            {{ run.name }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Filename
+                                                        </th>
+                                                        <td>
+                                                            {{ run.filename }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Read Length
+                                                        </th>
+                                                        <td>
+                                                            {{ run.readlength }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Mismatches Allowed
+                                                        </th>
+                                                        <td>
+                                                            {{ run.mismatches }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Align QC Filtered Reads
+                                                        </th>
+                                                        <td>
+                                                            {{ run.mapFiltered }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                           Generate New Splice Candidates
+                                                        </th>
+                                                        <td>
+                                                            {{ run.genSplice }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Strand Rule
+                                                        </th>
+                                                        <td>
+                                                            {{ run.strandRule }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>
+                                                            Created On
+                                                        </th>
+                                                        <td>
+                                                            {{ run.created }}
+                                                        </td>
+                                                    </tr>
+
+
                                                     </tbody>
                                                 </table>
                                             </td>

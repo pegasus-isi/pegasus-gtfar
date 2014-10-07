@@ -4,7 +4,14 @@
 {{ header }}
 
 {{ 'Request ID' | ljust(width=20) }}: {{ uid | safe }}
-{{ 'Request ID' | ljust(width=20) }}: {{ uid | safe }}
+{{ 'Run Name' | ljust(width=20) }}: {{ run.name }}
+{{ 'Filename' | ljust(width=20) }}: {{ run.filename }}
+{{ 'Read Length' | ljust(width=20) }} : {{ run.readLength }}
+{{ 'Align QC Filtered Reads' | ljust(width=20) }} : {{ run.mapFiltered }}
+{{ 'Generate New Splice Candidates' | ljust(width=20) }} : {{ run.genSplice }}
+{{ 'Strand Rule' | ljust(width=20) }} : {{ run.strandRule }}
+{{ 'Mismatches Allowed' | ljust(width=20) }} : {{ run.mismatches }}
+{{ 'Created On" | ljust(width=20) }} : {{run.created }}
 
 {{ 'Link' | ljust(width=20) }}: {{ url }}
 

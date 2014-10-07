@@ -173,9 +173,9 @@ def validate_fields(data):
     validation_error_messages = []
 
     if not 'name' in data:
-        validation_error_messages.append({'field': 'Name', 'message': 'You must provide a name for the run'})
+        validation_error_messages.append({'field': 'Name', 'message': 'The name field is required and must be an alphanumeric value (underscores acceptable)'})
     elif not re.match(r'\w+$', data['name']):
-        validation_error_messages.append({'field': 'Name', 'message': 'Name must be an alphanumeric value'})
+        validation_error_messages.append({'field': 'Name', 'message': 'The name field is required and must be an alphanumeric value (underscores acceptable)'})
 
     if not 'filename' in data:
         validation_error_messages.append({'field': 'File', 'message': 'You must provide a file for the run'})
@@ -184,11 +184,11 @@ def validate_fields(data):
 
     if not 'readLength' in data:
         validation_error_messages.append(
-            {'field': 'Read Length', 'message': 'You must provide a read length for the run'})
+            {'field': 'Read Length', 'message': 'The read length field is required and must be an integer between 50 and 128 (inclusive)'})
     elif not type(data['readLength']) == int or not str(data['readLength']).isdigit() or not int(
             data['readLength']) >= 50 or not int(data['readLength']) <= 128:
         validation_error_messages.append(
-            {'field': 'Read Length', 'message': 'Read length must be an integer between 50 and 128 (inclusive)'})
+            {'field': 'Read Length', 'message': 'The read length field is required and must be an integer between 50 and 128 (inclusive)'})
     elif 'genSplice' in data and data['genSplice'] == True:
         if not int(data['readLength']) == 75 or not int(data['readLength']) >= 100 or not int(
                 data['readLength']) <= 128:
@@ -197,38 +197,38 @@ def validate_fields(data):
 
     if not 'mismatches' in data:
         validation_error_messages.append(
-            {'field': 'Mismatches Allowed', 'message': 'You must provide the number of mismatches allowed for the run'})
+            {'field': 'Mismatches Allowed', 'message': 'The mismatches field is required and must be an integer between 0 and 8 (inclusive)'})
     elif not type(data['mismatches']) == int or not str(data['mismatches']).isdigit() or not int(
             data['mismatches']) >= 0 or not int(data['mismatches']) <= 8:
         validation_error_messages.append({'field': 'Mismatches Allowed',
-                                          'message': 'Mismatches allowed must be an integer between 0 and 8 (inclusive)'})
+                                          'message': 'The mismatches field is required and must be an integer between 0 and 8 (inclusive)'})
 
     if not 'strandRule' in data:
         validation_error_messages.append(
-            {'field': 'Strand Rule', 'message': 'You must provide a strand rule for the run.'})
+            {'field': 'Strand Rule', 'message': 'The Strand Rule field is required and must be either "Unstranded", "Sense", or "Anti-Sense".'})
     elif not matchesAny(strandRuleOptions, data['strandRule']):
         validation_error_messages.append(
-            {'field': 'Strand Rule', 'message': 'Strand Rule must be either "Unstranded", "Sense", or "Anti-Sense".'})
+            {'field': 'Strand Rule', 'message': 'The Strand Rule field is required and must be either "Unstranded", "Sense", or "Anti-Sense".'})
 
     if not 'genSplice' in data:
         validation_error_messages.append({'field': 'Generate New Splice Candidates',
-                                          'message': 'You must specify whether or not you want the run to generate new splice candidates.'})
+                                          'message': 'The Generate New Splice Candidates field is required and must be a boolean value.'})
     elif not type(data['genSplice']) == bool:
         validation_error_messages.append(
-            {'field': 'Generate New Splice Candidates', 'message': 'Generate New Splice Candidates must be a boolean.'})
+            {'field': 'Generate New Splice Candidates', 'message': 'The Generate New Splice Candidates field is required and must be a boolean value.'})
 
     if not 'mapFiltered' in data:
         validation_error_messages.append({'field': 'Map Filtered',
-                                          'message': 'You must specify whether or not you want the run to be map filtered.'})
+                                          'message': 'The Map Filtered field is required and must be a boolean value.'})
     elif not type(data['mapFiltered']) == bool:
-        validation_error_messages.append({'field': 'Map Filtered', 'message': 'Map Filtered must be a boolean.'})
+        validation_error_messages.append({'field': 'Map Filtered', 'message': 'The Map Filtered field is required and must be a boolean value.'})
 
     if 'email' in data:
         emails = data['email'].split(',')
         for email in emails:
-            if not '@' in email:
+            if not email == "" or not '@' in email:
                 validation_error_messages.append(
-                    {'field': 'Email', 'message': 'You must use a real, properly formatted email address'})
+                    {'field': 'Email', 'message': 'Emails must be properly formatted example@domain.com'})
 
     if validation_error_messages:
         raise ValidationException(errors=validation_error_messages)
