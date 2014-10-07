@@ -29,14 +29,12 @@ from werkzeug import secure_filename
 
 from flask import render_template, request, redirect, url_for, json, jsonify, send_from_directory
 
-from flask.ext.restless import ProcessingException
-
 from sqlalchemy.orm.exc import NoResultFound
 
 from pegasus.gtfar import app, db, s3, api_manager, IS_S3_USED, __VERSION__
 
 from pegasus.gtfar.dax.dax import GTFAR
-from pegasus.gtfar.models import Run, isValidFile
+from pegasus.gtfar.models import Run, Status, isValidFile
 
 from pegasus.workflow import wrapper
 from pegasus.workflow.wrapper import PegasusWorkflow, StopException
@@ -98,7 +96,7 @@ def before_first_request():
         # Register Index Files available locally with JDBCRC
         #
 
-        for path, dir_name, files in os.walk(app.config['GTFAR_DATA_DIR']  + '/index'):
+        for path, dir_name, files in os.walk(app.config['GTFAR_DATA_DIR'] + '/index'):
 
             for file_name in files:
 
@@ -125,7 +123,7 @@ def before_first_request():
                 file_name = os.path.basename(index_file[0])
 
                 replica = ReplicaEntry(file_name,
-                                       's3://pegasus@amazon/%s' % index_file[0],
+                                       's3://pegasus@amazon/%s/%s' % (app.config['GTFAR_S3_BUCKET'], index_file[0]),
                                        's3',
                                        attributes=[ReplicaAttribute('index', 'true')])
 
@@ -169,6 +167,17 @@ def isValidFile(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in validExtensions
 
 
+def workflow_name_exists(workflow_name):
+    session = db.session
+
+    try:
+        session.query(Run).filter(Run.name == workflow_name).one()
+    except NoResultFound:
+        return False
+
+    return True
+
+
 def validate_fields(data):
     validation_error_messages = []
 
@@ -176,6 +185,18 @@ def validate_fields(data):
         validation_error_messages.append({'field': 'Name', 'message': 'The name field is required and must be an alphanumeric value (underscores acceptable)'})
     elif not re.match(r'\w+$', data['name']):
         validation_error_messages.append({'field': 'Name', 'message': 'The name field is required and must be an alphanumeric value (underscores acceptable)'})
+    elif workflow_name_exists(data['name']):
+        validation_error_messages.append({'field': 'Workflow Name',
+                                          'message': 'Workflow Name must be unique. Name %s is already in use'
+                                                     % data['name']})
+    elif os.path.isdir(os.path.join(app.config['GTFAR_STORAGE_DIR'], data['name'])):
+        validation_error_messages.append({'field': 'Workflow Name',
+                                          'message': 'Workflow Name must be unique. Name %s is already in use'
+                                                     % data['name']})
+    elif IS_S3_USED and s3.dir_exists('data/runs/%s' % data['name']):
+        validation_error_messages.append({'field': 'Workflow Name',
+                                          'message': 'Workflow Name must be unique. Name %s is already in use' %
+                                                     data['name']})
 
     if not 'filename' in data:
         validation_error_messages.append({'field': 'File', 'message': 'You must provide a file for the run'})
@@ -235,7 +256,7 @@ def validate_fields(data):
 
 
 def create_run_directories(result):
-    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['name']))
 
     try:
         os.makedirs(os.path.join(path, 'input'))
@@ -254,8 +275,8 @@ def create_run_directories(result):
 
 
 def create_config(result):
-    _id = str(result['id'])
-    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
+    _id = result['name']
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['name']))
     output_dir = os.path.join(path, 'output')
 
     with open(os.path.join(path, 'config', 'pegasus.conf'), 'w') as conf:
@@ -278,14 +299,14 @@ def create_config(result):
 
 
 def generate_dax(result):
-    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['name']))
     filesize = os.path.getsize(os.path.join(path, 'input', result['filename']))
 
     splits = max(1, int(math.floor(filesize / app.config['SPLIT_DIVISOR'])))
 
     gtfar = GTFAR(result['gtf'],
                   result['genome'],
-                  result['id'],
+                  result['name'],
                   result['filename'],
                   base_dir=path,
                   bin_dir=app.config['GTFAR_BIN_DIR'],
@@ -296,7 +317,7 @@ def generate_dax(result):
                   clip_reads=result['genSplice'],
                   splice=True,
                   strand_rule=result['strandRule'],
-                  dax=os.path.join(path, '%d' % result['id']),
+                  dax=os.path.join(path, '%s' % result['name']),
                   url='%s#/createRun' % url_for('index', _external=True),
                   email=result['email'],
                   splits=splits)
@@ -312,11 +333,11 @@ def generate_dax(result):
 
 
 def plan_workflow(result):
-    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']))
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['name']))
 
     conf_file = os.path.join(path, 'config', 'pegasus.conf')
     input_dir = os.path.join(path, 'input')
-    dax_file = os.path.join(path, '%d.dax' % result['id'])
+    dax_file = os.path.join(path, '%s.dax' % result['name'])
     submit_dir = os.path.join(path, 'submit')
 
     workflow = PegasusWorkflow(app.config['PEGASUS_HOME'], os.path.join(path, 'submit'))
@@ -337,7 +358,7 @@ def plan_workflow(result):
 
 
 def run_workflow(result):
-    submit_dir = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['id']), 'submit')
+    submit_dir = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['name']), 'submit')
 
     workflow = PegasusWorkflow(app.config['PEGASUS_HOME'], submit_dir)
 
@@ -350,18 +371,28 @@ def remove_run_directories(instance_id, **kw):
         # Delete from file-system
         #
 
-        shutil.rmtree(os.path.join(app.config['GTFAR_STORAGE_DIR'], str(instance_id)))
+        shutil.rmtree(os.path.join(app.config['GTFAR_STORAGE_DIR'], instance_id), ignore_errors=True)
 
         #
         # Delete from S3
         #
 
         if IS_S3_USED:
-            s3.delete_run_dir(str(instance_id))
+            s3.delete_run_dir(instance_id)
 
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
+
+
+def remove_status(instance_id, **kw):
+    session = db.session
+    logs = session.query(Status).filter(Status.wf_id == instance_id)
+
+    for status in logs:
+        session.delete(status)
+    else:
+        session.commit()
 
 
 api_manager.create_api(Run,
@@ -372,6 +403,7 @@ api_manager.create_api(Run,
                            ],
                            'DELETE': [
                                remove_run_directories,
+                               remove_status
                            ]
                        },
                        postprocessors={
@@ -408,30 +440,44 @@ def upload(upload_folder):
         return jsonify({"code": 403, "message": "Bad file type or no file presented"}), 403
 
 
-@app.route('/api/runs/<int:_id>/status', methods=['GET'])
+@app.route('/api/runs/<string:_id>/status', methods=['GET'])
 def get_status(_id):
     workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
-                                       os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'submit'))
+                                       os.path.join(app.config['GTFAR_STORAGE_DIR'], _id, 'submit'))
     status = workflow.monitor(['-l'])
     # we have to change the state to be a basic data type
     return jsonify(status)
 
 
-@app.route('/api/runs/<int:_id>/analyze', methods=['GET'])
+@app.route('/api/runs/<string:_id>/analyze', methods=['GET'])
 def analyze(_id):
     workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
-                                       os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'submit'))
+                                       os.path.join(app.config['GTFAR_STORAGE_DIR'], _id, 'submit'))
     out = workflow.analyze()
 
     return out.read(), 200
 
 
-@app.route('/api/download/<path:file_path>')
-def download(file_path):
-    return send_from_directory(app.config['GTFAR_STORAGE_DIR'], file_path)
+@app.route('/api/runs/<string:name>/input/<string:file_name>')
+def download_input(name, file_name):
+    path = os.path.join(app.config['GTFAR_STORAGE_DIR'], name, 'input')
+    return send_from_directory(path, file_name)
 
 
-@app.route('/api/runs/<int:_id>/outputs', methods=['GET'])
+@app.route('/api/runs/<string:name>/output/<string:file_name>')
+def download_output(name, file_name):
+    if IS_S3_USED:
+        redirect_to = s3.get_download_url(name, file_name)
+        if redirect_to:
+            return redirect(redirect_to)
+        else:
+            return '', 404
+    else:
+        path = os.path.join(app.config['GTFAR_STORAGE_DIR'], name, 'output')
+        return send_from_directory(path, file_name)
+
+
+@app.route('/api/runs/<string:_id>/outputs', methods=['GET'])
 def get_output_files(_id):
     files = {'objects': []}
 
@@ -443,7 +489,7 @@ def get_output_files(_id):
                                      'size': jinja2.Template('{{size|filesizeformat}}').render(size=file_size)})
 
     else:
-        path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'output')
+        path = os.path.join(app.config['GTFAR_STORAGE_DIR'], _id, 'output')
 
         for filename in os.listdir(path):
             file_size = os.path.getsize(os.path.join(path, filename))
@@ -453,22 +499,22 @@ def get_output_files(_id):
     return jsonify(files)
 
 
-@app.route('/api/runs/<int:_id>/logs', methods=['GET'])
+@app.route('/api/runs/<string:_id>/logs', methods=['GET'])
 def get_logs(_id):
     pass
 
 
-@app.route('/api/runs/<int:_id>/stop')
+@app.route('/api/runs/<string:_id>/stop')
 def stop_run(_id):
     workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
-                                       os.path.join(app.config['GTFAR_STORAGE_DIR'], str(_id), 'submit'))
+                                       os.path.join(app.config['GTFAR_STORAGE_DIR'], _id, 'submit'))
     response = {
         'status': 200,
         'reason': 'Run stopped successfully.'
     }
     try:
         session = db.session
-        run = session.query(Run).filter(Run.id == _id).one()
+        run = session.query(Run).filter(Run.name == _id).one()
 
         # pegasus-remove
         workflow.stop()
@@ -481,7 +527,7 @@ def stop_run(_id):
     except NoResultFound:
         response = {
             'status': 400,
-            'reason': 'Run (%d) not found'
+            'reason': 'Run not found'
         }
     except StopException:
         response = {
@@ -501,7 +547,7 @@ def tests():
     return render_template('testRunner.html')
 
 
-@app.route('/')
+@app.route('/gtfar/')
 def index():
     """
     Loads up the main page
@@ -512,12 +558,18 @@ def index():
     api_links = {
         'runs': url_for(runs_prefix),
         'upload': '/api/upload',
-        'download': '/api/download',
+        'download_input': '/input',
+        'download_output': '/output',
         'status': '/status',
         'outputs': '/outputs',
         'stop': '/stop',
         'sample': url_for('static', filename='sample/sample.fastq.gz'),
-        'analyze' : '/analyze'
+        'analyze': '/analyze'
     }
 
     return render_template('mainView.html', apiLinks=json.dumps(api_links))
+
+
+@app.route('/')
+def home():
+    return render_template('home.html')

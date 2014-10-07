@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block content %}
+    <!--
+      ~ Copyright 2007-2012 University Of Southern California
+      ~
+      ~ Licensed under the Apache License, Version 2.0 (the "License");
+      ~ you may not use this file except in compliance with the License.
+      ~ You may obtain a copy of the License at
+      ~
+      ~ http://www.apache.org/licenses/LICENSE-2.0
+      ~
+      ~ Unless required by applicable law or agreed to in writing,
+      ~ software distributed under the License is distributed on an "AS IS" BASIS,
+      ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      ~ See the License for the specific language governing permissions and
+      ~ limitations under the License.
+      -->
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="jumbotron text-center">
+                <h2 style="font-family: Voltaire; font-size: 3em;">GT-FAR powered by Pegasus</h2>
+
+                <p>
+                    <a class="btn btn-lg btn-success" href="{{ url_for('index') }}#createRun">Start GT-FAR Run</a>
+                    <a class="btn btn-lg btn-warning" href="{{ url_for('index') }}#runs">List GT-FAR Runs</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <p>This web interface highlights the GT-FAR pipeline as a <a href="pegasus.isi.edu">Pegasus Workflow</a>.
+                Pegasus enables users to execute the pipeline on wide variety of execution environments ranging from
+                local clusters, grids to computational clouds.
+            </p>
+
+            <p>
+                This Amazon based cloud solution, allows users to start a virtual machine on AmazonEC2, and upload their
+                data-sets to perform GT-FAR analysis and makes outputs available in Amazon S3. The interface, allows
+                scientists to run and monitor their analysis runs. It also generates error reports, that can be used to
+                communicate back to developers if the analysis fail.
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12">
+            <h3>What is GT-FAR?</h3>
+            <hr>
+            <p>The Genome and Transcriptome-Free analysis of RNA software package is a collection of tools one can use
+                to
+                analyze RNA reads. GT-FAR is different from most RNA analysis programs because it can perform data
+                quantitation with or without a reference genome and gene model. In the simplest example, imagine you
+                have
+                human rna data from a control and treatment group and want to investigate how RNA differences relate to
+                phenotypic differences. In each case running an RNA file through GT-FAR will involve invoking a
+                sequential
+                workflow which involves the following steps:
+            <ol>
+                <li>
+                    Read Quality Control and Adaptor Trimming/Removal where reads are verified as high quality or when
+                    possible trimmed from either end to remove low quality positions or adaptor contamination.
+                </li>
+                <li>
+
+                    Alignment of verfied/trimmed reads to a length specific gene/intergene model created using a
+                    reference
+                    genome and gtf file.
+                </li>
+                <li>
+                    Gapped alignment of reads which did not find a suitable alignment to the gene/intergene model to
+                    predict
+                    novel genes and splice junctions.
+                </li>
+                <li>
+                    Sequence enumeration and lightweight assembly of the reads which were not able to find alignments in
+                    step 2 and 3.
+                </li>
+            </ol>
+            For each read file multiple levels of quantitative analysis are produced. At the highest level each sample
+            is summarized by the data quality, alignment rate to ribosomal RNA, mtRNA, mRNA, preMRNA, and the intergenic
+            portion of the genome. At lower levels samples are quantified by their expression levels to mRNA gene
+            models, preMRNA gene models, specific splice sites or isoforms (including novel splice sites), and finally
+            by the assembled unmapped sequences in the file. This allows users to discover if sample and control groups
+            differ largely because of differential expression of known mRNA gene models as well as differences in lesser
+            known expressed units; for example the most significant difference could be between a novel splice site of a
+            little known gene.</p>
+        </div>
+
+        <div class="col-sm-12">
+            <h3>What is Pegasus WMS?</h3>
+            <hr>
+            <p>The <a href="pegasus.isi.edu">Pegasus</a> project encompasses a set of technologies that help
+                workflow-based applications execute in a
+                number of different environments including desktops, campus clusters, grids, and clouds. Pegasus bridges
+                the scientific domain and the execution environment by automatically mapping high-level workflow
+                descriptions onto distributed resources. It automatically locates the necessary input data and
+                computational
+                resources necessary for workflow execution.Pegasus enables scientists to construct workflows in abstract
+                terms
+                without worrying about the details of the underlying execution environment or the particulars of the
+                low-level
+                specifications required by the middleware (Condor, Globus, or Amazon EC2). Pegasus also bridges the
+                current cyberinfrastructure by effectively coordinating multiple distributed resources.</p>
+
+            <p>
+                Pegasus has been used in a number of scientific domains including astronomy, bioinformatics, earthquake
+                science , gravitational wave physics, ocean science, limnology, and others. When errors occur, Pegasus
+                tries to recover when possible by retrying tasks, by retrying the entire workflow, by providing
+                workflow-level checkpointing, by re-mapping portions of the workflow, by trying alternative data sources
+                for staging data, and, when all else fails, by providing a rescue workflow containing a description of
+                only the work that remains to be done. It cleans up storage as the workflow is executed so that
+                data-intensive workflows have enough space to execute on storage-constrained resources]. Pegasus keeps
+                track of what has been done (provenance) including the locations of data used and produced, and which
+                software was used with which parameters.
+            </p>
+        </div>
+    </div>
+{% endblock content %}

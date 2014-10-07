@@ -63,6 +63,25 @@ class S3Utils(object):
                 except S3CreateError:
                     pass
 
+    def dir_exists(self, key):
+        key = key if key.endswith('/') else key + '/'
+
+        files = self._bucket.list(key)
+
+        for file in files:
+            return True
+
+        return False
+
+    def get_download_url(self, workflow_name, file_name):
+        file_path = 'data/runs/%s/output/%s' % (workflow_name, file_name)
+        key = self._bucket.get_key(file_path)
+
+        if key:
+            return key.generate_url(expires_in=60)
+
+        return None
+
     def get_bucket_name(self):
         return self._bucket.name
 

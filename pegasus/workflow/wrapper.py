@@ -156,9 +156,9 @@ class PegasusWorkflow(Workflow):
         args = self.__arg_to_str(args)
         args.append(self.dag_dir)
 
-        ec, out, err = self.__exec_command(executable, args)
+        ec, out, err = self.__exec_command(executable, args, ignore_exit_codes=[2])
 
-        if ec != 0:
+        if ec != 0 and ec != 2:
             raise AnalyzerException(exit_code=ec)
 
         return out
@@ -197,7 +197,7 @@ class PegasusWorkflow(Workflow):
 
         return args_list
 
-    def __exec_command(self, executable, args):
+    def __exec_command(self, executable, args, ignore_exit_codes=None):
         command = [executable]
 
         if args:
@@ -207,8 +207,8 @@ class PegasusWorkflow(Workflow):
         stderr = tempfile.SpooledTemporaryFile()
         exit_code = subprocess.call(command, stdout=stdout, stderr=stderr)
 
-        if exit_code != 0:
-            sys.stderr.write(' '.join(command))
+        if exit_code != 0 and (not ignore_exit_codes or (ignore_exit_codes and exit_code not in ignore_exit_codes)):
+            sys.stderr.write(' '.join(command) + '\n')
 
         # Temporary files are opened for read and write, so at the end the file pointer should be moved to 0 for reading
         stdout.seek(0)
