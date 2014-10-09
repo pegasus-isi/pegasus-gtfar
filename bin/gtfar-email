@@ -106,10 +106,17 @@ def get_email_message(uid, url, config_file):
     event = os.environ['PEGASUS_EVENT']
     submit_dir = os.environ['PEGASUS_SUBMIT_DIR']
     iso_timestamp = os.environ['PEGASUS_EVENT_TIMESTAMP_ISO']
+    status = os.environ['PEGASUS_STATUS']
 
     def get_template_str(template, run):
 
         template = env.get_template(template)
+        #
+        # If the workflow was aborted, then database will have the latest state i.e. 256.
+        # If the workflow finished, then we don't know if the state_update event was already triggered or not,
+        # so we use PEGASUS_STATUS to get the latest workflow state.
+        #
+        run[4] = run[4] if run[4] == 256 else int(status)
 
         return template.render(uid=uid,
                                wf_id=wf_id,
@@ -168,6 +175,7 @@ def main():
         validate_env_var('PEGASUS_EVENT')
         validate_env_var('PEGASUS_EVENT_TIMESTAMP_ISO')
         validate_env_var('PEGASUS_JOBID')
+        validate_env_var('PEGASUS_STATUS')
     except RuntimeError, err:
         print >> sys.stderr, err
         sys.exit(3)
