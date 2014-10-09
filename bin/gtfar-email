@@ -116,6 +116,7 @@ def get_email_message(uid, url, config_file):
         # If the workflow finished, then we don't know if the state_update event was already triggered or not,
         # so we use PEGASUS_STATUS to get the latest workflow state.
         #
+        run = [value for value in run]
         run[4] = run[4] if run[4] == 256 else int(status)
 
         return template.render(uid=uid,
