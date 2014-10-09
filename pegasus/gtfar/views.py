@@ -318,7 +318,7 @@ def generate_dax(result):
                   splice=True,
                   strand_rule=result['strandRule'],
                   dax=os.path.join(path, '%s' % result['name']),
-                  url='%s#/createRun' % url_for('index', _external=True),
+                  url='%s#/runs/details/%s' % (url_for('index', _external=True), result['name']),
                   email=result['email'],
                   splits=splits)
 
