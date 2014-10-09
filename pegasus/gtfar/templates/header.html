@@ -1,7 +1,8 @@
 <header>
     <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#nav-button">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#nav-button"
+                    ng-init="isCollapsed = true" ng-click="isCollapsed = !isCollapsed">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
@@ -10,20 +11,36 @@
             <a class="navbar-brand logo" href="{{ url_for('home') }}">GT-FAR</a>
         </div>
         <div class="container">
-            <div class="collapse navbar-collapse" id="nav-button">
+            <div collapse="isCollapsed" class="collapse navbar-collapse" id="nav-button">
                 <ul class="nav navbar-nav">
                     <li><a href="{{ url_for('home') }}"><i class="fa fa-home fa-lg"></i> </a></li>
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">GT-FAR <b class="caret"></b></a>
                         <ul class="dropdown-menu" role="menu">
-                            <li><a href="{{ url_for('index') }}#/runs"><i class="fa fa-list fa-lg"> </i> List Previous Runs</a></li>
-                            <li><a href="{{ url_for('index') }}#/createRun"><i class="fa fa-plus-square fa-fw"> </i> Start New Run</a></li>
+                            <li>
+                                <a href="{{ url_for('index') }}#/runs">
+                                    <i class="fa fa-list fa-lg"> </i> List Previous Runs
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('index') }}#/createRun">
+                                    <i class="fa fa-plus-square fa-fw"> </i> Start New Run
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a href="{{ url_for('index') }}#/contact" title="Contact Us"><i class="fa fa-envelope fa-lg"></i> </a></li>
-                    <li><a href="{{ url_for('index') }}#/help" title="Help"><i class="fa fa-question-circle fa-lg"></i> </a></li>
+                    <li>
+                        <a href="{{ url_for('contact') }}" title="Contact Us">
+                            <i class="fa fa-envelope fa-lg"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('help_page') }}" title="Help">
+                            <i class="fa fa-question-circle fa-lg"></i>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

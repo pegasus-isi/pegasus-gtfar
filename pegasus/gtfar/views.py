@@ -568,3 +568,13 @@ def index():
 @app.route('/')
 def home():
     return render_template('home.html')
+
+
+@app.route('/help')
+def help_page():
+    return render_template('help.html')
+
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')

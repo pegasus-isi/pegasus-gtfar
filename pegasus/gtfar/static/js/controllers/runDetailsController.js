@@ -336,7 +336,7 @@ define(["moment"],
                 }).error(function (data) {
                     if(data.code && data.message){
                         $scope.alerts.push({
-                            'message': data.message + ".  Error Code: " + data.code,
+                            'message': data.message,
                             'type': 'danger'
                         });
                     }

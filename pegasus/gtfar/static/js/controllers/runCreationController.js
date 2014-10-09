@@ -176,7 +176,7 @@ function(angular) {
                 $scope.addingRun = null;
                 if(data.code && data.message) {
                     $scope.alerts.push({
-                        'message': data.message + ".  Error Code: " + data.code,
+                        'message': data.message,
                         'type': 'danger'
                     });
                 }
