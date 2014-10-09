@@ -27,7 +27,7 @@ import jinja2
 
 from werkzeug import secure_filename
 
-from flask import render_template, request, redirect, url_for, json, jsonify, send_from_directory
+from flask import render_template, request, redirect, url_for, json, jsonify, send_from_directory, make_response
 
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -454,6 +454,12 @@ def analyze(_id):
     workflow = wrapper.PegasusWorkflow(app.config['PEGASUS_HOME'],
                                        os.path.join(app.config['GTFAR_STORAGE_DIR'], _id, 'submit'))
     out = workflow.analyze()
+
+    if 'attach' in request.args:
+        response = make_response(out.read(), 200)
+        response.headers['Content-Disposition'] = 'attachment; filename="%s.err.log"' % _id
+
+        return response
 
     return out.read(), 200
 
