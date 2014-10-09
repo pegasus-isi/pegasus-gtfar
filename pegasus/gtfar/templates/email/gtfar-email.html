@@ -1,9 +1,11 @@
 {% macro table_name(width=None, bgcolor='white') -%}
     width="{{ width if width else '100%' }}" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ bgcolor }}"
 {%- endmacro %}
+
 {% macro vertical_spacer(width='20px') -%}
     class="vertical_spacer" style="height: {{ width }};"
 {%- endmacro %}
+
 {% macro button() -%}
 style="{{ ['display: inline-block',
 'padding: 10px 16px',
@@ -22,6 +24,56 @@ style="{{ ['display: inline-block',
 'background-color: #5bc0de',
 'border-color: #46b8da'] | join(';') }}"
 {%- endmacro %}
+
+{% macro header_style() -%}
+    style="text-align: right; border: 1px solid #c5dbec;background: #dfeffc url(https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/redmond/images/ui-bg_glass_85_dfeffc_1x400.png) 50%;font-weight: bold;font-size: .9em;color: #2e6e9e;padding: 7px 15px 7px 0px;width: 40%;"
+{%  endmacro %}
+
+{% macro status_map(status) -%}
+    {% if status == -1 %}
+        Running
+    {% elif status == 0 %}
+        Successful
+    {% elif status == 256 %}
+        Aborted
+    {% elif status > 0 %}
+        Failed
+    {% endif %}
+{%- endmacro %}
+
+{% macro bool_map(status) -%}
+    {% if status %}
+        Yes
+    {% else %}
+        No
+    {% endif %}
+{%- endmacro %}
+
+{% macro row_coloring(class, status) -%}
+    {% if class == 'odd' %}
+
+        {% if status == 0 %}
+            style="background-color: #ddffdd;"
+        {% elif status == 256 %}
+            style="background-color: #ddddff;"
+        {% elif status > 0 %}
+            style="background-color: #ffdddd;"
+        {% endif %}
+
+    {% else %}
+
+        {% if status == 0 %}
+            style="background-color: #eeffee;"
+        {% elif status == 256 %}
+            style="background-color: #eeeeff;"
+        {% elif status > 0 %}
+            style="background-color: #ffeeee;"
+        {% endif %}
+
+    {% endif %}
+
+{%- endmacro %}
+
 <!DOCTYPE html>
 <html lang-"en">
 <head>
@@ -32,21 +84,14 @@ style="{{ ['display: inline-block',
     <tbody>
     <tr>
         <td align="center" style="font-family: Arial;">
-            <table class="document-layout" {{ table_name(width='640', bgcolor='#fff') }}>
+            <table class="document-layout" {{ table_name(width='720', bgcolor='#fff') }}>
                 <tbody>
-                <tr>
-                    <td>
-                        <a href="/">
-                            <img src="" width="640" border="0" align="top">
-                        </a>
-                    </td>
-                </tr>
                 <tr>
                     <td {{ vertical_spacer() }}></td>
                 </tr>
                 <tr>
                     <td style="font-family: Arial;">
-                        <table class="content-table" {{ table_name(width='640', bgcolor='white') }}>
+                        <table class="content-table" {{ table_name(width='720', bgcolor='white') }}>
                             <tbody>
                             <tr>
                                 <td class="horizontal-spacer" width="30" style="font-family: Arial;width: 30px;"></td>
@@ -55,7 +100,7 @@ style="{{ ['display: inline-block',
                                         <tbody>
                                         <tr>
                                             <td style="font-family: Arial;">
-                                                <p class="header-text" style="font-family: Arial;font-size: 1.25em;color: #9a9661;margin: 0;padding: 0;">{{ header | safe }}</p>
+                                                <p class="header-text" style="font-family: Arial;font-size: 1.25em;color: #9a9661;margin: 0;padding: 0;">Pegasus GT-FAR run completed</p>
                                             </td>
                                         </tr>
                                         <tr>
@@ -63,73 +108,81 @@ style="{{ ['display: inline-block',
                                         </tr>
                                         <tr>
                                             <td style="font-family: Arial;">
-                                                <table class="content" {{ table_name(width='580', bgcolor='white') }} style="border-collapse: collapse;">
+                                                <table class="content" {{ table_name(width='660', bgcolor='white') }} style="border-collapse: collapse;">
                                                     <tbody>
-                                                    <tr class=" loop.cycle('even', 'odd')  {{ status }}"{{ status }}>
-                                                    <th class="table-header" style="border: 1px solid #c5dbec;background: #dfeffc url(https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/redmond/images/ui-bg_glass_85_dfeffc_1x400.png) 50%;font-weight: bold;font-size: .9em;color: #2e6e9e;padding: 5px 0px 5px 0px;width: 40%;">
-                                                        Request ID
+                                                    {% set row_class = cycler('odd', 'even') %}
+                                                    <tr {{ row_coloring(row_class.next(), run[4]) }}>
+                                                    <th class="table-header" {{ header_style() }}>
+                                                        Workflow Name
                                                     </th>
                                                     <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
                                                         {{ uid | safe }}
                                                     </td>
                                                     </tr>
-                                                    <tr>
-                                                        <th class="table-header" style="border: 1px solid #c5dbec;background: #dfeffc url(https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/redmond/images/ui-bg_glass_85_dfeffc_1x400.png) 50%;font-weight: bold;font-size: .9em;color: #2e6e9e;padding: 5px 0px 5px 0px;width: 40%;">
-                                                            Filename
+                                                    <tr {{ row_coloring(row_class.next(), run[4]) }}>
+                                                        <th class="table-header" {{ header_style() }}>
+                                                            Reads File
                                                         </th>
                                                         <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
                                                             {{ run[2] }}
                                                         </td>
                                                     </tr>
-                                                    <tr>
-                                                        <th class="table-header" style="border: 1px solid #c5dbec;background: #dfeffc url(https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/redmond/images/ui-bg_glass_85_dfeffc_1x400.png) 50%;font-weight: bold;font-size: .9em;color: #2e6e9e;padding: 5px 0px 5px 0px;width: 40%;">
+                                                    <tr {{ row_coloring(row_class.next(), run[4]) }}>
+                                                        <th class="table-header" {{ header_style() }}>
                                                             Read Length
                                                         </th>
                                                         <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
                                                             {{ run[5] }}
                                                         </td>
                                                     </tr>
-                                                    <tr>
-                                                        <th class="table-header" style="border: 1px solid #c5dbec;background: #dfeffc url(https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/redmond/images/ui-bg_glass_85_dfeffc_1x400.png) 50%;font-weight: bold;font-size: .9em;color: #2e6e9e;padding: 5px 0px 5px 0px;width: 40%;">
-                                                            Mismatches Allowed
+                                                    <tr {{ row_coloring(row_class.next(), run[4]) }}>
+                                                        <th class="table-header" {{ header_style() }}>
+                                                            Mismatches
                                                         </th>
                                                         <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
                                                             {{ run[6] }}
                                                         </td>
                                                     </tr>
-                                                    <tr>
-                                                        <th class="table-header" style="border: 1px solid #c5dbec;background: #dfeffc url(https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/redmond/images/ui-bg_glass_85_dfeffc_1x400.png) 50%;font-weight: bold;font-size: .9em;color: #2e6e9e;padding: 5px 0px 5px 0px;width: 40%;">
+                                                    <tr {{ row_coloring(row_class.next(), run[4]) }}>
+                                                        <th class="table-header" {{ header_style() }}>
                                                             Align QC Filtered Reads
                                                         </th>
                                                         <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
-                                                            {{ run[8] }}
+                                                            {{ bool_map(run[8]) }}
                                                         </td>
                                                     </tr>
-                                                    <tr>
-                                                        <th class="table-header" style="border: 1px solid #c5dbec;background: #dfeffc url(https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/redmond/images/ui-bg_glass_85_dfeffc_1x400.png) 50%;font-weight: bold;font-size: .9em;color: #2e6e9e;padding: 5px 0px 5px 0px;width: 40%;">
+                                                    <tr {{ row_coloring(row_class.next(), run[4]) }}>
+                                                        <th class="table-header" {{ header_style() }}>
                                                            Generate New Splice Candidates
                                                         </th>
                                                         <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
-                                                            {{ run[9] }}
+                                                            {{ bool_map(run[9]) }}
                                                         </td>
                                                     </tr>
-                                                    <tr>
-                                                        <th class="table-header" style="border: 1px solid #c5dbec;background: #dfeffc url(https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/redmond/images/ui-bg_glass_85_dfeffc_1x400.png) 50%;font-weight: bold;font-size: .9em;color: #2e6e9e;padding: 5px 0px 5px 0px;width: 40%;">
+                                                    <tr {{ row_coloring(row_class.next(), run[4]) }}>
+                                                        <th class="table-header" {{ header_style() }}>
                                                             Strand Rule
                                                         </th>
                                                         <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
-                                                            {{ run[10] }}
+                                                            {{ run[10] | capitalize }}
                                                         </td>
                                                     </tr>
-                                                    <tr>
-                                                        <th class="table-header" style="border: 1px solid #c5dbec;background: #dfeffc url(https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/redmond/images/ui-bg_glass_85_dfeffc_1x400.png) 50%;font-weight: bold;font-size: .9em;color: #2e6e9e;padding: 5px 0px 5px 0px;width: 40%;">
-                                                            Created On
+                                                    <tr {{ row_coloring(row_class.next(), run[4]) }}>
+                                                        <th class="table-header" {{ header_style() }}>
+                                                            Started On
                                                         </th>
                                                         <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
                                                             {{ run[14] }}
                                                         </td>
                                                     </tr>
-
+                                                    <tr {{ row_coloring(row_class.next(), run[4]) }}>
+                                                        <th class="table-header" {{ header_style() }}>
+                                                            Status
+                                                        </th>
+                                                        <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
+                                                            {{ status_map(run[4]) }}
+                                                        </td>
+                                                    </tr>
 
                                                     </tbody>
                                                 </table>
@@ -141,9 +194,6 @@ style="{{ ['display: inline-block',
                                                     Show Details
                                                 </a>
                                             </td>
-                                        </tr>
-                                        <tr>
-                                            <td {{ vertical_spacer() }}></td>
                                         </tr>
                                         <tr>
                                             <td style="font-family: Arial;">
