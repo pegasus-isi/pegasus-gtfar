@@ -1,8 +1,5 @@
 #!/bin/bash
 
-echo "error found"
-exit 5
-
 if [ $# -ne 2 ]; then
     echo "Usage: `basename $0` <READS> <SPLITS>"
     exit 1
