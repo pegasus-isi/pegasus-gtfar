@@ -3,17 +3,17 @@
 {%- endmacro %}
 {{ header }}
 
-{{ 'Request ID' | ljust(width=20) }}: {{ uid | safe }}
-{{ 'Filename' | ljust(width=20) }}: {{ run[2] }}
-{{ 'Read Length' | ljust(width=20) }} : {{ run[5] }}
-{{ 'Mismatches Allowed' | ljust(width=20) }} : {{ run[6]}}
-{{ 'Align QC Filtered Reads' | ljust(width=20) }} : {{ run[8] }}
-{{ 'Generate New Splice Candidates' | ljust(width=20) }} : {{ run[9] }}
-{{ 'Strand Rule' | ljust(width=20) }} : {{ run[10] }}
+{{ 'Request ID' | ljust(width=33) }} : {{ uid | safe }}
+{{ 'Filename' | ljust(width=33) }} : {{ run[2] }}
+{{ 'Read Length' | ljust(width=33) }} : {{ run[5] }}
+{{ 'Mismatches Allowed' | ljust(width=33) }} : {{ run[6]}}
+{{ 'Align QC Filtered Reads' | ljust(width=33) }} : {{ run[8] }}
+{{ 'Generate New Splice Candidates' | ljust(width=33) }} : {{ run[9] }}
+{{ 'Strand Rule' | ljust(width=33) }} : {{ run[10] }}
 
-{{ 'Created On' | ljust(width=20) }} : {{run[14] }}
+{{ 'Created On' | ljust(width=33) }} : {{run[14] }}
 
-{{ 'Link' | ljust(width=20) }}: {{ url }}
+{{ 'Link' | ljust(width=33) }} : {{ url }}
 
 
 {{ message | safe }}
