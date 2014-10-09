@@ -170,21 +170,34 @@
                         <p></p>
 
                         <p></p>
-                        <p>If you feel you should not be getting an error, please copy this log and email it to <a href="mailto:gtfar-devel@isi.edu">gtfar-devel@isi.edu</a></p>
-                        <accordion close-others="{{false}}">
+
+                        <p>If you feel you should not be getting an error, please copy this log and email it to <a
+                                href="mailto:gtfar-devel@isi.edu">gtfar-devel@isi.edu</a></p>
+
+                        <p class="text-right">
+                            <a class="btn btn-danger" href="http://localhost:8000/api/runs/demo_run/analyze?attach"><i
+                                    class="fa fa-download" ng-show="errorReport.length"> </i> Download Log</a>
+                        </p>
+                        <accordion close-others="{{ false }}">
                             <accordion-group ng-repeat="error in errorReport">
-                                <accordion-heading>{{error.section}}<i class="pull-right fa " ng-class="{'fa-chevron-down': status.open, 'fa-chevron-right': !status.open}"></i>
+                                <accordion-heading>{{ error.section }}
+                                    <i class="pull-right fa "
+                                       ng-class="{'fa-chevron-down': status.open, 'fa-chevron-right': !status.open}">
+                                   </i>
                                 </accordion-heading>
-                                <p ng-repeat="detail in error.details">{{detail.text}}</p>
+                                <p ng-repeat="detail in error.details">{{ detail.text }}</p>
                                 <accordion-group ng-repeat="subsection in error.subsections">
-                                    <accordion-heading>{{subsection.section}}<i class="pull-right fa" ng-class="{'fa-chevron-down': status.open, 'fa-chevron-right': !status.open}"></i>
+                                    <accordion-heading>{{ subsection.section }}
+                                        <i class="pull-right fa"
+                                           ng-class="{'fa-chevron-down': status.open, 'fa-chevron-right': !status.open}">
+                                       </i>
                                     </accordion-heading>
-                                    <p ng-repeat="detail in subsection.details">{{detail.text}}</p>
+                                    <p ng-repeat="detail in subsection.details">{{ detail.text }}</p>
                                 </accordion-group>
                             </accordion-group>
                         </accordion>
 
-                        <p  ng-repeat="error in errorReport">{{error.text}}</p>
+                        <p ng-repeat="error in errorReport">{{ error.text }}</p>
                     </tab>
                 </tabset>
             </div>
