@@ -2,25 +2,14 @@
     width="{{ width if width else '100%' }}" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ bgcolor }}"
 {%- endmacro %}
 {% macro status_map(status) -%}
-    {% if status == -1 %}
-        Running
-    {% elif status == 0 %}
-        Successful
-    {% elif status == 256 %}
-        Aborted
-    {% elif status > 0 %}
-        Failed
-    {% endif %}
+    {% if status == -1 %}Running{% elif status == 0 %}Successful{% elif status == 256 %}Aborted{% elif status > 0 %}Failed{% endif %}
 {%- endmacro %}
 {% macro bool_map(status) -%}
-    {% if status %}
-        Yes
-    {% else %}
-        No
-    {% endif %}
+    {% if status %}Yes{% else %}No{% endif %}
 {%- endmacro %}
 
 Pegasus GT-FAR run completed
+
 
 {{ 'Workflow Name' | ljust(width=33) }} : {{ uid | safe }}
 {{ 'Reads File' | ljust(width=33) }} : {{ run[2] }}
@@ -36,3 +25,4 @@ Pegasus GT-FAR run completed
 {{ 'Link' | ljust(width=33) }} : {{ url }}
 
 To report any issues, please contact gtfar-devel@isi.edu
+

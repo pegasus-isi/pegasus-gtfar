@@ -53,21 +53,21 @@ style="{{ ['display: inline-block',
     {% if class == 'odd' %}
 
         {% if status == 0 %}
-            style="background-color: #ddffdd;"
+            style="background-color: #ddffdd;color:#3c763d;"
         {% elif status == 256 %}
-            style="background-color: #ddddff;"
+            style="background-color: #fcf8e3;color: #8a6d3b;"
         {% elif status > 0 %}
-            style="background-color: #ffdddd;"
+            style="background-color: #ffdddd;color:#a94442;"
         {% endif %}
 
     {% else %}
 
         {% if status == 0 %}
-            style="background-color: #eeffee;"
+            style="background-color: #eeffee;color:#3c763d;"
         {% elif status == 256 %}
-            style="background-color: #eeeeff;"
+            style="background-color: #fbf9ee;color: #8a6d3b;"
         {% elif status > 0 %}
-            style="background-color: #ffeeee;"
+            style="background-color: #ffeeee;color:#a94442;"
         {% endif %}
 
     {% endif %}
@@ -224,6 +224,8 @@ style="{{ ['display: inline-block',
                                         &copy; 2014 The University of Southern California
                                     </p>
                                 </td>
+                            </tr>
+                            <tr>
                                 <td align="center" style="font-family: Arial;">
                                     <p class="footer-text" style="font-family: Arial;font-size: .8em;color: #808080;margin: 0;padding: 0;padding-top: .5em;">
                                         To report any issues, please contact <a href="mailto:gtfar-devel@isi.edu">gtfar-devel@isi.edu</a>
