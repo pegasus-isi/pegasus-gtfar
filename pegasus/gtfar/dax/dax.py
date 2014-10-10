@@ -598,7 +598,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, ClipParseMixin, Analy
                 str(self._prefix),
                 'pegasus-gtfar@localhost.com',
                 str(self._email),
-                'GTFAR Workflow finished running',
+                'GT-FAR Workflow finished running',
                 str(self._url),
                 notifications_conf)
 
