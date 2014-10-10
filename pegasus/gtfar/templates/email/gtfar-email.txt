@@ -12,20 +12,27 @@
         Failed
     {% endif %}
 {%- endmacro %}
-{{ header }}
+{% macro bool_map(status) -%}
+    {% if status %}
+        Yes
+    {% else %}
+        No
+    {% endif %}
+{%- endmacro %}
 
-{{ 'Request ID' | ljust(width=33) }} : {{ uid | safe }}
-{{ 'Filename' | ljust(width=33) }} : {{ run[2] }}
+Pegasus GT-FAR run completed
+
+{{ 'Workflow Name' | ljust(width=33) }} : {{ uid | safe }}
+{{ 'Reads File' | ljust(width=33) }} : {{ run[2] }}
 {{ 'Read Length' | ljust(width=33) }} : {{ run[5] }}
-{{ 'Mismatches Allowed' | ljust(width=33) }} : {{ run[6]}}
-{{ 'Align QC Filtered Reads' | ljust(width=33) }} : {{ run[8] }}
-{{ 'Generate New Splice Candidates' | ljust(width=33) }} : {{ run[9] }}
-{{ 'Strand Rule' | ljust(width=33) }} : {{ run[10] }}
+{{ 'Mismatches' | ljust(width=33) }} : {{ run[6]}}
+{{ 'Align QC Filtered Reads' | ljust(width=33) }} : {{ bool_map(run[8]) }}
+{{ 'Generate New Splice Candidates' | ljust(width=33) }} : {{ bool_map(run[9]) }}
+{{ 'Strand Rule' | ljust(width=33) }} : {{ run[10] | capitalize }}
 
-{{ 'Started On' | ljust(width=33) }} : {{run[14] }}
+{{ 'Started On' | ljust(width=33) }} : {{ run[14] }}
 {{ 'Status' | ljust(width=33) }} : {{ status_map(run[4]) }}
 
 {{ 'Link' | ljust(width=33) }} : {{ url }}
 
-
-{{ message | safe }}
+To report any issues, please contact gtfar-devel@isi.edu
