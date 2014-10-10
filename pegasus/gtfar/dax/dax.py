@@ -595,11 +595,11 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, ClipParseMixin, Analy
         if self._email:
             email_script = '%s/gtfar-email --id %r --from %r --to %r --subject %r --url %r --config %r' % (
                 self._bin_dir,
-                self._prefix,
+                str(self._prefix),
                 'pegasus-gtfar@localhost.com',
-                self._email,
+                str(self._email),
                 'GTFAR Workflow finished running',
-                self._url,
+                str(self._url),
                 notifications_conf)
 
             self.adag.invoke('at_end', email_script)
