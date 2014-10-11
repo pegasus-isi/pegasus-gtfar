@@ -596,7 +596,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, ClipParseMixin, Analy
             email_script = '%s/gtfar-email --id %r --from %r --to %r --subject %r --url %r --config %r' % (
                 self._bin_dir,
                 str(self._prefix),
-                'pegasus-gtfar@localhost.com',
+                'pegasus-gtfar@isi.edu',
                 str(self._email),
                 'GT-FAR Workflow finished running',
                 str(self._url),
