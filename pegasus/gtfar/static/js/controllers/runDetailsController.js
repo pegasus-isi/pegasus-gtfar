@@ -82,7 +82,7 @@ define(["moment"],
                     // We don't want the calls to continue when we leave this state
                     if ($state.includes("runDetails")) {
                         if ($scope.status.state <= 3) {
-                            setTimeout(getStatus, 2000);
+                            setTimeout(getStatus, 30000);
                         }
                     }
 
