@@ -64,10 +64,6 @@ class AnnotateMixin(object):
         self._chrs_index(read_length, seed=seed)
         self._splices_index(read_length, seed=seed)
 
-        if self._clip_reads:
-            # Seed is always F1
-            self._genes_index(read_length, seed='F1')
-
     def _annotate_gtf(self, read_length):
         annotate_gtf = Job(name='annotate_gtf')
         annotate_gtf.invoke('all', self._state_update % 'Generating annotation FASTA files')
@@ -452,8 +448,8 @@ class ClipParseMixin(object):
         mismatches = self._clip_mismatches
 
         # Input files
-        hash_v = self._get_index_hash(self._read_length, seed)
-        index = File('h%d_%s_F%d_%d.index' % (hash_v, clip_to.upper(), self._clip_seed, self._read_length))
+        prefix = self._get_index_hash(self._read_length, exclude_genome=True)
+        fa = File('h%s/%s.fa' % (prefix, clip_to.upper()))
         reads_txt = File('%s_%s_reads.txt' % (tag, clip_to.lower()))
 
         for i in self._range():
@@ -475,13 +471,13 @@ class ClipParseMixin(object):
         log = File('%s_%s.log' % (tag, clip_to.lower()))
 
         # Arguments
-        clip_reads.addArguments(index, reads_txt, '--seed %s' % seed, '--anchorL %d' % anchor, '-e', '-v %d' % mismatches)
+        clip_reads.addArguments(fa, reads_txt, '--seed %s' % seed, '--anchorL %d' % anchor, '-e', '-v %d' % mismatches)
         clip_reads.addArguments('-s', '-u', '--noSamHeader', '--ignoreDummyR %d' % 40, '--ignoreRepeatR %d' % 15)
 
         clip_reads.setStdout(log)
 
         # Uses
-        clip_reads.uses(index, link=Link.INPUT)
+        clip_reads.uses(fa, link=Link.INPUT)
         clip_reads.uses(reads_txt, link=Link.INPUT)
         clip_reads.uses(log, link=Link.OUTPUT, transfer=False, register=False)
 
