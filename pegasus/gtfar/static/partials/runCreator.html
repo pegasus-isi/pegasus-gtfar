@@ -26,7 +26,7 @@
 
                     <div class="col-xs-12 col-sm-7 col-md-8 col-lg-9">
                         <input type="text" class="form-control" id="inputRunName" placeholder="62H2EAAXX_7_HSB_135"
-                               ng-model="run.name" name="name" required alphanumeric tabindex="1" autofocus>
+                               ng-model="run.name" name="name" required alphanumeric tabindex="1" maxlength="39" autofocus>
                         <span class="help-block">An easy-to-remember name used as a prefix for the output files.</span>
                     </div>
                 </div>
@@ -128,7 +128,7 @@
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input type="email" class="form-control" id="inputEmail" placeholder="example@domain.com"
-                               ng-model="run.email" name="email" multiple tabindex="8">
+                               ng-model="run.email" name="email" multiple tabindex="8" maxlength="254">
                         <span class="help-block">Separate multiple emails by commas</span>
                     </div>
                 </div>
