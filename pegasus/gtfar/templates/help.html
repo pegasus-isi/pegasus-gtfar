@@ -3,11 +3,17 @@
     <div class="container" data-spy="scroll" data-target="affix-nav">
         <nav id="affix-nav" class="sidebar col-md-3">
             <ul class="nav sidenav" data-spy="affix" data-offset-top="10">
-                <li class="active"><a href="{{ url_for('help_page') }}#science">Science</a>
+                <li class="active"><a href="{{ url_for('help_page') }}#science">Science</a></li>
                 <li><a href="{{ url_for('help_page') }}#webInterface">Web Interface</a>
                     <ul class="nav">
-                        <li><a ng-href="{{ url_for('help_page') }}#viewRuns">Viewing Runs</a></li>
-                        <li><a href="{{ url_for('help_page') }}#newRun">Creating a New Run</a></li>
+                        <li><a href="{{ url_for('help_page') }}#gettingStarted">Getting Started</a></li>
+                        <li><a href="{{ url_for('help_page') }}#viewRuns">Viewing Runs</a>
+                            <ul class="nav">
+                                <li><a href="{{ url_for('help_page') }}#viewSummary">View Runs Summary</a></li>
+                                <li><a href="{{ url_for('help_page') }}#viewDetails">View Run Details</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="{{ url_for('help_page') }}#newRun">Starting a New Run</a></li>
                     </ul>
                 </li>
                 <li><a href="{{ url_for('help_page') }}#contact">Contact</a></li>
@@ -42,28 +48,206 @@
             <h3 id="webInterface"> Using the Web Interface</h3>
 
             <p>The web interface provides an organized way for you to create and monitor runs for your workflows.</p>
+
+            <h4 id="gettingStarted">Getting Started</h4>
+            <p>The page you are taken to by default when you connect to the site (we will refer to this as the home page)provides
+            a pair of buttons to start or view runs, and a few paragraphs explaining what this tool and Pegasus are.  To
+            come back to this page at any time click the image of the house located at the top right of the top menu bar
+            (the menu bar is present on all pages).
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/home-icon.jpg') }}">
+                <span class="help-block">Right side of menu bar with arrow pointing to the home icon</span>
+            </p>
             <h4 id="viewRuns">Viewing Runs</h4>
+            <p>There are two ways to view runs.  You can view a brief summary of all runs at once, or you can see a detailed view of
+            a single run.  First we will look at how you can view a summary of all runs.</p>
+            <h5 id="viewSummary">View Runs Summary</h5>
+            <p>To view a summary of all runs from the home page you can click on the yellow button at the top of the page that says
+            "List GT-Far Runs".  Alternatively you can go to the menu bar and from the "GT-FAR" dropdown menu select "List Previous Runs"
+            item from the list.  Both of these icons are pointed out below.
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-button-home-page.jpg') }}">
+                <span class="help-block">The list button on the home page</span>
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-button-menu-bar.jpg') }}">
+                <span class="help-block">The list button in the menu bar</span>
+            </p>
+            <p>This will take you to the listing page which will have a table where each row is a summary of a single run.
+            Above this table you should see a button labelled "Start New Run" and one labelled "Refresh".
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-page.jpg') }}">
+                <span class="help-block">The listing page</span>
+            Clicking the "Start New Run" button will take you to the start run page, explained
+            <a href="{{ url_for('help_page') }}#newRun">here</a>.  Clicking the "Refresh" button will load any changes to the
+            runs and add newly created runs to the display.
+            </p>
+            <p>The table that holds all of the runs allows for sorting, grouping, and searching.  To sort the runs, click on any of the
+            headers on the table (by default they are sorted with the newest run appearing at the top).  You can see how the table is
+            sorted by looking for a triangle at the headers of the table and seeing which way it points.
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-page-alpha-sort.jpg') }}">
+                <span class="help-block">Listings sorted by name</span>
+            You can group listings by dragging any of the headers in the table and dropping them onto the text right above the headers
+            that reads "Drag a column header here and drop it to group by that column".  When you do this then the table will place all
+            runs within dropdowns where you can select which of the options you want to view.  You can nest groupings by dragging more
+            headers to the top bar.
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-page-status-group.jpg') }}">
+                <span class="help-block">Listings grouped by status</span>
+            To search for a run click on the green triangle at the top right corner of the table to reveal a search bar.  Type into
+            this bar to search based on your criteria.
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-page-search-test.jpg') }}">
+                <span class="help-block">Searching for the word test (arrow points to the triangle to open the search bar)</span>
+            </p>
+            <p>Each Run has a checkbox in the rightmost position on the row.  When you check any number of boxes a red button saying
+            "Delete Selected" will appear in the top right corner of the box.  Clicking this button will stop delete both the run
+            and any files associated with it.  In order to ensure that you do not accidentally delete runs that you want to keep,
+            a pop-up message will appear after you click "Delete Selected" so you can confirm the delete.
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-page-delete.jpg') }}">
+                <span class="help-block">Listing with multiple rows checked and the "Delete Selected" button visible</span>
+            </p>
 
-            <p>The default page you will be taken to the page that lists all of the runs. At any time you can get back
-                to
-                this page by clicking the Home icon at the top menu.
-                Here you will be able to see all runs listed in order of most recently created to least recently
-                created.
-                You can sort the list however you like by clicking the headers at the top of the table.
-                You can also search for a specific run by clicking the triangle icon at the top right corner of the
-                table,
-                and then entering your query into the box that appears.
-                To view the details of any page, click on the name of the run that you want to inspect. The details page
-                will open up to show you what parameters were input into the run when it was created, how far along the
-                run
-                is progress, how many failures have been detected, and what output files are available for download.
-                On the details page you can download files by clicking on the name of the file.</p>
-            <h4 id="newRun">Creating a New Run</h4>
+            <p>Each run contains two links, the first is the "File" column of the run.  This column serves as a download link so you
+            can download the input file for the run to inspect it.  Please not that you cannot download, modify, and resubmit the file
+            once the run has already started, but you can use it to start a new run with the same file, or even a modified version of
+            that file.  The second link is the "Name" column.  This link will take you to the details page of the run associated with
+            that name.  The next section will walk you through the details page.</p>
+            <h5 id="viewDetails">View Run Details</h5>
+            <p>To view the details of a run, go to the listing page and click on the name of the run that you want to view.  This will
+            open the details page for that run.
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-running.jpg') }}">
+                <span class="help-block">An example of a running details page</span>
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-aborted.jpg') }}">
+                <span class="help-block">An example of an aborted details page</span>
+            </p>
+            <p>Here on this page you will see an un-editable version of the inputs used to start the run (help with starting detailed
+            <a href="{{ url_for('help_page') }}#newRun">here</a>).  You will also see an icon next to the name that displays what state
+            the run is currently in (blue "Running", green "Successful", red "Failed", or yellow "Aborted").  As well as either a progress bar
+            if the run is still progressing, or an alert bar with the message and color corresponding to whether the run finished, failed, or was
+            aborted.</p>
 
-            <p>There are two ways to get to the page to create a new run. Your first option is to click the GT-FAR
-                dropdown
-                menu at the top and then click
-                "Start New Run". Your second option is to click the "Start New Run" button at the listing page.</p>
+            <p>The two items in this form you can interact with are the input file and the emails.</p>
+            <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-input.jpg') }}">
+            <p>You can click on the name of the input file to download the file to your machine.</p>
+            <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-emails.jpg') }}">
+            <p>You can also click on the name of the emails listed in the form to send an email to that address.</p>
+
+            <p>The progress bar that shows up will also allow you to stop the run before it would normally terminate.  This button
+            is found to the right of the progress bar as you can see in the image below.</p>
+            <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-progress.jpg') }}">
+            <p>When you click the stop button, the run will change to reflect that you have aborted the run.  The progress bar and stop button
+            should then be replaced with an alert bar that looks like this:</p>
+            <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-abort-bar.jpg') }}">
+
+            <h5>Output Files and Error Reports</h5>
+            <p>There are two sets of items generated from the run: output files and and error report.  Both of these show up as tabs
+            below where the progress bar/alert is.  Note that the tab for the error report is only visible when there are errors in your
+            run, so if you do not see it that means that your run has not encountered any errors.</p>
+            <p>The output files tab lists all output files generated by the run and can be downloaded if you click the name of the file
+            you want to look at.
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-outputs.jpg') }}">
+            </p>
+
+            <p>If your run encounters errors then you you will be presented with an error report.  You can view the error report
+            in a formatted version or you can download the log and view it on your machine by clicking the "Download Log" button at
+            the top of the error report.  We also provide a link to the developer email so you can send us a message in case you
+            feel like you should not be seeing and error message and we will work with you to sort out the issue.</p>
+            <p>Below is an example of how the error report will look to you.  Note that with the formatted version on the page,
+            you can choose which portions of the error report you wish to see the details of, and which you do not.  This helps
+            keep the error report from taking up a lot of page space while still providing you with all the information.  To
+            open or close any section simply click on the name of the section that you wish to open or close.</p>
+            <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-error-report.jpg') }}">
+
+            <p>In the next section we will go over how to start a new run using this web interface.</p>
+
+
+
+            <h4 id="newRun">Start a New Run</h4>
+
+            <p>There are three ways to navigate to the page to start a new run:
+            <ol>
+                <li>Click the "Start GT-FAR Run" button on the home page
+                    <img class="img-responsive" src="{{ url_for ('static', filename='images/help/main-page-start-button.jpg') }}">
+                </li>
+                <li>Click the "Start New Run" button on the listing page
+                    <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-page-start-button.jpg') }}">
+                </li>
+                <li>Click the "Start New Run" option from the "GT-FAR" dropdown in the top menu bar on any page
+                    <img class="img-responsive" src="{{ url_for ('static', filename='images/help/menu-bar-start-button.jpg') }}">
+                </li>
+            </ol></p>
+
+            <p>When you arrive at the page you will see a form for you to fill out with information about the run you wish to start.
+            You will also see a submit and cancel button at the bottom of the form.
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/start-run-page.jpg') }}">
+                <span class="help-block">The start run page when you first navigate to it</span>
+            </p>
+            <p>Follow these guidelines to fill out a form properly.</p>
+
+
+
+            <h5>Workflow Name</h5>
+            <p> <img class="img-responsive" src="{{ url_for ('static', filename='images/help/run-name.jpg') }}">
+                The workflow name is the name that the system will associate the run with.  It is used both as the name and as the id.
+                You may only use alphanumeric characters as well as underscores for the name, all other input will be rejected.
+                The name field is required for a run to start successfully.
+            </p>
+
+            <h5>Annotation File and Genome Version</h5>
+            <p> <img class="img-responsive" src="{{ url_for ('static', filename='images/help/annotation-genome.jpg') }}">
+                Currently the annotation file and genome version are provided for you.  You will not be allowed to edit these
+                fields, but we want to have them displayed for you so you are aware of their values.
+            </p>
+
+            <h5>Input File</h5>
+            <p> <img class="img-responsive" src="{{ url_for ('static', filename='images/help/input-file.jpg') }}">
+                The input file is required to know what information you want to run a workflow on.  The file must be g-zipped and
+                smaller than 5 Gigabytes.  We also provide a sample file for you to download and use to start a run.  The input file
+                is required for a run to start.
+            </p>
+
+            <h5>Read Length</h5>
+            <p> <img class="img-responsive" src="{{ url_for ('static', filename='images/help/read-length.jpg') }}">
+                The Read length field determines how many values are read at a single time.  This value is require and must be
+                between 50 and 128 (inclusive).  If you also check the "Generate New Splice Candidates" field, then the value of
+                Read Length must be either 75 or between 100 and 128 (inclusive).
+            </p>
+
+            <h5>Mismatches</h5>
+            <p> <img class="img-responsive" src="{{ url_for ('static', filename='images/help/mismatches.jpg') }}">
+                The Mismatches field corresponds to how many mismatches you will allow your run to have and keep progressing.
+                This field is required and must have a value between 0 and 8 (inclusive).
+            </p>
+
+            <h5>Align QC Filtered Reads</h5>
+            <p> <img class="img-responsive" src="{{ url_for ('static', filename='images/help/filtered-reads.jpg') }}">
+                The Align QC Filtered Reads field is a simple checkbox that will evaluate as either true or false.  By default
+                this value will evaluate to false.
+            </p>
+
+            <h5>Generate New Splice Candidates</h5>
+            <p> <img class="img-responsive" src="{{ url_for ('static', filename='images/help/gen-splice.jpg') }}">
+                The Generate New Splice Candidates field is a simple checkbox that will evaluate as either true or false (false
+                is the default).  If you check this field then you must make sure that your "Read Length" field has a value of
+                either 75 or anything between 100 and 128 (inclusive).
+            </p>
+
+            <h5>Strand Rule</h5>
+            <p> <img class="img-responsive" src="{{ url_for ('static', filename='images/help/strand-rule.jpg') }}">
+                The strand rule is a selection box that let's you choose if you want the rule to be "Stranded", "Sense", or "Anti-Sense".
+                By default, the strand rule is set to "Stranded".
+            </p>
+
+            <h5>Email</h5>
+            <p> <img class="img-responsive" src="{{ url_for ('static', filename='images/help/email.jpg') }}">
+                The email field is where you specify what email addresses to send updates and notices about the run to.  This field is
+                not required, but if you do specify any emails you must properly format them like "example@domain.com".  If you want to
+                specify multiple emails then you must separate the emails with a comma.
+            </p>
+
+            <p>Once you have filled out all of these fields properly you should have a form that looks similar to this:
+                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/start-run-page-filled.jpg') }}">
+            </p>
+
+            <p>Click the blue "Submit" button at the bottom of the page and (if you have all the fields properly filled) you will
+                be redirected to the details page for the new run you just started.  Information about the details page can be found
+                <a href="{{ url_for('help_page') }}#viewDetails">here</a>.
+            </p>
+
 
             <h3 id="contact">Contact Us</h3>
 
