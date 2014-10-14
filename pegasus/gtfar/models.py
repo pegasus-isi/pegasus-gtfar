@@ -30,7 +30,7 @@ def isValidFile(filename):
 
 class Run(db.Model):
     __tablename__ = 'runs'
-    name = Column(db.Unicode(20), primary_key=True)
+    name = Column(db.Unicode(40), primary_key=True)
     userName = Column(db.String(64))
     filename = Column(db.String(255))
     uploadFolder = Column(db.String(64))
@@ -52,7 +52,7 @@ class Status(db.Model):
     __tablename__ = 'status'
 
     id = Column(Integer, primary_key=True)
-    wf_id = Column(db.Unicode(20))
+    wf_id = Column(db.Unicode(40))
     job_name = Column(db.String(64))
     status = Column(Integer)
     log = Column(db.String(255))
