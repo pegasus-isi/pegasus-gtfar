@@ -327,6 +327,7 @@ def generate_dax(result):
     if validation_results is True:
         gtfar.annotate()
         gtfar.option_filter()
+        gtfar.clip_and_parse()
         gtfar.iterative_map()
         gtfar.analyze()
         gtfar.write_dax()
