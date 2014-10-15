@@ -213,8 +213,8 @@ def validate_fields(data):
         validation_error_messages.append(
             {'field': 'Read Length', 'message': 'The read length field is required and must be an integer between 50 and 128 (inclusive)'})
     elif 'genSplice' in data and data['genSplice'] == True:
-        if not int(data['readLength']) == 75 and not int(data['readLength']) >= 100 and not int(data['readLength']) <= 128:
-            validation_error_messages.append({'field': 'Read Length', 'message': 'When the generate new splice candidate option is true the read length must be either 75 or between 100 and 128 (inclusive)'})
+        if not data['readLength'] >= 75:
+            validation_error_messages.append({'field': 'Read Length', 'message': 'When the Generate New Splice Candidates option is true, the read length must be >= 75'})
 
     if not 'mismatches' in data:
         validation_error_messages.append(
