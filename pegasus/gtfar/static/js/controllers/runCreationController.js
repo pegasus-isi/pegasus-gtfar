@@ -157,7 +157,7 @@ function(angular) {
                 }
             }
 
-            if ($scope.run["genSplice"] && !$scope.run["readLength"] < 75) {
+            if ($scope.run["genSplice"] && $scope.run["readLength"] < 75) {
                 $scope.alerts.push({'type': 'danger', 'message' : 'When the Generate New Splice Candidates option is true, the read length must be >= 75'});
                 return;
             }
