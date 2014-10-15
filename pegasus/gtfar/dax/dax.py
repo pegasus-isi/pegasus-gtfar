@@ -559,6 +559,8 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, ClipParseMixin, Analy
             self._trims = [50, 75]
         elif self._read_length > 51:
             self._trims = [50]
+        else:
+            self._trims = []
 
         # Options
         self._mismatches = mismatches
