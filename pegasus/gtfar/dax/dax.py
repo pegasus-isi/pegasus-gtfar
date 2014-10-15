@@ -413,21 +413,24 @@ class ClipParseMixin(object):
         return miss_genome
 
     def _clip_and_parse_reads_to_gene(self, reads, tag):
+        anchor = self._compute_clip_seed(self._read_length)
+
         self._clipr('GENE', reads, tag)
 
         reads = os.path.basename(reads)
         for i in self._range():
             reads_i = os.path.splitext(reads)[0] % i
-            mapping_file = 'GENE_B_%d_%d_%s.sam' % (self._clip_seed, self._clip_mismatches, reads_i)
+            mapping_file = 'GENE_A_%d_%d_%d_%s.sam' % (self._clip_seed, self._clip_mismatches, anchor, reads_i)
             self._parse_clipped_alignment(mapping_file)
 
     def _clip_and_parse_reads_to_genome(self, reads, tag):
+        anchor = self._compute_clip_seed(self._read_length)
         self._clipr('GENOME', reads, tag)
 
         reads = os.path.basename(reads)
         for i in self._range():
             reads_i = os.path.splitext(reads)[0] % i
-            sam_file = 'GENOME_B_%d_%d_%s.sam' % (self._clip_seed, self._clip_mismatches, reads_i)
+            sam_file = 'GENOME_A_%d_%d_%d_%s.sam' % (self._clip_seed, self._clip_mismatches, anchor, reads_i)
             self._parse_clipped_alignment(sam_file)
 
     def _compute_clip_seed(self, read_length):
@@ -459,7 +462,7 @@ class ClipParseMixin(object):
             # Output files
             file_type = 'sam'
             path, file_name, ext = GTFAR._get_filename_parts(reads_i.name)
-            sam_mapping = '%s_B_%d_%d_%s.%s' % (clip_to.upper(), self._clip_seed, mismatches, file_name, file_type)
+            sam_mapping = '%s_A_%d_%d_%d_%s.%s' % (clip_to.upper(), self._clip_seed, mismatches, anchor, file_name, file_type)
             fastq_out = File('%s_miss_%s%s' % (file_name, clip_to, ext))
 
             # Uses
