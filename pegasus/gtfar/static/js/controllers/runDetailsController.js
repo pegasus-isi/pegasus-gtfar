@@ -22,7 +22,6 @@ define(["moment"],
         "use strict"
 
         var runDetailsController = function ($scope, $state, $stateParams, $http, $window) {
-
             $scope.alerts = [];
             $scope.getAlertIcon = function (status) {
                 return (status == 'success') ? "text-success fa fa-check-circle" : "text-danger fa fa-exclamation-triangle";
@@ -43,6 +42,8 @@ define(["moment"],
             };
 
             $scope.GTFAR_S3_BUCKET = $window.GTFAR_S3_BUCKET;
+
+            $scope.analyzeURL = $window.apiLinks.runs + "/" + $stateParams.name + $window.apiLinks.analyze;
 
             function getRun() {
                 $http.get($window.apiLinks.runs + "/" + $stateParams.name).success(function (data) {
