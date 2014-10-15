@@ -142,7 +142,7 @@ function(moment) {
                 {field : "readLength", displayName : "Read Length", width: '10%', cellTemplate : "<div class='ngCellText'>{{row.getProperty(col.field)}}</div>" },
                 {field : "mismatches", displayName : "Mismatches", width: '10%',cellTemplate : "<div class='ngCellText'>{{row.getProperty(col.field)}}</div>" },
                 {field : "filename", displayName : "File", cellTemplate : "<i class='fa fa-file-text-o'></i> <a ng-href='{{getDownloadLink(row.getProperty(\"name\"), row.getProperty(col.field))}}'>{{row.getProperty(col.field)}}</a>" },
-                {field : "created", displayName : "Created On", width: '30%', cellTemplate : "<div class='ngCellText'>{{getFormattedDate(row.getProperty(col.field))}}</div>" }
+                {field : "created", displayName : "Started On", width: '30%', cellTemplate : "<div class='ngCellText'>{{getFormattedDate(row.getProperty(col.field))}}</div>" }
             ],
             sortInfo : {fields : ['created'], directions : ['desc']},
             selectedItems : []
