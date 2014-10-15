@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if [ $# -ne 2 ]; then
     echo "Usage: `basename $0` <READS> <SPLITS>"
     exit 1
@@ -42,7 +44,7 @@ function split_reads {
 
         else
 
-            echo "Need either a FastQ or Fastq.gz file"
+            echo "Need either a FastQ or FastQ.gz file"
             exit 3
 
         fi
