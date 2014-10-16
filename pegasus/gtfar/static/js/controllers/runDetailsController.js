@@ -137,101 +137,89 @@ define(["moment"],
                     for(var i = 0; i < fileSplits.length; i++) {
                         $scope.errorReport.push({'section' : fileSplits[i].match(/[^=]+/)[0], 'details' : [], 'subsections' : []});
                         var headerRemoved = fileDetails.split(fileSplits[i]);
-                        // This will be true for all splits except for the first one, and due to the nature of how split works
-                        // on the ith iteration we will populate the details for the i-1th file
                         var previousFileDetails = headerRemoved[0].trim();
+                        // This will be true for all splits except for the first one, and because split separates the parts before
+                        // and after the splitting string on the ith iteration we will populate the details for the i-1th file
+                        // but because we have the summary section as the 0th index of the errorReport
                         if(previousFileDetails != "") {
+                            // To make sure we add data to the proper section of the report if some parts are missing
+                            var previousSectionIndex = -1;
                             var summaryHeader = previousFileDetails.match(/-{4,}(.+?Summary)-{4,}/);
-                            var detailsSplit = previousFileDetails.split(summaryHeader[0]);
+                            var splitByHeader;
+                            if(summaryHeader) {
+                                splitByHeader = previousFileDetails.split(summaryHeader[0]);
 
-                            // The first section will give any general details on the file
-                            var headerSection = detailsSplit[0].trim().split('\n');
-                            for(var j = 0; j < headerSection.length; j++) {
-                                // Even though the summary section would want us to offset by + 1, it is cancelled out by
-                                // the fact that we are trying to add to the previous section which offsets by -1
-                                $scope.errorReport[i].details.push({'text' : headerSection[j]});
+                                // The previous section
+                                fillErrorDetails($scope.errorReport[i], previousSectionIndex, splitByHeader[0].trim().split('\n'));
+                                $scope.errorReport[i].subsections.push({'section' : summaryHeader[1], 'details' : []});
+                                previousFileDetails = splitByHeader[1];
+                                previousSectionIndex += 1;
                             }
-                            previousFileDetails = detailsSplit[1];
 
                             var stdoutHeader = previousFileDetails.match(/-{4,}(.+?stdout)-{4,}/);
-                            detailsSplit = previousFileDetails.split(stdoutHeader[0]);
+                            if(stdoutHeader) {
+                                splitByHeader = previousFileDetails.split(stdoutHeader[0]);
 
-                            // Add the summary section since the last details split isolates that text
-                            var fileSummary = {'section' : summaryHeader[1], 'details' : []};
-                            var summarySection = detailsSplit[0].trim().split('\n');
-                            for(var j = 0; j < summarySection.length; j++) {
-                                fileSummary.details.push({'text' : summarySection[j]});
+                                // Add the previous section
+                                fillErrorDetails($scope.errorReport[i], previousSectionIndex, splitByHeader[0].trim().split('\n'));
+                                $scope.errorReport[i].subsections.push({'section' : stdoutHeader[1], 'details' : []});
+                                previousFileDetails = splitByHeader[1];
+                                previousSectionIndex += 1;
                             }
-                            $scope.errorReport[i].subsections.push(fileSummary);
-
-                            previousFileDetails = detailsSplit[1];
 
                             var stderrHeader = previousFileDetails.match(/-{4,}(.+?stderr)-{4,}/);
-                            detailsSplit = previousFileDetails.split(stderrHeader[0]);
+                            if(stderrHeader) {
+                                splitByHeader = previousFileDetails.split(stderrHeader[0]);
 
-                            // Add the stdout section since the last details split isolates that text
-                            var fileStdout = {'section' : stdoutHeader[1], 'details' : []};
-                            var stdoutSection = detailsSplit[0].trim().split('\n');
-                            for(var j = 0; j < stdoutSection.length; j++) {
-                                fileStdout.details.push({'text' : stdoutSection[j]});
+                                // Add the previous section
+                                fillErrorDetails($scope.errorReport[i], previousSectionIndex, splitByHeader[0].trim().split('\n'));
+                                $scope.errorReport[i].subsections.push({'section': stderrHeader[1], 'details' : []});
+                                previousFileDetails = splitByHeader[1];
+                                previousSectionIndex += 1;
                             }
-                            $scope.errorReport[i].subsections.push(fileStdout);
-
-                            // Since stderr is the last section we can add that too
-                            var fileStderr = {'section' : stderrHeader[1], 'details' : []};
-                            var stderrSection = detailsSplit[1].trim().split('\n');
-                            for(var j = 0; j < stderrSection.length; j++) {
-                                fileStderr.details.push({'text' : stderrSection[j]});
-                            }
-                            $scope.errorReport[i].subsections.push(fileStderr);
-
+                            // Add the final section
+                            fillErrorDetails($scope.errorReport[i], previousSectionIndex, previousFileDetails.trim().split('\n'));
                         }
-                        // Special case for the last split
 
+                        // Special case for the last file
                         if(i == fileSplits.length - 1) {
                             var currentFileDetails = headerRemoved[1].trim();
+                            var previousSectionIndex = -1;
 
                             var summaryHeader = currentFileDetails.match(/-{4,}(.+?Summary)-{4,}/);
-                            var detailsSplit = currentFileDetails.split(summaryHeader[0]);
-
-                            // The first section will give any general details on the file
-                            var headerSection = detailsSplit[0].trim().split('\n');
-                            for(var j = 0; j < headerSection.length; j++) {
-                                $scope.errorReport[i+1].details.push({'text' : headerSection[j]}); // The i+1 accounts for the offset of the summary section in the report
+                            var splitByHeader;
+                            if(summaryHeader) {
+                                splitByHeader = currentFileDetails.split(summaryHeader[0]);
+                                // The first section will give any general details on the file
+                                fillErrorDetails($scope.errorReport[i+1], previousSectionIndex, splitByHeader[0].trim().split('\n'));
+                                $scope.errorReport[i+1].subsections.push({'section' : summaryHeader[1], 'details' : []});
+                                currentFileDetails = splitByHeader[1];
+                                previousSectionIndex += 1;
                             }
-                            currentFileDetails = detailsSplit[1];
 
                             var stdoutHeader = currentFileDetails.match(/-{4,}(.+?stdout)-{4,}/);
-                            detailsSplit = currentFileDetails.split(stdoutHeader[0]);
+                            if(stdoutHeader) {
+                                splitByHeader = currentFileDetails.split(stdoutHeader[0]);
 
-                            // Add the summary section since the last details split isolates that text
-                            var fileSummary = {'section' : summaryHeader[1], 'details' : []};
-                            var summarySection = detailsSplit[0].trim().split('\n');
-                            for(var j = 0; j < summarySection.length; j++) {
-                                fileSummary.details.push({'text' : summarySection[j]});
+                                // Add the previous section
+                                fillErrorDetails($scope.errorReport[i+1], previousSectionIndex, splitByHeader[0].trim().split('\n'));
+                                $scope.errorReport[i+1].subsections.push({'section' : stdoutHeader[1], 'details' : []});
+                                currentFileDetails = splitByHeader[1];
+                                previousSectionIndex += 1;
                             }
-                            $scope.errorReport[i+1].subsections.push(fileSummary); // The i+1 accounts for the offset of the summary section in the report
-
-                            currentFileDetails = detailsSplit[1];
 
                             var stderrHeader = currentFileDetails.match(/-{4,}(.+?stderr)-{4,}/);
-                            detailsSplit = currentFileDetails.split(stderrHeader[0]);
+                            if(stderrHeader) {
+                                splitByHeader = currentFileDetails.split(stderrHeader[0]);
 
-                            // Add the stdout section since the last details split isolates that text
-                            var fileStdout = {'section' : stdoutHeader[1], 'details' : []};
-                            var stdoutSection = detailsSplit[0].trim().split('\n');
-                            for(var j = 0; j < stdoutSection.length; j++) {
-                                fileStdout.details.push({'text' : stdoutSection[j]});
+                                // Add the previous section
+                                fillErrorDetails($scope.errorReport[i+1], previousSectionIndex, splitByHeader[0].trim().split('\n'));
+                                $scope.errorReport[i+1].subsections.push({'section': stderrHeader[1], 'details' : []});
+                                currentFileDetails = splitByHeader[1];
+                                previousSectionIndex += 1;
                             }
-                            $scope.errorReport[i+1].subsections.push(fileStdout); // The i+1 accounts for the offset of the summary section in the report
-
-                            // Since stderr is the last section we can add that too
-                            var fileStderr = {'section' : stderrHeader[1], 'details' : []};
-                            var stderrSection = detailsSplit[1].trim().split('\n');
-                            for(var j = 0; j < stderrSection.length; j++) {
-                                fileStderr.details.push({'text' : stderrSection[j]});
-                            }
-                            $scope.errorReport[i+1].subsections.push(fileStderr); // The i+1 accounts for the offset of the summary section in the report
+                            // Add the final section
+                            fillErrorDetails($scope.errorReport[i+1], previousSectionIndex, currentFileDetails.trim().split('\n'));
                         }
 
                         // This should be everything after the last header we split by
@@ -248,6 +236,13 @@ define(["moment"],
                         $scope.alerts.push({'type': 'danger', 'message': 'Unknown error occurred while retrieving error analysis.  Please contact the developers'});
                     }
                 });
+            }
+
+            function fillErrorDetails(report, sectionIndex, details) {
+                var reportSection = (sectionIndex == -1) ? report.details : report.subsections[sectionIndex].details;
+                for(var i = 0; i < details.length; i++){
+                    reportSection.push({'text' : details[i]});
+                }
             }
 
             function clearErrorReport() {
