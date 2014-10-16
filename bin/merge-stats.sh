@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+set -o pipefail
+
 if [ $# -lt 2 ]; then
     echo "Usage: `basename $0` <REGEX> <OUTPUT>"
     exit 1
