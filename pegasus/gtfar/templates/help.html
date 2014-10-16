@@ -1,259 +1,369 @@
 {% extends 'base.html' %}
+{% block js %}
+    <script>
+        $(function () {
+            $('body').scrollspy({ target: '.bs-docs-sidebar' });
+        });
+    </script>
+{% endblock %}
 {% block content %}
-    <div class="container" data-spy="scroll" data-target="affix-nav">
-        <nav id="affix-nav" class="sidebar col-md-3">
-            <ul class="nav sidenav" data-spy="affix" data-offset-top="10">
-                <li class="active"><a href="{{ url_for('help_page') }}#science">Science</a></li>
-                <li><a href="{{ url_for('help_page') }}#webInterface">Web Interface</a>
+    <div class="row">
+    <div class="col-xs-12 col-sm-4 col-md-3">
+        <div class="bs-docs-sidebar hidden-print hidden-xs hidden-sm" role="complementary">
+            <ul class="nav bs-docs-sidenav" data-spy="affix" data-offset-top="10">
+                <li class="active"><a href="#important">Important Information</a>
                     <ul class="nav">
-                        <li><a href="{{ url_for('help_page') }}#gettingStarted">Getting Started</a></li>
-                        <li><a href="{{ url_for('help_page') }}#viewRuns">Viewing Runs</a></li>
-                        <li><a href="{{ url_for('help_page') }}#viewSummary">View Runs Summary</a></li>
-                        <li><a href="{{ url_for('help_page') }}#newRun">Starting a New Run</a></li>
-                        <li><a href="{{ url_for('help_page') }}#viewDetails">View Run Details</a></li>
+                        <li><a href="#browsers">Supported Browsers</a></li>
+                        <li><a href="#github">Source Code</a></li>
                     </ul>
                 </li>
-                <li><a href="{{ url_for('help_page') }}#contact">Contact</a></li>
+                <li><a href="#webInterface">Pegasus GT-FAR Dashboard</a>
+                    <ul class="nav">
+                        <li><a href="#viewRuns">List Previous Runs</a>
+                            <ul class="nav">
+                                <li><a href="#sorting">Sorting Runs</a></li>
+                                <li><a href="#searching">Searching</a></li>
+                                <li><a href="#grouping">Grouping</a></li>
+                                <li><a href="#deleting">Deleting</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#newRun">Start New Run</a>
+                            <ul class="nav">
+                                <li><a href="#inputParameters">Input Parameters</a>
+                                    <ul class="nav">
+                                        <li><a href="#workflowName">Workflow Name</a></li>
+                                        <li><a href="#annotationGenome">Annotation File and Genome Version</a></li>
+                                        <li><a href="#reads">Reads File</a></li>
+                                        <li><a href="#redLenhth">Reads Length</a></li>
+                                        <li><a href="#mismatches">Mismatches</a></li>
+                                        <li><a href="#alignQC">Align QC Filtered Reads</a></li>
+                                        <li><a href="#gnsc">Generate New Splice Candidates</a></li>
+                                        <li><a href="#starndRule">Strand Rule</a></li>
+                                        <li><a href="#email">Email Address</a></li>
+                                    </ul>
+                                </li>
+
+                            </ul>
+                        </li>
+                        <li><a href="#workflowDetails">Workflow Details</a></li>
+                    </ul>
+                </li>
+                <li><a href="#contact">Contact Us</a></li>
             </ul>
-        </nav>
-        <div class="content col-md-9">
-            <h3 id="important">Important Information</h3>
-            <h4 id="browsers">Supported Browsers</h4>
-
-            <p>
-                We support latest versions of the following browsers.
-
-            <ul>
-                <li>Google Chrome</li>
-                <li>Mozilla Firefox</li>
-                <li>Apple Safari</li>
-                <li>Internet Explorer</li>
-            </ul>
-            </p>
-
-            <h4 id="github">SourceCode</h4>
-
-            <p>Source code for the GT-FAR pipeline is hosted on <i class="fa fa-github fa-lg"> </i> GitHub at <a
-                    href="https://github.com/pegasus-isi/pegasus-gtfar">https://github.com/pegasus-isi/pegasus-gtfar</a>
-            </p>
-
-
-            <h3 id="science"> Science</h3>
-
-            <p>The help resources for the science behind GT-FAR are coming soon.</p>
-
-            <h3 id="webInterface"> Using the Web Interface</h3>
-
-            <p>The web interface provides an organized way for you to create and monitor runs for your workflows.</p>
-
-            <h4 id="gettingStarted">Getting Started</h4>
-            <p>The page you are taken to by default when you connect to the site (we will refer to this as the home page)provides
-            a pair of buttons to start or view runs, and a few paragraphs explaining what this tool and Pegasus are.  To
-            come back to this page at any time click the image of the house located at the top right of the top menu bar
-            (the menu bar is present on all pages).
-                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/home-icon.jpg') }}">
-                <span class="help-block">Right side of menu bar with arrow pointing to the home icon</span>
-            </p>
-            <h4 id="viewRuns">Viewing Runs</h4>
-            <p>There are two ways to view runs.  You can view a brief summary of all runs at once, or you can see a detailed view of
-            a single run.  First we will look at how you can view a summary of all runs.</p>
-
-            <h4 id="viewSummary">View Runs Summary</h4>
-            <p>To view a summary of all runs from the home page you can click on the yellow button at the top of the page that says
-            "List GT-Far Runs".  Alternatively you can go to the menu bar and from the "GT-FAR" dropdown menu select "List Previous Runs"
-            item from the list.  Both of these icons are pointed out below.
-                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-button-home-page.jpg') }}">
-                <span class="help-block">The list button on the home page</span>
-                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-button-menu-bar.jpg') }}">
-                <span class="help-block">The list button in the menu bar</span>
-            </p>
-            <p>This will take you to the listing page which will have a table where each row is a summary of a single run.
-            Above this table you should see a button labelled "Start New Run" and one labelled "Refresh".
-                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-page.jpg') }}">
-                <span class="help-block">The listing page</span>
-            Clicking the "Start New Run" button will take you to the start run page, explained
-            <a href="{{ url_for('help_page') }}#newRun">here</a>.  Clicking the "Refresh" button will load any changes to the
-            runs and add newly created runs to the display.
-            </p>
-            <p>The table that holds all of the runs allows for sorting, grouping, and searching.  To sort the runs, click on any of the
-            headers on the table (by default they are sorted with the newest run appearing at the top).  You can see how the table is
-            sorted by looking for a triangle at the headers of the table and seeing which way it points.</p>
-            <p>
-            You can group listings by dragging any of the headers in the table and dropping them onto the text right above the headers
-            that reads "Drag a column header here and drop it to group by that column".  When you do this then the table will place all
-            runs within dropdowns where you can select which of the options you want to view.  You can nest groupings by dragging more
-            headers to the top bar.</p>
-
-            <p>To search for a run click on the green triangle at the top right corner of the table to reveal a search bar.  Type into
-            this bar to search based on your criteria.
-                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-page-search-test.jpg') }}">
-                <span class="help-block">Searching for the word test (arrow points to the triangle to open the search bar)</span>
-            </p>
-            <p>Each Run has a checkbox in the rightmost position on the row.  When you check any number of boxes a red button saying
-            "Delete Selected" will appear in the top right corner of the box.  Clicking this button will stop delete both the run
-            and any files associated with it.  In order to ensure that you do not accidentally delete runs that you want to keep,
-            a pop-up message will appear after you click "Delete Selected" so you can confirm the delete.
-                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-page-delete.jpg') }}">
-                <span class="help-block">Listing with multiple rows checked and the "Delete Selected" button visible</span>
-            </p>
-
-            <p>Each run contains two links, the first is the "File" column of the run.  This column serves as a download link so you
-            can download the input file for the run to inspect it.  Please not that you cannot download, modify, and resubmit the file
-            once the run has already started, but you can use it to start a new run with the same file, or even a modified version of
-            that file.  The second link is the "Name" column.  This link will take you to the details page of the run associated with
-            that name.  The next section will walk you through the start new run page.</p>
-
-            <h4 id="newRun">Start a New Run</h4>
-
-            <p>There are three ways to navigate to the page to start a new run:
-            <ol>
-                <li>Click the "Start GT-FAR Run" button on the home page
-                    <img class="img-responsive" src="{{ url_for ('static', filename='images/help/main-page-start-button.jpg') }}">
-                </li>
-                <li>Click the "Start New Run" button on the listing page
-                    <img class="img-responsive" src="{{ url_for ('static', filename='images/help/list-page-start-button.jpg') }}">
-                </li>
-                <li>Click the "Start New Run" option from the "GT-FAR" dropdown in the top menu bar on any page
-                    <img class="img-responsive" src="{{ url_for ('static', filename='images/help/menu-bar-start-button.jpg') }}">
-                </li>
-            </ol></p>
-
-            <p>When you arrive at the page you will see a form for you to fill out with information about the run you wish to start.
-                You will also see a submit and cancel button at the bottom of the form.
-                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/start-run-page.jpg') }}">
-                <span class="help-block">The start run page when you first navigate to it</span>
-            </p>
-            <p>Follow these guidelines to fill out a form properly.</p>
-
-            <h5>Workflow Name</h5>
-            <p>
-                The workflow name is the name that the system will associate the run with.  It is used both as the name and as the id.
-                You may only use alphanumeric characters as well as underscores for the name, all other input will be rejected.
-                The name field is required for a run to start successfully.
-            </p>
-
-            <h5>Annotation File and Genome Version</h5>
-            <p>
-                Currently the annotation file and genome version are provided for you.  You will not be allowed to edit these
-                fields, but we want to have them displayed for you so you are aware of their values.
-            </p>
-
-            <h5>Input File</h5>
-            <p>
-                The input file is required to know what information you want to run a workflow on.  The file must be g-zipped and
-                smaller than 5 Gigabytes.  We also provide a sample file for you to download and use to start a run.  The input file
-                is required for a run to start.
-            </p>
-
-            <h5>Read Length</h5>
-            <p>
-                The Read length field determines how many values are read at a single time.  This value is require and must be
-                between 50 and 128 (inclusive).  If you also check the "Generate New Splice Candidates" field, then the value of
-                Read Length must be either 75 or between 100 and 128 (inclusive).
-            </p>
-
-            <h5>Mismatches</h5>
-            <p>
-                The Mismatches field corresponds to how many mismatches you will allow your run to have and keep progressing.
-                This field is required and must have a value between 0 and 8 (inclusive).
-            </p>
-
-            <h5>Align QC Filtered Reads</h5>
-            <p>
-                The Align QC Filtered Reads field is a simple checkbox that will evaluate as either true or false.  By default
-                this value will evaluate to false.
-            </p>
-
-            <h5>Generate New Splice Candidates</h5>
-            <p>
-                The Generate New Splice Candidates field is a simple checkbox that will evaluate as either true or false (false
-                is the default).  If you check this field then you must make sure that your "Read Length" field has a value of
-                either 75 or anything between 100 and 128 (inclusive).
-            </p>
-
-            <h5>Strand Rule</h5>
-            <p>
-                The strand rule is a selection box that let's you choose if you want the rule to be "Stranded", "Sense", or "Anti-Sense".
-                By default, the strand rule is set to "Stranded".
-            </p>
-
-            <h5>Email</h5>
-            <p>
-                The email field is where you specify what email addresses to send updates and notices about the run to.  This field is
-                not required, but if you do specify any emails you must properly format them like "example@domain.com".  If you want to
-                specify multiple emails then you must separate the emails with a comma.
-            </p>
-
-            <p>Once you have filled out all of these fields properly you should have a form that looks similar to this:
-                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/start-run-page-filled.jpg') }}">
-            </p>
-
-            <p>Click the blue "Submit" button at the bottom of the page and (if you have all the fields properly filled) you will
-                be redirected to the details page for the new run you just started.  We will go over this page in the next section.
-            </p>
-
-
-            <h4 id="viewDetails">View Run Details</h4>
-            <p>To view the details of a run, go to the listing page and click on the name of the run that you want to view.  This will
-            open the details page for that run.
-                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-running.jpg') }}">
-                <span class="help-block">An example of a running details page</span>
-                <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-aborted.jpg') }}">
-                <span class="help-block">An example of an aborted details page</span>
-            </p>
-            <p>Here on this page you will see an un-editable version of the inputs used to start the run (help with starting detailed
-            <a href="{{ url_for('help_page') }}#newRun">here</a>).  You will also see an icon next to the name that displays what state
-            the run is currently in (blue "Running", green "Successful", red "Failed", or yellow "Aborted").  As well as either a progress bar
-            if the run is still progressing, or an alert bar with the message and color corresponding to whether the run finished, failed, or was
-            aborted.</p>
-
-            <p>The two items in this form you can interact with are the input file and the emails.
-                You can click on the name of the input file to download the file to your machine.  You can also click on the name of
-                the emails listed in the form to send an email to that address.</p>
-
-            <p>The progress bar that shows up will also allow you to stop the run before it would normally terminate.  This button
-            is found to the right of the progress bar.  When you click the stop button, the run will change to reflect that you have aborted the run.  The progress bar and stop button
-            should then be replaced with an alert bar that confirms the run was aborted.</p>
-
-            <h5>Output Files and Error Reports</h5>
-            <p>There are two sets of items generated from the run: output files and and error report.  Both of these show up as tabs
-            below where the progress bar/alert is.  Note that the tab for the error report is only visible when there are errors in your
-            run, so if you do not see it that means that your run has not encountered any errors.</p>
-            <p>The output files tab lists all output files generated by the run and can be downloaded if you click the name of the file
-            you want to look at.
-            </p>
-
-            <p>If your run encounters errors then you you will be presented with an error report.  You can view the error report
-            in a formatted version or you can download the log and view it on your machine by clicking the "Download Log" button at
-            the top of the error report.  We also provide a link to the developer email so you can send us a message in case you
-            feel like you should not be seeing and error message and we will work with you to sort out the issue.</p>
-            <p>Below is an example of how the error report will look to you.  Note that with the formatted version on the page,
-            you can choose which portions of the error report you wish to see the details of, and which you do not.  This helps
-            keep the error report from taking up a lot of page space while still providing you with all the information.  To
-            open or close any section simply click on the name of the section that you wish to open or close.</p>
-            <img class="img-responsive" src="{{ url_for ('static', filename='images/help/details-page-error-report.jpg') }}">
-
-            <p>In the next section we will go over how to start a new run using this web interface.</p>
-
-
-            <h3 id="contact">Contact Us</h3>
-
-            <p> Please contact us at <a href="mailto:gtfar-devel@isi.edu"><i class="fa fa-envelope-o"> </i>
-                gtfar-devel@isi.edu</a>, for
-            <ol>
-                <li>Setup the <a href="pegasus.isi.edu">Pegasus</a> GT-FAR pipeline to run on you own
-                    cluster.
-                </li>
-                <li> Ask questions or provide feedback.
-                </li>
-                <li> Report issues with the pipeline.</li>
-            </ol>
-            </p>
-
-            <p>Please contact us at <a href="mailto:pegasus-support@isi.edu"><i class="fa fa-envelope-o"> </i>
-                pegasus-support@isi.edu</a>, if you would like to integrate your pipeline with <a
-                    href="pegasus.isi.edu">Pegasus.</a>
-            </p>
         </div>
+    </div>
+
+    <div class="col-xs-12 col-sm-12 col-md-9" role="main">
+    <div class="bs-docs-section">
+        <h1 id="important" class="page-header">Important Information</h1>
+
+        <h2 id="browsers">Supported Browsers</h2>
+
+        <p>
+            We support latest versions of the following browsers.
+
+        <ul>
+            <li>Google Chrome</li>
+            <li>Mozilla Firefox</li>
+            <li>Apple Safari</li>
+            <li>Internet Explorer</li>
+        </ul>
+        </p>
+
+        <h2 id="github">Source Code</h2>
+
+        <p>Source code for the GT-FAR pipeline is hosted on <i class="fa fa-github fa-lg"> </i> GitHub at <a
+                href="https://github.com/pegasus-isi/pegasus-gtfar">https://github.com/pegasus-isi/pegasus-gtfar</a>
+        </p>
+    </div>
+    <div class="bs-docs-section">
+    <h1 id="webInterface" class="page-header">Pegasus GT-FAR Dashboard</h1>
+
+    <p>The web interface provides an organized way for you to create and monitor runs for your workflows.</p>
+
+    <h2 id="viewRuns">List Previous Runs</h2>
+
+    <p>You can view a list of previous runs from the listings page. To navigate to the listings page click on "List
+        Previous Runs" from the GT-FAR drop-down menu at the top.</p>
+
+    <p>
+        <img class="img-responsive" style="margin: 0 auto;"
+             src="{{ url_for ('static', filename='images/help/list-button-menu-bar.jpg') }}">
+        <span class="help-block text-center">The list button in the menu bar</span>
+    </p>
+
+    <p>List previous runs page provides a summary of previous Pegasus GT-FAR runs. The page also shows some input
+        parameters for the run, and current status of the workflow, and the start date of the run.
+
+        <img class="img-responsive" style="margin: 0 auto;"
+             src="{{ url_for ('static', filename='images/help/list-page.jpg') }}">
+        <span class="help-block text-center">List Previous Runs</span>
+
+        Clicking the
+        <button class="btn btn-primary">
+            <i class="fa fa-refresh"> </i> Refresh
+        </button>
+        button will get update all the information on the page.
+    </p>
+
+    <h3 id="sorting">Sorting Runs</h3>
+
+    <p>Simply click on any of the column header once or twice to sort in ascending or
+        descending order respectively.
+    </p>
+
+    <h3 id="searching">Searching</h3>
+
+    <p>Click on the down-arrow icon at the top-right of the table and enter you search term
+        in the text field.
+        <img class="img-responsive" style="margin: 0 auto;"
+             src="{{ url_for ('static', filename='images/help/list-page-search-test.jpg') }}">
+        <span class="help-block text-center">Searching for runs the contain the word "test"</span></p>
+
+    <h3 id="grouping">Grouping</h3>
+
+    <p>Users can group their runs on one or more columns. So a user can group runs according to the read length, and
+        mismatches.
+
+        To group runs simply drag and drop a column in the area that "Drag a column header here and drop it to group by
+        that column".</p>
+
+    <h3 id="deleting">Deleting Runs</h3>
+
+    <p>Select a run by clicking the checkbox located t the left of the row. To delete all
+        runs click on the checkbox to left of the "Name" column.
+        Click the "Delete Selected" button, and click "OK" to confirm.
+        Deleting a run results in deletion of all results associated with the run, and cannot be undone.
+        <img class="img-responsive" style="margin: 0 auto;"
+             src="{{ url_for ('static', filename='images/help/list-page-delete.jpg') }}">
+        <span class="help-block text-center">Listing with multiple rows checked and the "Delete Selected" button visible</span>
+    </p>
+
+    <h2 id="newRun">Start New Run</h2>
+
+    <p>
+        To navigate to the Start New Run page, Click the "Start New Run" from the GT-FAR drop-down menu at the top.
+    </p>
+
+    <p><img class="img-responsive" style="margin: 0 auto;"
+            src="{{ url_for ('static', filename='images/help/menu-bar-start-button.jpg') }}">
+        <span class="help-block text-center">Start New Run</span>
+    </p>
+
+    <p>
+        Input the parameters for the GT-FAR run in the web form.
+    </p>
+
+    <p>
+        <img class="img-responsive" style="margin: 0 auto;"
+             src="{{ url_for ('static', filename='images/help/start-run-page.jpg') }}">
+        <span class="help-block text-center">Web form to start a new Pegasus GT-FAR run</span>
+    </p>
+
+    <h3 id="inputParameters">Input Parameters</h3>
+
+    <h4 id="workfflowName">Workflow Name</h4>
+
+    <p>
+        The workflow name is a label that a user uses to uniquely identify a run. Workflow Name is also used a prefix
+        for naming the the output files.
+    </p>
+
+    <p>
+        Workflow name is a required field and only accepts alphanumeric characters and underscores.
+    </p>
+
+    <h4 id="annotationGenome">Annotation File and Genome Version</h4>
+
+    <p>
+        Currently the annotation file and genome version are provided for you. You will not be allowed to edit these
+        fields, but we want to have them displayed for you so you are aware of their values.
+    </p>
+
+    <h4 id="reads">Reads File</h4>
+
+    <p>
+        The reads file is a required field. </p>
+
+    <p>It must be a FastQ file compressed using GZIP. It must have an extension of ".fq.gz" or ".fastq.gz".
+        Currently, the system only allows reads files which are smaller than 5 GB.
+    </p>
+
+    <h4 id="readLength">Read Length</h4>
+
+    <p>
+        Read length field specifies the length of the reads in the reads file.
+    </p>
+
+    <p>
+        Read length must be between 50 and 128 (inclusive).
+    </p>
+
+    <h4 id="mismatches">Mismatches</h4>
+
+    <p>
+        Mismatches field specifies the number of mismatches to allow when mapping reads
+    </p>
+
+    <p>
+        Mismatches must be between 0 and 8 (inclusive).
+    </p>
+
+    <h4 id="alignQC">Align QC Filtered Reads</h4>
+
+    <p>
+        Select Align QC Filtered Reads option to align filtered reads in addition to full length reads.
+    </p>
+
+    <h4 id="gnsc">Generate New Splice Candidates</h4>
+
+    <p>
+        Select Generate New Splice Candidates option, if you would like to generate a GTF file with a list of Novel
+        Splice Candidates. It uses gapped alignment protocol to discover and confirm novel splice junctions.
+    </p>
+
+    <blockquote>
+        Generate New Splice Candidates can only be selected when the Read Length is 75 or above.
+    </blockquote>
+
+    <h4 id="strandRule">Strand Rule</h4>
+
+    <p>If a stranded sequencing protocol was used, select the expected read/gene orientation (Sense/Anti-Sense) else
+        select Unstranded.
+        By default, the strand rule is set to "Unstranded".
+    </p>
+
+    <h4 id="email">Email Address</h4>
+
+    <p>
+        Provide one or more Email Addresses separated by a comma. An Email notification is sent out to the recipients
+        when the workflow finishes running.
+    </p>
+    <blockquote>Email notifications may end up in Spam folder.</blockquote>
+
+
+    <p>Click the
+        <button class="btn btn-primary">Submit <i class="fa fa-long-arrow-right"> </i></button>
+        button at the bottom of the form to initiate the run. Once the Pegasus GT-FAR workflow has
+        started the user will be automatically be redirected to the workflow details page, where users can view the
+        progress of their run.
+    </p>
+
+
+    <h4 id="workflowDetails">Workflow Details</h4>
+
+    <p>Users can navigate to the details page for a workflow, by clicking on the Workflow Name in the List Previous Runs
+        Page.
+    </p>
+
+    <p>From the Workflow Details page users can -
+    <ol>
+        <li>Monitor the progress of the run.</li>
+        <li>View/Download output files.</li>
+        <li>View/Download an error report if any failures were detected.</li>
+        <li>Stop a workflow run (stopped runs cannot be restarted).</li>
+    </ol>
+    </p>
+
+    <h3>Monitoring the progress of a run</h3>
+
+    <p>The workflow details page lists the input parameters with which the run was initiated. Users will see a progress
+        bar while the workflow is running.
+    </p>
+
+    <p>A color coded workflow status is visible next to the workflow name, and in the alerts bar just above the Output
+        Files tab.
+    </p>
+
+    <p>
+        <span class="label label-info">Running</span> Indicates the workflow is running, and no failures were detected.
+    </p>
+
+    <p>
+        <span class="label label-warning">Failing</span> Indicates the workflow is running, and one or more failures
+        have been detected.
+    </p>
+
+    <p>
+        <span class="label label-warning">Aborted</span> Indicates the workflow was manually aborted by the user.
+    </p>
+
+    <p>
+        <span class="label label-success">Success</span> Indicates the workflow has finished successfully, without any
+        failures.
+    </p>
+
+    <p>
+        <span class="label label-danger">Failed</span> Indicates a workflow has finished running, with one or more
+        failures.
+    </p>
+
+    <p>
+        <img class="img-responsive" style="margin: 0 auto;"
+             src="{{ url_for ('static', filename='images/help/details-page-running.jpg') }}">
+        <span class="help-block text-center">Monitoring the progress of the run.</span>
+    </p>
+
+
+    <h3>Stopping a Run</h3>
+
+    <p>Users can stop/abort a workflow by clicking the
+        <button class="btn btn-danger btn-sm">Stop</button>
+        button located to the right on the progress bar.
+    </p>
+
+    <h3>Output Files</h3>
+
+    <p>
+        Output files are listed and available for download immediately in the Output Files tab, as soon as they
+        generated by the workflow run.
+    </p>
+
+    <p><img class="img-responsive" style="margin: 0 auto;"
+            src="{{ url_for ('static', filename='images/help/details-page-aborted.jpg') }}">
+        <span class="help-block text-center">Stopped Run / Output Files</span>
+    </p>
+
+    <h3>Error Report</h3>
+
+    <p>Users are be able to view an error report, if any failures were detected while running the workflow.
+    </p>
+
+    <p>The error report shows an overall summary and a summary for all failed jobs in the workflow. The example below
+        illustrates a scenario where an invalid reads files caused the failure.</p>
+
+    <p>If the users feel that the error is invalid, users should download the error report but clicking the
+        <button class="btn btn-danger"><i class="fa fa-download"> </i> Download Log</button>
+        button and Email it to <a href="mailto:gtfar-devel@isi.edu"><i class="fa fa-envelope-o"> </i>
+            gtfar-devel@isi.edu</a>.
+    </p>
+
+    <p>
+        <img class="img-responsive" style="margin: 0 auto;"
+             src="{{ url_for ('static', filename='images/help/details-page-error-report.jpg') }}">
+        <span class="help-block text-center">Error Report</span>
+    </p>
+    </div>
+    <div class="bs-docs-section">
+        <h1 id="contact" class="page-header">Contact Us</h1>
+
+        <p> Please contact us at <a href="mailto:gtfar-devel@isi.edu"><i class="fa fa-envelope-o"> </i>
+            gtfar-devel@isi.edu</a>, for
+        <ol>
+            <li>Setup the <a href="pegasus.isi.edu">Pegasus</a> GT-FAR pipeline to run on you own
+                cluster.
+            </li>
+            <li> Ask questions or provide feedback.
+            </li>
+            <li> Report issues with the pipeline.</li>
+        </ol>
+        </p>
+
+        <p>Please contact us at <a href="mailto:pegasus-support@isi.edu"><i class="fa fa-envelope-o"> </i>
+            pegasus-support@isi.edu</a>, if you would like to integrate your pipeline with <a
+                href="pegasus.isi.edu">Pegasus.</a>
+        </p>
+    </div>
+    </div>
     </div>
 {% endblock content %}
