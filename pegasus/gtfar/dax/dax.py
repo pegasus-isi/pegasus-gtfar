@@ -396,9 +396,7 @@ class ClipParseMixin(object):
         if self._clip_reads:
             self._clip_and_parse('reads%d_full_miss_FEATURES_miss_GENOME_miss_SPLICES.fastq', 'clip')
 
-            cat = UNIXUtils.cat(self._info_files, '%s.splice_candidates.gtf' % self._prefix, o_transfer=True)
-            cat.invoke('all', self._state_update % 'Merge all info files into a single GTF file')
-            self.adag.addJob(cat)
+            self._merge_info(self._info_files, '%s.splice_candidates.gtf' % self._prefix)
 
     def _clip_and_parse(self, reads, tag):
         self._clip_and_parse_reads_to_gene(reads, tag)
@@ -507,6 +505,31 @@ class ClipParseMixin(object):
         parse_clipped_alignment.uses(info, link=Link.OUTPUT, transfer=False, register=False)
 
         self.adag.addJob(parse_clipped_alignment)
+
+    def _merge_info(self, info_files, gtf_file):
+        merge_info = Job(name='merge-info')
+        merge_info.invoke('all', self._state_update % 'Merging info files to generate GTF file')
+
+        # Outputs
+        gtf_file = File(gtf_file)
+
+        for info_file in info_files:
+            # Inputs
+            info_i = File(info_file)
+
+            # Arguments
+            merge_info.addArguments(info_i)
+
+            # Uses
+            merge_info.uses(info_i, link=Link.INPUT)
+
+        # Arguments
+        merge_info.addArguments(gtf_file)
+
+        # Outputs
+        merge_info.uses(gtf_file, link=Link.OUTPUT, transfer=True, register=False)
+
+        self.adag.addJob(merge_info)
 
 
 class AnalyzeMixin(object):

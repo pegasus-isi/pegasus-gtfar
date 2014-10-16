@@ -78,6 +78,22 @@ tr merge-stats {
     }
 }
 
+tr merge-info {
+    site local {
+        pfn "{{ bin_dir }}/merge-info.sh"
+        arch "x86_64"
+        os "{{ os | lower }}"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/merge-info.sh"
+        arch "x86_64"
+        os "{{ os | lower }}"
+        type "INSTALLED"
+    }
+}
+
 tr pre_filter_fastq.py {
     site local {
         pfn "{{ bin_dir }}/pre_filter_fastq.py"
