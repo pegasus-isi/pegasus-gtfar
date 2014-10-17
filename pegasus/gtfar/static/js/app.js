@@ -22,75 +22,74 @@
 // Keep angular files at the end because they do not export anything
 define(["angular", "js/controllers/runsController", "js/controllers/runDetailsController", "js/controllers/runCreationController",
         "js/router", "uiRouter", "angularGrid", "bootstrapUI", "moment"],
-function(angular, runsController, runDetailsController, runCreationController,
-         router) {
-    'use strict'
+    function (angular, runsController, runDetailsController, runCreationController, router) {
+        'use strict'
 
-    var appName = "gtfarApp";
-    var app = angular.module(appName, ["ui.router", "ngGrid", "ui.bootstrap"]);
+        var appName = "gtfarApp";
+        var app = angular.module(appName, ["ui.router", "ngGrid", "ui.bootstrap"]);
 
-    // For form validation
-    var INTEGER_REGEX = /^\-?\d+$/;
-    app.directive('integer', function() {
-        return {
-            require: 'ngModel',
-            link: function(scope, elm, attrs, ctrl) {
-                ctrl.$parsers.unshift(function(viewValue) {
-                    if (INTEGER_REGEX.test(viewValue)) {
-                        // it is valid
-                        ctrl.$setValidity('integer', true);
-                        return viewValue;
-                    } else {
-                        // it is invalid, return undefined (no model update)
-                        ctrl.$setValidity('integer', false);
-                        return undefined;
-                    }
-                });
-            }
-        };
-    });
-
-    var ALPHANUM_REGEX = /^[\w_]+$/i;
-    app.directive('alphanumeric', function() {
-        return {
-            require: 'ngModel',
-            link: function(scope, elm, attrs, ctrl) {
-                ctrl.$parsers.unshift(function(viewValue) {
-                    if (ALPHANUM_REGEX.test(viewValue)) {
-                        // it is valid
-                        ctrl.$setValidity('alphanumeric', true);
-                        return viewValue;
-                    } else {
-                        // it is invalid, return undefined (no model update)
-                        ctrl.$setValidity('alphanumeric', false);
-                        return undefined;
-                    }
-                });
-            }
-        };
-    });
-
-    app.config(router.getFullConstructor());
-
-    app.run(["$window", function($window) {
-        $window.tempFolder = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-            return v.toString(16);
+        // For form validation
+        var INTEGER_REGEX = /^\-?\d+$/;
+        app.directive('integer', function () {
+            return {
+                require: 'ngModel',
+                link: function (scope, elm, attrs, ctrl) {
+                    ctrl.$parsers.unshift(function (viewValue) {
+                        if (INTEGER_REGEX.test(viewValue)) {
+                            // it is valid
+                            ctrl.$setValidity('integer', true);
+                            return viewValue;
+                        } else {
+                            // it is invalid, return undefined (no model update)
+                            ctrl.$setValidity('integer', false);
+                            return undefined;
+                        }
+                    });
+                }
+            };
         });
-    }]);
 
-    app.controller("runsController", runsController.getFullConstructor());
-    app.controller("runDetailsController", runDetailsController);
-    app.controller("runCreationController", runCreationController.getFullConstructor());
+        var ALPHANUM_REGEX = /^[\w_]+$/i;
+        app.directive('alphanumeric', function () {
+            return {
+                require: 'ngModel',
+                link: function (scope, elm, attrs, ctrl) {
+                    ctrl.$parsers.unshift(function (viewValue) {
+                        if (ALPHANUM_REGEX.test(viewValue)) {
+                            // it is valid
+                            ctrl.$setValidity('alphanumeric', true);
+                            return viewValue;
+                        } else {
+                            // it is invalid, return undefined (no model update)
+                            ctrl.$setValidity('alphanumeric', false);
+                            return undefined;
+                        }
+                    });
+                }
+            };
+        });
+
+        app.config(router.getFullConstructor());
+
+        app.run(["$window", function ($window) {
+            $window.tempFolder = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }]);
+
+        app.controller("runsController", runsController.getFullConstructor());
+        app.controller("runDetailsController", runDetailsController);
+        app.controller("runCreationController", runCreationController.getFullConstructor());
 
 
-    function getName() {
-        return appName;
-    }
+        function getName() {
+            return appName;
+        }
 
-    return {
-        app : app,
-        getName : getName
-    };
+        return {
+            app: app,
+            getName: getName
+        };
 
-});
+    });

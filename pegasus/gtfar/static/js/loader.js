@@ -24,38 +24,38 @@
 requirejs.config({
 
     //"baseURL" : "js",
-    "paths" : {
-        js : "/js",
-        angular : "//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.18/angular",
-        uiRouter : "//cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.10/angular-ui-router",
-        bootstrapUI : "//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.0/ui-bootstrap-tpls",
-        angularGrid : '//cdnjs.cloudflare.com/ajax/libs/ng-grid/2.0.11/ng-grid.min',
-        jquery : "//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery",
-        "moment" : "//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.3/moment.min"
+    "paths": {
+        js: "/js",
+        angular: "//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.18/angular",
+        uiRouter: "//cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.10/angular-ui-router",
+        bootstrapUI: "//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.11.0/ui-bootstrap-tpls",
+        angularGrid: '//cdnjs.cloudflare.com/ajax/libs/ng-grid/2.0.11/ng-grid.min',
+        jquery: "//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery",
+        "moment": "//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.3/moment.min"
     },
     /*
      * Some libraries do not use requirejs, which means that any libraries they require are not guaranteed to be loaded
      * beforehand, it also means they do not have a pointer to call in our files, to fix this add to the shim for any
      * library that gets added that is not AMD so that it can be properly used in this project.
      */
-    shim : {
-        uiRouter : {
-            deps : ["angular"]
+    shim: {
+        uiRouter: {
+            deps: ["angular"]
             // No export because this just adds fields into angular
         },
-        bootstrapUI : {
-            deps : ["angular"]
+        bootstrapUI: {
+            deps: ["angular"]
             // No export because this just adds fields into angular
         },
-        angularGrid : {
-            deps : ["jquery","angular"]
+        angularGrid: {
+            deps: ["jquery", "angular"]
             // No export because this just adds fields into angular
         },
-        angular : {
-            exports : "angular"
+        angular: {
+            exports: "angular"
         },
-        jquery : {
-            exports : "$"
+        jquery: {
+            exports: "$"
         }
     }
 });
@@ -64,7 +64,7 @@ requirejs.config({
  * Load the main module
  */
 
-requirejs(["angular", "app"], function(angular, app) {
+requirejs(["angular", "app"], function (angular, app) {
     angular.element(document).ready(function () {
         angular.bootstrap(document, [app.getName()]);
     });

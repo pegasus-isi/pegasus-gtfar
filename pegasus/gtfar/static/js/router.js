@@ -20,53 +20,50 @@
  * Created by dcbriggs on 7/14/14.
  */
 define(["./controllers/runsController", "./controllers/runDetailsController", "./controllers/runCreationController"],
-function(runsController, runDetailsController, runCreationController){
+    function (runsController, runDetailsController, runCreationController) {
 
-    var routes = function($stateProvider, $urlRouterProvider) {
-        //
-        // For any unmatched url, redirect to /runs
-        $urlRouterProvider.otherwise("/runs");
-        //
-        // Now set up the states
-        $stateProvider
-            .state('runs', {
-                url: "/runs",
-                templateUrl: "/partials/runs.html",
-                controller: "runsController"
+        var routes = function ($stateProvider, $urlRouterProvider) {
+            //
+            // For any unmatched url, redirect to /runs
+            $urlRouterProvider.otherwise("/runs");
+            //
+            // Now set up the states
+            $stateProvider
+                .state('runs', {
+                    url: "/runs",
+                    templateUrl: "/partials/runs.html",
+                    controller: "runsController"
 
-            })
-            .state('runDetails', {
-                url: "/runs/details/{name:[^/]*}",
-                templateUrl: "/partials/runDetails.html",
-                controller: "runDetailsController"
-            })
-            .state('createRun', {
-                url: "/createRun",
-                templateUrl: "/partials/runCreator.html",
-                controller : "runCreationController"
-            });
-    };
+                })
+                .state('runDetails', {
+                    url: "/runs/details/{name:[^/]*}",
+                    templateUrl: "/partials/runDetails.html",
+                    controller: "runDetailsController"
+                })
+                .state('createRun', {
+                    url: "/createRun",
+                    templateUrl: "/partials/runCreator.html",
+                    controller: "runCreationController"
+                });
+        };
 
-    /*
-     * This will be used in the .config of the app.
-     * Return an array with the variables we want
-     * to inject so the caller does not need to worry about that.
-     */
-    function getFullConstructor() {
-        return ["$stateProvider", "$urlRouterProvider", routes];
-    }
+        /*
+         * This will be used in the .config of the app.
+         * Return an array with the variables we want
+         * to inject so the caller does not need to worry about that.
+         */
+        function getFullConstructor() {
+            return ["$stateProvider", "$urlRouterProvider", routes];
+        }
 
-    // For testing so that we can mock the variables you normally inject
-    function getMinimalConstructor() {
-        return routes;
-    }
+        // For testing so that we can mock the variables you normally inject
+        function getMinimalConstructor() {
+            return routes;
+        }
 
-    return {
-        getFullConstructor : getFullConstructor,
-        getName : getMinimalConstructor
-    }
+        return {
+            getFullConstructor: getFullConstructor,
+            getName: getMinimalConstructor
+        }
 
-
-
-
-});
+    });

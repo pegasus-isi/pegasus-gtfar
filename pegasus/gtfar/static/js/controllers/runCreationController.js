@@ -19,204 +19,205 @@
  */
 
 define(["angular"],
-function(angular) {
-    "use strict"
-    var runsCreationController = function($scope, $window, $http, $state) {
+    function (angular) {
+        "use strict"
+        var runsCreationController = function ($scope, $window, $http, $state) {
 
-        var file;
-        var FIVE_GIGABYTES = 5000000000;
-        $scope.alerts = [];
-        $scope.getAlertIcon = function(status) {
-            return (status == 'success') ? "text-success fa fa-check-circle" : "text-danger fa fa-exclamation-triangle";
-        };
-        $scope.closeAlert = function(index) {
-            $scope.alerts.splice(index, 1);
-        };
-        $scope.uploadProgress = null;
-        $scope.addingRun = null;
-        $scope.strandRuleOptions = [{rule: "unstranded"},{rule: "sense"},{rule: "anti-sense"}];
-        // Defaults
-
-        // We have to define this out of the run object because we need to link it to .rule in the end
-        $scope.strandRule = $scope.strandRuleOptions[0];
-
-        $scope.run = {
-            genome : "Genome", // TODO: add this in a bit $scope.genome,
-            gtf : "gencode.v19.annotation.gtf", // TODO: Add this in a bit $scope.gtf,
-            status : -1, // default status to running
-            userName : "genericUser",
-            readLength : 100,
-            mismatches : 3,
-            trimUnmapped : false,
-            mapFiltered : false,
-            genSplice : false
-        };
-
-        $scope.sample = $window.apiLinks.sample;
-
-        $scope.uploadFile = function() {
-            /*
-             * Upload the file
-             * Angular does not natively work with a formData object so we have to override
-             * the default behavior.  Refer to the link below
-             * http://uncorkedstudios.com/blog/multipartformdata-file-upload-with-angularjs
-             */
-            var  inputFile = document.getElementById("inputFile");
-
-            if (inputFile && !inputFile.value) {
-                return;
-            }
-
-            if( inputFile.files[0].size > FIVE_GIGABYTES) {
-                $scope.alerts.push({
-                    "type" : "danger",
-                    "message" : "That file is too large, please select one smaller than five gigabytes"
-                });
-                return;
-            }
-
+            var file;
+            var FIVE_GIGABYTES = 5000000000;
             $scope.alerts = [];
+            $scope.getAlertIcon = function (status) {
+                return (status == 'success') ? "text-success fa fa-check-circle" : "text-danger fa fa-exclamation-triangle";
+            };
+            $scope.closeAlert = function (index) {
+                $scope.alerts.splice(index, 1);
+            };
+            $scope.uploadProgress = null;
+            $scope.addingRun = null;
+            $scope.strandRuleOptions = [
+                {rule: "unstranded"},
+                {rule: "sense"},
+                {rule: "anti-sense"}
+            ];
+            // Defaults
 
-            var fileData = new FormData(document.getElementById("runForm"));
-            var xhr = new XMLHttpRequest();
-            // TODO: disable the browse button
-            xhr.upload.onprogress = function(e) {
-                $scope.$apply(function() {
-                    if (e.lengthComputable) {
-                        $scope.uploadProgress = Math.round(e.loaded / e.total * 100);
-                        $scope.uploadProgressStyle = {width: $scope.uploadProgress + '%'};
-                    }
-                });
+            // We have to define this out of the run object because we need to link it to .rule in the end
+            $scope.strandRule = $scope.strandRuleOptions[0];
+
+            $scope.run = {
+                genome: "Genome", // TODO: add this in a bit $scope.genome,
+                gtf: "gencode.v19.annotation.gtf", // TODO: Add this in a bit $scope.gtf,
+                status: -1, // default status to running
+                userName: "genericUser",
+                readLength: 100,
+                mismatches: 3,
+                trimUnmapped: false,
+                mapFiltered: false,
+                genSplice: false
             };
 
-            xhr.upload.onload = function(e) {
-                // Event listener for when the file completed uploading
-                $scope.$apply(function() {
-                    $scope.uploadProgress = null;
-                    $scope.alerts.push({
-                        "type" : "success",
-                        "message" : "File uploaded successfully"
-                    });
-                });
-            };
+            $scope.sample = $window.apiLinks.sample;
 
-            xhr.onerror = function(e) {
-                $scope.$apply(function() {
-                    $scope.uploadProgress = null;
-                    $scope.alerts.push({
-                        "type" : "danger",
-                        "message" : "File failed to upload"
-                    });
-                });
-            };
+            $scope.uploadFile = function () {
+                /*
+                 * Upload the file
+                 * Angular does not natively work with a formData object so we have to override
+                 * the default behavior.  Refer to the link below
+                 * http://uncorkedstudios.com/blog/multipartformdata-file-upload-with-angularjs
+                 */
+                var inputFile = document.getElementById("inputFile");
 
-            xhr.open('POST', $window.apiLinks.upload + "/" + $window.tempFolder);
-            xhr.send(fileData);
-
-        };
-
-        $scope.cancel = function() {
-            $state.go('runs');
-        };
-
-        $scope.addRun = function() {
-            $scope.alerts = [];
-            var invalid = false;
-            if($scope.form.$invalid) {
-                if($scope.form.name.$invalid) {
-                    invalid = true;
-                    $scope.alerts.push({'type' : 'danger', 'message' : 'The name field is required and must be an alphanumeric value (underscores acceptable)'});
-                }
-                if($scope.form.mismatches.$invalid) {
-                    invalid = true;
-                    $scope.alerts.push({'type' : 'danger', 'message' : 'The mismatches field is required and must be an integer between 0 and 8 (inclusive)'});
-                }
-                if($scope.form.readLength.$invalid) {
-                    invalid = true;
-                    $scope.alerts.push({'type' : 'danger', 'message' : 'The read length field is required and must be an integer between 50 and 128 (inclusive)'});
-                }
-                // Check for the empty string because we could have a case where the user enters and then erases an email
-                if($scope.form.email.$invalid && $scope.form.email.$viewValue != "") {
-                    if($scope.form.email.$viewValue.indexOf(',') != -1) { // Multiple emails input
-                        var emails = $scope.form.email.$viewValue.split(",");
-                        for(var i = 0; i < emails.length; i++) {
-                            if(emails[i].indexOf("@") == -1) {
-                                invalid = true;
-                                $scope.alerts.push({'type' : 'danger', 'message' : 'Emails must be properly formatted example@domain.com'});
-                                return;
-                            }
-                        }
-                    }
-                    else {
-                        invalid = true;
-                        $scope.alerts.push({'type' : 'danger', 'message' : 'Emails must be properly formatted example@domain.com'});
-                    }
-                }
-                if(invalid) {
+                if (inputFile && !inputFile.value) {
                     return;
                 }
-            }
 
-            if ($scope.run["genSplice"] && $scope.run["readLength"] < 75) {
-                $scope.alerts.push({'type': 'danger', 'message' : 'When the Generate New Splice Candidates option is true, the read length must be >= 75'});
-                return;
-            }
-
-            $scope.run["strandRule"] = $scope.strandRule.rule;
-            $scope.run["uploadFolder"] = $window.tempFolder;
-            $scope.run.email = $scope.form.email.$viewValue;
-            try {
-                $scope.run["filename"] = document.getElementById("inputFile").files[0].name;
-            }
-            catch(error)
-            {
-                return; // An error message should show to the user so we just need to return
-            }
-            $scope.addingRun = true;
-            // Add the run to the database, the runId will be used to create the folder
-            $http.post($window.apiLinks.runs, $scope.run).success(function(data) {
-                $scope.addingRun = null;
-                $state.go('runDetails', {name : data.name});
-             }).error(function(data, status) {
-                $scope.addingRun = null;
-                if(data.code && data.message) {
+                if (inputFile.files[0].size > FIVE_GIGABYTES) {
                     $scope.alerts.push({
-                        'message': data.message,
-                        'type': 'danger'
+                        "type": "danger",
+                        "message": "That file is too large, please select one smaller than five gigabytes"
                     });
+                    return;
                 }
-                else if(status == 400) {
-                    for (var i = 0; i < data.errors.length; i++) {
-                        $scope.alerts.push({'type': 'danger', 'message': data.errors[i].message});
+
+                $scope.alerts = [];
+
+                var fileData = new FormData(document.getElementById("runForm"));
+                var xhr = new XMLHttpRequest();
+                // TODO: disable the browse button
+                xhr.upload.onprogress = function (e) {
+                    $scope.$apply(function () {
+                        if (e.lengthComputable) {
+                            $scope.uploadProgress = Math.round(e.loaded / e.total * 100);
+                            $scope.uploadProgressStyle = {width: $scope.uploadProgress + '%'};
+                        }
+                    });
+                };
+
+                xhr.upload.onload = function (e) {
+                    // Event listener for when the file completed uploading
+                    $scope.$apply(function () {
+                        $scope.uploadProgress = null;
+                        $scope.alerts.push({
+                            "type": "success",
+                            "message": "File uploaded successfully"
+                        });
+                    });
+                };
+
+                xhr.onerror = function (e) {
+                    $scope.$apply(function () {
+                        $scope.uploadProgress = null;
+                        $scope.alerts.push({
+                            "type": "danger",
+                            "message": "File failed to upload"
+                        });
+                    });
+                };
+
+                xhr.open('POST', $window.apiLinks.upload + "/" + $window.tempFolder);
+                xhr.send(fileData);
+
+            };
+
+            $scope.cancel = function () {
+                $state.go('runs');
+            };
+
+            $scope.addRun = function () {
+                $scope.alerts = [];
+                var invalid = false;
+                if ($scope.form.$invalid) {
+                    if ($scope.form.name.$invalid) {
+                        invalid = true;
+                        $scope.alerts.push({'type': 'danger', 'message': 'The name field is required and must be an alphanumeric value (underscores acceptable)'});
+                    }
+                    if ($scope.form.mismatches.$invalid) {
+                        invalid = true;
+                        $scope.alerts.push({'type': 'danger', 'message': 'The mismatches field is required and must be an integer between 0 and 8 (inclusive)'});
+                    }
+                    if ($scope.form.readLength.$invalid) {
+                        invalid = true;
+                        $scope.alerts.push({'type': 'danger', 'message': 'The read length field is required and must be an integer between 50 and 128 (inclusive)'});
+                    }
+                    // Check for the empty string because we could have a case where the user enters and then erases an email
+                    if ($scope.form.email.$invalid && $scope.form.email.$viewValue != "") {
+                        if ($scope.form.email.$viewValue.indexOf(',') != -1) { // Multiple emails input
+                            var emails = $scope.form.email.$viewValue.split(",");
+                            for (var i = 0; i < emails.length; i++) {
+                                if (emails[i].indexOf("@") == -1) {
+                                    invalid = true;
+                                    $scope.alerts.push({'type': 'danger', 'message': 'Emails must be properly formatted example@domain.com'});
+                                    return;
+                                }
+                            }
+                        }
+                        else {
+                            invalid = true;
+                            $scope.alerts.push({'type': 'danger', 'message': 'Emails must be properly formatted example@domain.com'});
+                        }
+                    }
+                    if (invalid) {
+                        return;
                     }
                 }
-                else if(data.code && data.code == 503) {
-                    $scope.alerts.push({'type' : 'danger', 'message' : 'Could not connect to server, please check your connection.'});
+
+                if ($scope.run["genSplice"] && $scope.run["readLength"] < 75) {
+                    $scope.alerts.push({'type': 'danger', 'message': 'When the Generate New Splice Candidates option is true, the read length must be >= 75'});
+                    return;
                 }
-                else {
-                    $scope.alerts.push({'type': 'danger', 'message': 'Unknown error occurred while retrieving error analysis.  Please contact the developers'});
+
+                $scope.run["strandRule"] = $scope.strandRule.rule;
+                $scope.run["uploadFolder"] = $window.tempFolder;
+                $scope.run.email = $scope.form.email.$viewValue;
+                try {
+                    $scope.run["filename"] = document.getElementById("inputFile").files[0].name;
                 }
+                catch (error) {
+                    return; // An error message should show to the user so we just need to return
+                }
+                $scope.addingRun = true;
+                // Add the run to the database, the runId will be used to create the folder
+                $http.post($window.apiLinks.runs, $scope.run).success(function (data) {
+                    $scope.addingRun = null;
+                    $state.go('runDetails', {name: data.name});
+                }).error(function (data, status) {
+                    $scope.addingRun = null;
+                    if (data.code && data.message) {
+                        $scope.alerts.push({
+                            'message': data.message,
+                            'type': 'danger'
+                        });
+                    }
+                    else if (status == 400) {
+                        for (var i = 0; i < data.errors.length; i++) {
+                            $scope.alerts.push({'type': 'danger', 'message': data.errors[i].message});
+                        }
+                    }
+                    else if (data.code && data.code == 503) {
+                        $scope.alerts.push({'type': 'danger', 'message': 'Could not connect to server, please check your connection.'});
+                    }
+                    else {
+                        $scope.alerts.push({'type': 'danger', 'message': 'Unknown error occurred while retrieving error analysis.  Please contact the developers'});
+                    }
 
-             });
+                });
 
 
+            }
+        };
 
-
+        function getFullConstructor() {
+            return ["$scope", "$window", "$http", "$state", runsCreationController];
         }
-    };
 
-    function getFullConstructor() {
-        return ["$scope", "$window", "$http", "$state", runsCreationController];
-    }
+        // For testing so we can mock the injected variables
+        function getMinimalConstructor() {
+            return runsCreationController;
+        }
 
-    // For testing so we can mock the injected variables
-    function getMinimalConstructor() {
-        return runsCreationController;
-    }
+        return {
+            getFullConstructor: getFullConstructor,
+            getName: getMinimalConstructor
+        };
 
-    return {
-        getFullConstructor : getFullConstructor,
-        getName : getMinimalConstructor
-    };
-
-});
+    });
