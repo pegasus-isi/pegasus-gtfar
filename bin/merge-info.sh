@@ -8,7 +8,7 @@ if [ $# -lt 2 ]; then
     exit 1
 fi
 
-REGEX=${@:0:$#}
+REGEX=${@:1:$#}
 OUTPUT=${!#}
 
 if [ -z "${REGEX}" ]; then
