@@ -138,11 +138,11 @@ define(["moment"],
                 selectWithCheckboxOnly: true,
                 showFilter: true,
                 columnDefs: [
-                    {field: "name", displayName: "Name", cellTemplate: "<a class='gridCenter' ui-sref='runDetails({name : row.getProperty(\"name\")})'><div class='ngCellText'>{{row.getProperty(col.field)}}</div></a>" },
+                    {field: "name", displayName: "Name", cellTemplate: "<a class='gridCenter' title='{{row.getProperty(col.field)}}' ui-sref='runDetails({name : row.getProperty(\"name\")})'><div class='ngCellText'>{{row.getProperty(col.field)}}</div></a>" },
                     {field: "status", displayName: "Status", width: 60, cellTemplate: "<i class='ngCellText' ng-class='getExitCodeIcon(row.getProperty(col.field))'></i>" },
                     {field: "readLength", displayName: "Read Length", width: '10%', cellTemplate: "<div class='ngCellText'>{{row.getProperty(col.field)}}</div>" },
                     {field: "mismatches", displayName: "Mismatches", width: '10%', cellTemplate: "<div class='ngCellText'>{{row.getProperty(col.field)}}</div>" },
-                    {field: "filename", displayName: "File", cellTemplate: "<i class='fa fa-file-text-o'></i> <a ng-href='{{getDownloadLink(row.getProperty(\"name\"), row.getProperty(col.field))}}'>{{row.getProperty(col.field)}}</a>" },
+                    {field: "filename", displayName: "File", cellTemplate: "<a class='gridCenter' ng-href='{{getDownloadLink(row.getProperty(\"name\"), row.getProperty(col.field))}}' title='{{row.getProperty(col.field)}}'><div class='ngCellText'><i class='fa fa-file-text-o'></i> {{ row.getProperty(col.field) }}</div></a>" },
                     {field: "created", displayName: "Started On", width: '30%', cellTemplate: "<div class='ngCellText'>{{getFormattedDate(row.getProperty(col.field))}}</div>" }
                 ],
                 sortInfo: {fields: ['created'], directions: ['desc']},
