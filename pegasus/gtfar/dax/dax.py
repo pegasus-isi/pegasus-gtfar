@@ -536,6 +536,8 @@ class AnalyzeMixin(object):
     def analyze(self):
         self._analyze()
 
+        self._bar_plot()
+
     def _analyze(self):
         analyze = Job(name='analyze_samfile')
         analyze.invoke('all', self._state_update % 'Analyzing SAM file')
@@ -560,6 +562,25 @@ class AnalyzeMixin(object):
         analyze.uses(summary_out, link=Link.OUTPUT, transfer=True, register=False)
 
         self.adag.addJob(analyze)
+
+    def _bar_plot(self):
+        bar_plot = Job(name='bar_plot')
+        bar_plot.invoke('all', self._state_update % 'Plot summary out file')
+
+        # Input files
+        summary_file = File('%s.summary.out' % self._prefix)
+
+        # Output files
+        pdf_file = File('%s.ps' % self._prefix)
+
+        # Arguments
+        bar_plot.addArguments('--output-file', pdf_file, summary_file)
+
+        # Uses
+        bar_plot.uses(summary_file, link=Link.INPUT)
+        bar_plot.uses(pdf_file, link=Link.OUTPUT, transfer=True, register=False)
+
+        self.adag.addJob(bar_plot)
 
 
 class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, ClipParseMixin, AnalyzeMixin):

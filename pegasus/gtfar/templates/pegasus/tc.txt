@@ -158,6 +158,22 @@ tr analyze_samfile {
     }
 }
 
+tr bar_plot {
+    site local {
+        pfn "{{ bin_dir }}/gtfar_bar_plot.py"
+        arch "x86_64"
+        os "{{ os | lower }}"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/gtfar_bar_plot.py"
+        arch "x86_64"
+        os "{{ os | lower }}"
+        type "INSTALLED"
+    }
+}
+
 tr merge {
     site local {
         pfn "/bin/cat"
