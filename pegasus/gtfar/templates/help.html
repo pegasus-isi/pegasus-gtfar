@@ -1,369 +1,452 @@
 {% extends 'base.html' %}
 {% block js %}
-    <script>
-        $(function () {
-            $('body').scrollspy({ target: '.bs-docs-sidebar' });
-        });
-    </script>
+<script>
+    $(function () {
+        $('body').scrollspy({ target: '.bs-docs-sidebar' });
+    });
+</script>
 {% endblock %}
 {% block content %}
-    <div class="row">
-    <div class="col-xs-12 col-sm-4 col-md-3">
-        <div class="bs-docs-sidebar hidden-print hidden-xs hidden-sm" role="complementary">
-            <ul class="nav bs-docs-sidenav" data-spy="affix" data-offset-top="10">
-                <li class="active"><a href="#important">Important Information</a>
-                    <ul class="nav">
-                        <li><a href="#browsers">Supported Browsers</a></li>
-                        <li><a href="#github">Source Code</a></li>
-                    </ul>
-                </li>
-                <li><a href="#webInterface">Pegasus GT-FAR Dashboard</a>
-                    <ul class="nav">
-                        <li><a href="#viewRuns">List Previous Runs</a>
-                            <ul class="nav">
-                                <li><a href="#sorting">Sorting Runs</a></li>
-                                <li><a href="#searching">Searching</a></li>
-                                <li><a href="#grouping">Grouping</a></li>
-                                <li><a href="#deleting">Deleting</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="#newRun">Start New Run</a>
-                            <ul class="nav">
-                                <li><a href="#inputParameters">Input Parameters</a>
-                                    <ul class="nav">
-                                        <li><a href="#workflowName">Workflow Name</a></li>
-                                        <li><a href="#annotationGenome">Annotation File and Genome Version</a></li>
-                                        <li><a href="#reads">Reads File</a></li>
-                                        <li><a href="#redLenhth">Reads Length</a></li>
-                                        <li><a href="#mismatches">Mismatches</a></li>
-                                        <li><a href="#alignQC">Align QC Filtered Reads</a></li>
-                                        <li><a href="#gnsc">Generate New Splice Candidates</a></li>
-                                        <li><a href="#starndRule">Strand Rule</a></li>
-                                        <li><a href="#email">Email Address</a></li>
-                                    </ul>
-                                </li>
-
-                            </ul>
-                        </li>
-                        <li><a href="#workflowDetails">Workflow Details</a></li>
-                    </ul>
-                </li>
-                <li><a href="#contact">Contact Us</a></li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="col-xs-12 col-sm-12 col-md-9" role="main">
-    <div class="bs-docs-section">
-        <h1 id="important" class="page-header">Important Information</h1>
-
-        <h2 id="browsers">Supported Browsers</h2>
-
-        <p>
-            We support latest versions of the following browsers.
-
-        <ul>
-            <li>Google Chrome</li>
-            <li>Mozilla Firefox</li>
-            <li>Apple Safari</li>
-            <li>Internet Explorer</li>
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+    <div class="bs-docs-sidebar hidden-print hidden-xs hidden-sm" role="complementary">
+        <ul class="nav bs-docs-sidenav" data-spy="affix" data-offset-top="10">
+            <li class="active"><a href="#important">Important Information</a>
+                <ul class="nav">
+                    <li><a href="#browsers">Supported Browsers</a></li>
+                    <li><a href="#github">Source Code</a></li>
+                </ul>
+            </li>
+            <li><a href="#webInterface">Pegasus GT-FAR Dashboard</a>
+                <ul class="nav">
+                    <li><a href="#viewRuns">List Previous Runs</a>
+                        <ul class="nav">
+                            <li><a href="#sorting">Sorting Runs</a></li>
+                            <li><a href="#searching">Searching</a></li>
+                            <li><a href="#grouping">Grouping</a></li>
+                            <li><a href="#deleting">Deleting</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#newRun">Start New Run</a>
+                        <ul class="nav">
+                            <li><a href="#inputParameters">Input Parameters</a>
+                                <ul class="nav">
+                                    <li><a href="#workflowName">Workflow Name</a></li>
+                                    <li><a href="#annotationGenome">Annotation File and Genome Version</a></li>
+                                    <li><a href="#reads">Reads File</a></li>
+                                    <li><a href="#redLenhth">Reads Length</a></li>
+                                    <li><a href="#mismatches">Mismatches</a></li>
+                                    <li><a href="#alignQC">Align QC Filtered Reads</a></li>
+                                    <li><a href="#gnsc">Generate New Splice Candidates</a></li>
+                                    <li><a href="#strandRule">Strand Rule</a></li>
+                                    <li><a href="#email">Email Address</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><a href="#workflowDetails">Workflow Details</a>
+                        <ul class="nav">
+                            <li><a href="#monitoring">Monitoring the progress of a run</a></li>
+                            <li><a href="#stopping">Stopping a Run</a></li>
+                            <li><a href="#outputFiles">Output Files</a>
+                                <ul class="nav">
+                                    <li><a href="#adaptorStats">Adaptor Stats</a></li>
+                                    <li><a href="#rejects">Rejects FastQ</a></li>
+                                    <li><a href="#unmapped">Unmapped FastQ</a></li>
+                                    <li><a href="#multigene">Multi-Gene Counts</a></li>
+                                    <li><a href="#feature">Feature Counts</a></li>
+                                    <li><a href="#summary">Summary Out</a></li>
+                                    <li><a href="#gene">Genes Counts</a></li>
+                                    <li><a href="#splice">Splice Candidates</a></li>
+                                    <li><a href="#sam">SAM</a></li>
+                                    <li><a href="#ps">PS</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#errorReport">Error Report</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><a href="#contact">Contact Us</a></li>
         </ul>
-        </p>
-
-        <h2 id="github">Source Code</h2>
-
-        <p>Source code for the GT-FAR pipeline is hosted on <i class="fa fa-github fa-lg"> </i> GitHub at <a
-                href="https://github.com/pegasus-isi/pegasus-gtfar">https://github.com/pegasus-isi/pegasus-gtfar</a>
-        </p>
     </div>
-    <div class="bs-docs-section">
-    <h1 id="webInterface" class="page-header">Pegasus GT-FAR Dashboard</h1>
+</div>
 
-    <p>The web interface provides an organized way for you to create and monitor runs for your workflows.</p>
+<div class="col-xs-12 col-sm-12 col-md-9" role="main">
 
-    <h2 id="viewRuns">List Previous Runs</h2>
+<div class="bs-docs-section">
+    <h1 id="important" class="page-header">Important Information</h1>
 
-    <p>You can view a list of previous runs from the listings page. To navigate to the listings page click on "List
-        Previous Runs" from the GT-FAR drop-down menu at the top.</p>
-
-    <p>
-        <img class="img-responsive" style="margin: 0 auto;"
-             src="{{ url_for ('static', filename='images/help/list-button-menu-bar.jpg') }}">
-        <span class="help-block text-center">The list button in the menu bar</span>
-    </p>
-
-    <p>List previous runs page provides a summary of previous Pegasus GT-FAR runs. The page also shows some input
-        parameters for the run, and current status of the workflow, and the start date of the run.
-
-        <img class="img-responsive" style="margin: 0 auto;"
-             src="{{ url_for ('static', filename='images/help/list-page.jpg') }}">
-        <span class="help-block text-center">List Previous Runs</span>
-
-        Clicking the
-        <button class="btn btn-primary">
-            <i class="fa fa-refresh"> </i> Refresh
-        </button>
-        button will get update all the information on the page.
-    </p>
-
-    <h3 id="sorting">Sorting Runs</h3>
-
-    <p>Simply click on any of the column header once or twice to sort in ascending or
-        descending order respectively.
-    </p>
-
-    <h3 id="searching">Searching</h3>
-
-    <p>Click on the down-arrow icon at the top-right of the table and enter you search term
-        in the text field.
-        <img class="img-responsive" style="margin: 0 auto;"
-             src="{{ url_for ('static', filename='images/help/list-page-search-test.jpg') }}">
-        <span class="help-block text-center">Searching for runs the contain the word "test"</span></p>
-
-    <h3 id="grouping">Grouping</h3>
-
-    <p>Users can group their runs on one or more columns. So a user can group runs according to the read length, and
-        mismatches.
-
-        To group runs simply drag and drop a column in the area that "Drag a column header here and drop it to group by
-        that column".</p>
-
-    <h3 id="deleting">Deleting Runs</h3>
-
-    <p>Select a run by clicking the checkbox located t the left of the row. To delete all
-        runs click on the checkbox to left of the "Name" column.
-        Click the "Delete Selected" button, and click "OK" to confirm.
-        Deleting a run results in deletion of all results associated with the run, and cannot be undone.
-        <img class="img-responsive" style="margin: 0 auto;"
-             src="{{ url_for ('static', filename='images/help/list-page-delete.jpg') }}">
-        <span class="help-block text-center">Listing with multiple rows checked and the "Delete Selected" button visible</span>
-    </p>
-
-    <h2 id="newRun">Start New Run</h2>
+    <h2 id="browsers">Supported Browsers</h2>
 
     <p>
-        To navigate to the Start New Run page, Click the "Start New Run" from the GT-FAR drop-down menu at the top.
+        We support latest versions of the following browsers.
+
+    <ul>
+        <li>Google Chrome</li>
+        <li>Mozilla Firefox</li>
+        <li>Apple Safari</li>
+        <li>Internet Explorer</li>
+    </ul>
     </p>
 
-    <p><img class="img-responsive" style="margin: 0 auto;"
-            src="{{ url_for ('static', filename='images/help/menu-bar-start-button.jpg') }}">
-        <span class="help-block text-center">Start New Run</span>
+    <h2 id="github">Source Code</h2>
+
+    <p>Source code for the GT-FAR pipeline is hosted on <i class="fa fa-github fa-lg"> </i> GitHub at <a
+            href="https://github.com/pegasus-isi/pegasus-gtfar">https://github.com/pegasus-isi/pegasus-gtfar</a>
     </p>
+</div>
 
-    <p>
-        Input the parameters for the GT-FAR run in the web form.
-    </p>
+<div class="bs-docs-section">
+<h1 id="webInterface" class="page-header">Pegasus GT-FAR Dashboard</h1>
 
-    <p>
-        <img class="img-responsive" style="margin: 0 auto;"
-             src="{{ url_for ('static', filename='images/help/start-run-page.jpg') }}">
-        <span class="help-block text-center">Web form to start a new Pegasus GT-FAR run</span>
-    </p>
+<p>The web interface provides an organized way for you to create and monitor runs for your workflows.</p>
 
-    <h3 id="inputParameters">Input Parameters</h3>
+<h2 id="viewRuns">List Previous Runs</h2>
 
-    <h4 id="workflowName">Workflow Name</h4>
+<p>You can view a list of previous runs from the listings page. To navigate to the listings page click on "List
+    Previous Runs" from the GT-FAR drop-down menu at the top.</p>
 
-    <p>
-        The workflow name is a label that a user uses to uniquely identify a run. Workflow Name is also used a prefix
-        for naming the the output files.
-    </p>
+<p>
+    <img class="img-responsive" style="margin: 0 auto;"
+         src="{{ url_for ('static', filename='images/help/list-button-menu-bar.jpg') }}">
+    <span class="help-block text-center">The list button in the menu bar</span>
+</p>
 
-    <p>
-        Workflow name is a required field and only accepts alphanumeric characters and underscores.
-    </p>
+<p>List previous runs page provides a summary of previous Pegasus GT-FAR runs. The page also shows some input
+    parameters for the run, and current status of the workflow, and the start date of the run.
 
-    <h4 id="annotationGenome">Annotation File and Genome Version</h4>
+    <img class="img-responsive" style="margin: 0 auto;"
+         src="{{ url_for ('static', filename='images/help/list-page.jpg') }}">
+    <span class="help-block text-center">List Previous Runs</span>
 
-    <p>
-        Currently the annotation file and genome version are provided for you. You will not be allowed to edit these
-        fields, but we want to have them displayed for you so you are aware of their values.
-    </p>
+    Clicking the
+    <button class="btn btn-primary">
+        <i class="fa fa-refresh"> </i> Refresh
+    </button>
+    button will get update all the information on the page.
+</p>
 
-    <h4 id="reads">Reads File</h4>
+<h3 id="sorting">Sorting Runs</h3>
 
-    <p>
-        The reads file is a required field. </p>
+<p>Simply click on any of the column header once or twice to sort in ascending or
+    descending order respectively.
+</p>
 
-    <p>It must be a FastQ file compressed using GZIP. It must have an extension of ".fq.gz" or ".fastq.gz".
-        Currently, the system only allows reads files which are smaller than 5 GB.
-    </p>
+<h3 id="searching">Searching</h3>
 
-    <h4 id="readLength">Read Length</h4>
+<p>Click on the down-arrow icon at the top-right of the table and enter you search term
+    in the text field.
+    <img class="img-responsive" style="margin: 0 auto;"
+         src="{{ url_for ('static', filename='images/help/list-page-search-test.jpg') }}">
+    <span class="help-block text-center">Searching for runs the contain the word "test"</span></p>
 
-    <p>
-        Read length field specifies the length of the reads in the reads file.
-    </p>
+<h3 id="grouping">Grouping</h3>
 
-    <p>
-        Read length must be between 50 and 128 (inclusive).
-    </p>
+<p>Users can group their runs on one or more columns. So a user can group runs according to the read length, and
+    mismatches.
 
-    <h4 id="mismatches">Mismatches</h4>
+    To group runs simply drag and drop a column in the area that "Drag a column header here and drop it to group by
+    that column".</p>
 
-    <p>
-        Mismatches field specifies the number of mismatches to allow when mapping reads
-    </p>
+<h3 id="deleting">Deleting Runs</h3>
 
-    <p>
-        Mismatches must be between 0 and 8 (inclusive).
-    </p>
+<p>Select a run by clicking the checkbox located t the left of the row. To delete all
+    runs click on the checkbox to left of the "Name" column.
+    Click the "Delete Selected" button, and click "OK" to confirm.
+    Deleting a run results in deletion of all results associated with the run, and cannot be undone.
+    <img class="img-responsive" style="margin: 0 auto;"
+         src="{{ url_for ('static', filename='images/help/list-page-delete.jpg') }}">
+    <span class="help-block text-center">Listing with multiple rows checked and the "Delete Selected" button visible</span>
+</p>
 
-    <h4 id="alignQC">Align QC Filtered Reads</h4>
+<h2 id="newRun">Start New Run</h2>
 
-    <p>
-        Select Align QC Filtered Reads option to align filtered reads in addition to full length reads.
-    </p>
+<p>
+    To navigate to the Start New Run page, Click the "Start New Run" from the GT-FAR drop-down menu at the top.
+</p>
 
-    <h4 id="gnsc">Generate New Splice Candidates</h4>
+<p><img class="img-responsive" style="margin: 0 auto;"
+        src="{{ url_for ('static', filename='images/help/menu-bar-start-button.jpg') }}">
+    <span class="help-block text-center">Start New Run</span>
+</p>
 
-    <p>
-        Select Generate New Splice Candidates option, if you would like to generate a GTF file with a list of Novel
-        Splice Candidates. It uses gapped alignment protocol to discover and confirm novel splice junctions.
-    </p>
+<p>
+    Input the parameters for the GT-FAR run in the web form.
+</p>
 
-    <blockquote>
-        Generate New Splice Candidates can only be selected when the Read Length is 75 or above.
-    </blockquote>
+<p>
+    <img class="img-responsive" style="margin: 0 auto;"
+         src="{{ url_for ('static', filename='images/help/start-run-page.jpg') }}">
+    <span class="help-block text-center">Web form to start a new Pegasus GT-FAR run</span>
+</p>
 
-    <h4 id="strandRule">Strand Rule</h4>
+<h3 id="inputParameters">Input Parameters</h3>
 
-    <p>If a stranded sequencing protocol was used, select the expected read/gene orientation (Sense/Anti-Sense) else
-        select Unstranded.
-        By default, the strand rule is set to "Unstranded".
-    </p>
+<h4 id="workflowName">Workflow Name</h4>
 
-    <h4 id="email">Email Address</h4>
+<p>
+    The workflow name is a label that a user uses to uniquely identify a run. Workflow Name is also used a prefix
+    for naming the the output files.
+</p>
 
-    <p>
-        Provide one or more Email Addresses separated by a comma. An Email notification is sent out to the recipients
-        when the workflow finishes running.
-    </p>
-    <blockquote>Email notifications may end up in Spam folder.</blockquote>
+<p>
+    Workflow name is a required field and only accepts alphanumeric characters and underscores.
+</p>
+
+<h4 id="annotationGenome">Annotation File and Genome Version</h4>
+
+<p>
+    Currently the annotation file and genome version are provided for you. You will not be allowed to edit these
+    fields, but we want to have them displayed for you so you are aware of their values.
+</p>
+
+<h4 id="reads">Reads File</h4>
+
+<p>
+    The reads file is a required field. </p>
+
+<p>It must be a FastQ file compressed using GZIP. It must have an extension of ".fq.gz" or ".fastq.gz".
+    Currently, the system only allows reads files which are smaller than 5 GB.
+</p>
+
+<h4 id="readLength">Read Length</h4>
+
+<p>
+    Read length field specifies the length of the reads in the reads file.
+</p>
+
+<p>
+    Read length must be between 50 and 128 (inclusive).
+</p>
+
+<h4 id="mismatches">Mismatches</h4>
+
+<p>
+    Mismatches field specifies the number of mismatches to allow when mapping reads
+</p>
+
+<p>
+    Mismatches must be between 0 and 8 (inclusive).
+</p>
+
+<h4 id="alignQC">Align QC Filtered Reads</h4>
+
+<p>
+    Select Align QC Filtered Reads option to align filtered reads in addition to full length reads.
+</p>
+
+<h4 id="gnsc">Generate New Splice Candidates</h4>
+
+<p>
+    Select Generate New Splice Candidates option, if you would like to generate a GTF file with a list of Novel
+    Splice Candidates. It uses gapped alignment protocol to discover and confirm novel splice junctions.
+</p>
+
+<blockquote>
+    Generate New Splice Candidates can only be selected when the Read Length is 75 or above.
+</blockquote>
+
+<h4 id="strandRule">Strand Rule</h4>
+
+<p>If a stranded sequencing protocol was used, select the expected read/gene orientation (Sense/Anti-Sense) else
+    select Unstranded.
+    By default, the strand rule is set to "Unstranded".
+</p>
+
+<h4 id="email">Email Address</h4>
+
+<p>
+    Provide one or more Email Addresses separated by a comma. An Email notification is sent out to the recipients
+    when the workflow finishes running.
+</p>
+<blockquote>Email notifications may end up in Spam folder.</blockquote>
 
 
-    <p>Click the
-        <button class="btn btn-primary">Submit <i class="fa fa-long-arrow-right"> </i></button>
-        button at the bottom of the form to initiate the run. Once the Pegasus GT-FAR workflow has
-        started the user will be automatically be redirected to the workflow details page, where users can view the
-        progress of their run.
-    </p>
+<p>Click the
+    <button class="btn btn-primary">Submit <i class="fa fa-long-arrow-right"> </i></button>
+    button at the bottom of the form to initiate the run. Once the Pegasus GT-FAR workflow has
+    started the user will be automatically be redirected to the workflow details page, where users can view the
+    progress of their run.
+</p>
 
 
-    <h3 id="workflowDetails">Workflow Details</h3>
+<h3 id="workflowDetails">Workflow Details</h3>
 
-    <p>Users can navigate to the details page for a workflow, by clicking on the Workflow Name in the List Previous Runs
-        Page.
-    </p>
+<p>Users can navigate to the details page for a workflow, by clicking on the Workflow Name in the List Previous Runs
+    Page.
+</p>
 
-    <p>From the Workflow Details page users can -
+<p>From the Workflow Details page users can -
+<ol>
+    <li>Monitor the progress of the run.</li>
+    <li>View/Download output files.</li>
+    <li>View/Download an error report if any failures were detected.</li>
+    <li>Stop a workflow run (stopped runs cannot be restarted).</li>
+</ol>
+</p>
+
+<h4 id="monitoring">Monitoring the progress of a run</h4>
+
+<p>The workflow details page lists the input parameters with which the run was initiated. Users will see a progress
+    bar while the workflow is running.
+</p>
+
+<p>A color coded workflow status is visible next to the workflow name, and in the alerts bar just above the Output
+    Files tab.
+</p>
+
+<p>
+    <span class="label label-info">Running</span> Indicates the workflow is running, and no failures were detected.
+</p>
+
+<p>
+    <span class="label label-warning">Failing</span> Indicates the workflow is running, and one or more failures
+    have been detected.
+</p>
+
+<p>
+    <span class="label label-warning">Aborted</span> Indicates the workflow was manually aborted by the user.
+</p>
+
+<p>
+    <span class="label label-success">Success</span> Indicates the workflow has finished successfully, without any
+    failures.
+</p>
+
+<p>
+    <span class="label label-danger">Failed</span> Indicates a workflow has finished running, with one or more
+    failures.
+</p>
+
+<p>
+    <img class="img-responsive" style="margin: 0 auto;"
+         src="{{ url_for ('static', filename='images/help/details-page-running.jpg') }}">
+    <span class="help-block text-center">Monitoring the progress of the run.</span>
+</p>
+
+
+<h4 id="stopping">Stopping a Run</h4>
+
+<p>Users can stop/abort a workflow by clicking the
+    <button class="btn btn-danger btn-sm">Stop</button>
+    button located to the right on the progress bar.
+</p>
+
+<h4 id="outputFiles">Output Files</h4>
+
+<p>
+    Output files are listed and available for download immediately in the Output Files tab, as soon as they
+    generated by the workflow run.
+</p>
+
+<p><img class="img-responsive" style="margin: 0 auto;"
+        src="{{ url_for ('static', filename='images/help/details-page-aborted.jpg') }}">
+    <span class="help-block text-center">Stopped Run / Output Files</span>
+</p>
+
+<h5 id="adaptorStats">Adaptor Stats File</h5>
+
+<p>
+    A file summarizing the reads which pass/failed/trimmed the adaptor QC
+</p>
+
+<h5 id="rejects">Rejects FastQ</h5>
+
+<p>
+    Reads rejected by the read QC portion of the pipeline.
+</p>
+
+<h5 id="unmapped">Unmapped FastQ</h5>
+
+<p>
+    Unmapped reads which can be sorted and counted to compare samples by sequence.
+</p>
+
+<h5 id="multigene">Multi-gene Counts</h5>
+
+<p>
+    A file for the counts of reads which mapped to genes which share a genomic location
+</p>
+
+<h5 id="feature">Feature Counts</h5>
+
+<p>
+    Counts for each genomic feature in the transcriptome (eg. Exon, Exon-jxn, intron, etc).
+</p>
+
+<h5 id="summary">Summary Out</h5>
+
+<p>
+    A summary of the alignment by chromosome, annotation family, and transcriptomic feature.
+</p>
+
+<h5 id="genes">Genes Counts</h5>
+
+<p>
+    Raw counts for each gene in transcritome
+</p>
+
+<h5 id="splice">Splice Candidates</h5>
+
+<p>
+    A gtf file which can be used to re-annotate the genome and confirm novel splice candidates
+</p>
+
+<h5 id="sam">SAM File</h5>
+
+<p>
+    Merged sam file of all alignment steps in GTFAR.
+</p>
+
+<h5 id="ps">PS</h5>
+
+<p>
+    A figure summarizing (made from *) the alignment by transcriptomic feature and annotation family.
+</p>
+
+<h4 id="errorReport">Error Report</h4>
+
+<p>Users are be able to view an error report, if any failures were detected while running the workflow.
+</p>
+
+<p>The error report shows an overall summary and a summary for all failed jobs in the workflow. The example below
+    illustrates a scenario where an invalid reads files caused the failure.</p>
+
+<p>If the users feel that the error is invalid, users should download the error report but clicking the
+    <button class="btn btn-danger"><i class="fa fa-download"> </i> Download Log</button>
+    button and Email it to <a href="mailto:gtfar-devel@isi.edu"><i class="fa fa-envelope-o"> </i>
+        gtfar-devel@isi.edu</a>.
+</p>
+
+<p>
+    <img class="img-responsive" style="margin: 0 auto;"
+         src="{{ url_for ('static', filename='images/help/details-page-error-report.jpg') }}">
+    <span class="help-block text-center">Error Report</span>
+</p>
+</div>
+
+<div class="bs-docs-section">
+    <h1 id="contact" class="page-header">Contact Us</h1>
+
+    <p> Please contact us at <a href="mailto:gtfar-devel@isi.edu"><i class="fa fa-envelope-o"> </i>
+        gtfar-devel@isi.edu</a>, for
     <ol>
-        <li>Monitor the progress of the run.</li>
-        <li>View/Download output files.</li>
-        <li>View/Download an error report if any failures were detected.</li>
-        <li>Stop a workflow run (stopped runs cannot be restarted).</li>
+        <li>Setup the <a href="pegasus.isi.edu">Pegasus</a> GT-FAR pipeline to run on you own
+            cluster.
+        </li>
+        <li> Ask questions or provide feedback.
+        </li>
+        <li> Report issues with the pipeline.</li>
     </ol>
     </p>
 
-    <h4>Monitoring the progress of a run</h4>
-
-    <p>The workflow details page lists the input parameters with which the run was initiated. Users will see a progress
-        bar while the workflow is running.
+    <p>Please contact us at <a href="mailto:pegasus-support@isi.edu"><i class="fa fa-envelope-o"> </i>
+        pegasus-support@isi.edu</a>, if you would like to integrate your pipeline with <a
+            href="pegasus.isi.edu">Pegasus.</a>
     </p>
+</div>
 
-    <p>A color coded workflow status is visible next to the workflow name, and in the alerts bar just above the Output
-        Files tab.
-    </p>
-
-    <p>
-        <span class="label label-info">Running</span> Indicates the workflow is running, and no failures were detected.
-    </p>
-
-    <p>
-        <span class="label label-warning">Failing</span> Indicates the workflow is running, and one or more failures
-        have been detected.
-    </p>
-
-    <p>
-        <span class="label label-warning">Aborted</span> Indicates the workflow was manually aborted by the user.
-    </p>
-
-    <p>
-        <span class="label label-success">Success</span> Indicates the workflow has finished successfully, without any
-        failures.
-    </p>
-
-    <p>
-        <span class="label label-danger">Failed</span> Indicates a workflow has finished running, with one or more
-        failures.
-    </p>
-
-    <p>
-        <img class="img-responsive" style="margin: 0 auto;"
-             src="{{ url_for ('static', filename='images/help/details-page-running.jpg') }}">
-        <span class="help-block text-center">Monitoring the progress of the run.</span>
-    </p>
-
-
-    <h4>Stopping a Run</h4>
-
-    <p>Users can stop/abort a workflow by clicking the
-        <button class="btn btn-danger btn-sm">Stop</button>
-        button located to the right on the progress bar.
-    </p>
-
-    <h4>Output Files</h4>
-
-    <p>
-        Output files are listed and available for download immediately in the Output Files tab, as soon as they
-        generated by the workflow run.
-    </p>
-
-    <p><img class="img-responsive" style="margin: 0 auto;"
-            src="{{ url_for ('static', filename='images/help/details-page-aborted.jpg') }}">
-        <span class="help-block text-center">Stopped Run / Output Files</span>
-    </p>
-
-    <h4>Error Report</h4>
-
-    <p>Users are be able to view an error report, if any failures were detected while running the workflow.
-    </p>
-
-    <p>The error report shows an overall summary and a summary for all failed jobs in the workflow. The example below
-        illustrates a scenario where an invalid reads files caused the failure.</p>
-
-    <p>If the users feel that the error is invalid, users should download the error report but clicking the
-        <button class="btn btn-danger"><i class="fa fa-download"> </i> Download Log</button>
-        button and Email it to <a href="mailto:gtfar-devel@isi.edu"><i class="fa fa-envelope-o"> </i>
-            gtfar-devel@isi.edu</a>.
-    </p>
-
-    <p>
-        <img class="img-responsive" style="margin: 0 auto;"
-             src="{{ url_for ('static', filename='images/help/details-page-error-report.jpg') }}">
-        <span class="help-block text-center">Error Report</span>
-    </p>
-    </div>
-    <div class="bs-docs-section">
-        <h1 id="contact" class="page-header">Contact Us</h1>
-
-        <p> Please contact us at <a href="mailto:gtfar-devel@isi.edu"><i class="fa fa-envelope-o"> </i>
-            gtfar-devel@isi.edu</a>, for
-        <ol>
-            <li>Setup the <a href="pegasus.isi.edu">Pegasus</a> GT-FAR pipeline to run on you own
-                cluster.
-            </li>
-            <li> Ask questions or provide feedback.
-            </li>
-            <li> Report issues with the pipeline.</li>
-        </ol>
-        </p>
-
-        <p>Please contact us at <a href="mailto:pegasus-support@isi.edu"><i class="fa fa-envelope-o"> </i>
-            pegasus-support@isi.edu</a>, if you would like to integrate your pipeline with <a
-                href="pegasus.isi.edu">Pegasus.</a>
-        </p>
-    </div>
-    </div>
-    </div>
+</div>
+</div>
 {% endblock content %}
