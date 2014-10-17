@@ -3,6 +3,8 @@
 import os
 import sys
 
+import argparse
+
 import pylab as pl
 
 import matplotlib.pyplot as plt
@@ -10,7 +12,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict as dd
 
 
-def load_bar_data(infofile, obs):
+def load_bar_data(infofile):
     INIT = True
     k = 0
     vals = []
@@ -50,7 +52,7 @@ def load_bar_data(infofile, obs):
     return FEATURE_DICT, FAMILY_DICT
 
 
-def make_adjacent_bars(feats, fams):
+def make_adjacent_bars(feats, fams, output_file):
     default_colors = ['blue', 'Crimson', 'black', 'cyan', 'magenta', 'green']
     more_colors = ['Pink', 'Bisque', 'Brown', 'CadetBlue', 'Chartreuse', 'Chocolate', 'DarkGray', 'DarkKhaki']
     even_more_colors = ['DarkOrange', 'DarkSalmon', 'DarkSlateGray', 'DeepPink', 'DarkTurquoise', 'ForestGreen',
@@ -96,26 +98,35 @@ def make_adjacent_bars(feats, fams):
     ax1.set_title("Alignment Function Summary")
 
     #pl.show()
-    pl.savefig("gtfar_output.ps")
+    pl.savefig(output_file)
 
 
-obs = ''
-myname = 'foo'
-if not os.isatty(0):
-    import tempfile
+def main():
+    parser = argparse.ArgumentParser(description='GTFAR status update utility')
 
-    FILE = tempfile.TemporaryFile()
-    for line in sys.stdin:
-        FILE.write(line)
-    FILE.seek(0)
-    if len(sys.argv) > 1: obs = sys.argv[1]
-    if len(sys.argv) > 2: myname = sys.argv[2]
-else:
-    FILE = open(sys.argv[1])
-    if len(sys.argv) > 2: obs = sys.argv[2]
-    if len(sys.argv) > 3: myname = sys.argv[3]
+    parser.add_argument('-o', '--output-file', required=True, help='Output file name')
+    parser.add_argument('input_file', help='Input file name')
 
-feature_dict, family_dict = load_bar_data(FILE, obs)
+    args = parser.parse_args(sys.argv[1:])
 
-make_adjacent_bars(feature_dict, family_dict)
+    output_file = args.output_file
 
+    obs = ''
+    myname = 'foo'
+    if not os.isatty(0):
+        import tempfile
+
+        FILE = tempfile.TemporaryFile()
+        for line in sys.stdin:
+            FILE.write(line)
+        FILE.seek(0)
+    else:
+        FILE = open(args.input_file)
+
+    feature_dict, family_dict = load_bar_data(FILE)
+
+    make_adjacent_bars(feature_dict, family_dict, output_file)
+
+
+if __name__ == '__main__':
+    main()
