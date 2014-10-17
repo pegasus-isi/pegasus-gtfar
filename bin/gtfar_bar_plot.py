@@ -111,20 +111,8 @@ def main():
 
     output_file = args.output_file
 
-    obs = ''
-    myname = 'foo'
-    if not os.isatty(0):
-        import tempfile
-
-        FILE = tempfile.TemporaryFile()
-        for line in sys.stdin:
-            FILE.write(line)
-        FILE.seek(0)
-    else:
-        FILE = open(args.input_file)
-
+    FILE = open(args.input_file)
     feature_dict, family_dict = load_bar_data(FILE)
-
     make_adjacent_bars(feature_dict, family_dict, output_file)
 
 
