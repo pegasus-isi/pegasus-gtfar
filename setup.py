@@ -80,8 +80,7 @@ setup(
         'Jinja2==2.7.3',
         'SQLAlchemy==0.9.6',
         'MySQL-python==1.2.5',
-        'biopython==1.64',
-        'matplotlib==1.4.0'
+        'biopython==1.64'
     ],
     test_suite='pegasus.tests'
 )
