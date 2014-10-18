@@ -62,17 +62,21 @@ define(["moment"],
                         getErrorReport();
                     }
                 }).error(function (data, status) {
+                    console.log("Status: " + status +  "Data: " + data);
 
                     if (status == 404) {
                         $scope.alerts.push({
                             'message': '404: Page Not Found. Please ensure that the URL is valid.',
                             'type': 'danger'
                         });
-
-                        return;
+                    } else {
+                        $scope.alerts.push({
+                            'type': 'danger',
+                            'message': 'Unknown error occurred while getting run details. Please contact the developers'
+                        });
                     }
 
-                    console.log("Status: " + status +  "Data: " + data);
+                    return;
                 });
             }
 
