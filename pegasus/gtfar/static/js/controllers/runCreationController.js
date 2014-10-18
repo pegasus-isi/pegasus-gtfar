@@ -72,10 +72,13 @@ define(["angular"],
                 }
 
                 if (inputFile.files[0].size > FIVE_GIGABYTES) {
-                    $scope.alerts.push({
-                        "type": "danger",
-                        "message": "That file is too large, please select one smaller than five gigabytes"
+                    $scope.$apply(function () {
+                        $scope.alerts.push({
+                            "type": "danger",
+                            "message": "That file is too large, please select one smaller than five gigabytes"
+                        });
                     });
+
                     return;
                 }
 
