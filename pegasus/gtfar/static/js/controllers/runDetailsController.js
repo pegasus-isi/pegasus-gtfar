@@ -61,8 +61,18 @@ define(["moment"],
                         getOutputFiles();
                         getErrorReport();
                     }
-                }).error(function (data) {
-                    console.error(data);
+                }).error(function (data, status) {
+
+                    if (status == 404) {
+                        $scope.alerts.push({
+                            'message': '404: Page Not Found. Please ensure that the URL is valid.',
+                            'type': 'danger'
+                        });
+
+                        return;
+                    }
+
+                    console.log("Status: " + status +  "Data: " + data);
                 });
             }
 
