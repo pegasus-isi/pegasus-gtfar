@@ -37,9 +37,13 @@
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input type="text" class="form-control" id="inputGTF" placeholder="" ng-model="run.gtf"
-                               name="gtf"
-                               readonly>
-                        <span class="help-block">Annotation File in GTF format</span>
+                               name="gtf" readonly>
+                        <span class="help-block">
+                            Annotation File in GTF format.
+                            <a href="http://www.gencodegenes.org/releases/19.html" taget="_blank">
+                                <i class="fa fa-info-circle"> </i> More Information.
+                            </a>
+                        </span>
                     </div>
                 </div>
                 <div class="form-group">
@@ -50,7 +54,7 @@
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
                         <input type="text" class="form-control" id="inputGenome" placeholder="" ng-model="run.genome"
                                name="genome" readonly>
-                        <span class="help-block">Must match the species and annotation file</span>
+                        <span class="help-block">Must match the species and annotation file.</span>
                     </div>
                 </div>
                 <div class="form-group">
