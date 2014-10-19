@@ -61,7 +61,7 @@ def make_adjacent_bars(feats, fams, output_file):
                     'white']
     colors = default_colors + more_colors + even_more_colors + final_colors
     fig, (ax0, ax1) = plt.subplots(ncols=2, figsize=(8, 4))
-    fig.subplots_adjust(bottom=0.35)
+    fig.subplots_adjust(bottom=0.50)
     feat_tuples = []
     fam_tuples = []
     for f in feats:
