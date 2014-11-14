@@ -70,6 +70,7 @@ class MapReads:
                 self.getNextRead = self.getMappingFeatureRead
                 self.printData   = self.printFeatureData
             else:
+                #print self.rawLine
                 errorQuit("No Mapped Reads")
         
         elif self.format  == "sam":
@@ -226,7 +227,7 @@ class MapReads:
                     pair = m[4][i]
                     if m[1][0] >= pair[0] and m[1][1] <= pair[1]:
                         EDGE=True
-                        m[0][5]="EXON:COORDS="+"-".join([str(s) for s in pair])
+                        m[0][5]="EXONEDGE:COORDS="+"-".join([str(s) for s in pair])
                        # else:   m[0][5]="EXON:COORDS="+"-".join([str(s) for s in pair])
                         break
                 if not EDGE:

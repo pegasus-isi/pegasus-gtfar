@@ -85,22 +85,23 @@ class SamFile:
             self.totalUniq+=1
             if className.split(":")[0] in ["EXON","FILTER","KJXN","NJXN"]:
                 self.geneData[geneName+','+altName][idx]+=1
-            elif className.split(":")[0] in ["ITRN"]:
+            elif className.split(":")[0] in ["ITRN","IJXN"]:
                 self.intronData[geneName+','+altName][idx]+=1
-            self.featureData[geneName+','+altName+"@"+className][idx]+=1
+            #print className
+            if className.split(":")[0] in ["EXON","KJXN","NJXN","ITRN"]:
+                self.featureData[geneName+','+altName+"@"+className][idx]+=1
 
         #### FIX IT SO THE CLASS TYPE HAS THE GENE NAME WITH IT!!! ####
-
             self.classType[className.split(":")[0]][idx]+=1
             self.chrData[readLines[0][2]][idx]+=1
             self.familyData[geneFam][idx]+=1
         else:
             myGenes = set([x[15].split(SEP)[-1]+","+x[16].split(SEP)[-1] for x in readLines])
             myClasses = set([x[14].split(SEP)[-1] for x in readLines])
+            myGeneClasses = set([x[15].split(SEP)[-1]+","+x[16].split(SEP)[-1]+"@"+x[14].split(SEP)[-1] for x in readLines])
             myFams = set([x[17].split(SEP)[-1] for x in readLines])
             myLocs = set([x[2]+","+x[3] for x in readLines])
             myChrs = set([x[2] for x in readLines])
-
             if len(myGenes) == 1:
                 self.multiLoc+=1
                 if className.split(":")[0] in ["EXON","FILTER","KJXN","NJXN"]:
@@ -112,11 +113,13 @@ class SamFile:
                 
                 self.familyData[geneFam][idx]+=1
                 if len(myClasses) == 1:
-                    self.featureData[geneName+','+altName+"@"+className][idx]+=1
+                    if className.split(":")[0] in ["EXON","KJXN","NJXN","ITRN"]:
+                        self.featureData[geneName+','+altName+"@"+className][idx]+=1
                     self.classType[className.split(":")[0]][idx]+=1
                 else:
                     for c in myClasses:
-                        self.featureData[geneName+','+altName+"@"+c][idx+2]+=1.0/len(myClasses)
+                        if c.split(":")[0] in ["EXON","KJXN","NJXN","ITRN"]:
+                            self.featureData[geneName+','+altName+"@"+c][idx+2]+=1.0/len(myClasses)
                         self.classType[c.split(":")[0]][idx+2]+=1.0/len(myClasses)
             elif len(myLocs) == 1:
                 self.multiGene+=1
@@ -126,12 +129,15 @@ class SamFile:
                     self.geneData[multiGene][idx]+=1
                 self.chrData[readLines[0][2]][idx]+=1
                 if len(myClasses) == 1:
-                    self.featureData[geneName+','+altName+"@"+className][idx]+=1
+                    if className.split(":")[0] in ["EXON","KJXN","NJXN","ITRN"]:
+                        self.featureData[geneName+','+altName+"@"+className][idx]+=1
                     self.classType[className.split(":")[0]][idx]+=1
                 else:
                     for c in myClasses:
-                        self.featureData[geneName+','+altName+"@"+c][idx+2]+=1.0/len(myClasses)
                         self.classType[c.split(":")[0]][idx+2]+=1.0/len(myClasses)
+                    for g in myGeneClasses:
+                        if g.split(":")[0].split("@")[-1] in ["EXON","KJXN","NJXN","ITRN"]:
+                            self.featureData[g][idx+2]+=1.0/len(myGenes)
                 if len(myFams) == 1:
                     self.familyData[geneFam][idx]+=1
                 else:
@@ -147,25 +153,28 @@ class SamFile:
                 self.multiBoth+=1
                 for c in myChrs:
                     self.chrData[c][idx+2]+=1.0/len(myChrs)
+                for g in myGeneClasses:
+                    if g.split(":")[0].split("@")[-1] in ["EXON","KJXN","NJXN","ITRN"]:
+                        self.featureData[g][idx+2]+=1.0/len(myClasses)
                 for c in myClasses:
-                    self.featureData[geneName+','+altName+"@"+c][idx+2]+=1.0/len(myClasses)
+                    #self.featureData[geneName+','+altName+"@"+c][idx+2]+=1.0/len(myClasses)
                     self.classType[c.split(":")[0]][idx+2]+=1.0/len(myClasses)
                 for f in myFams:
                     self.familyData[f][idx+2]+=1.0/len(myFams)
                 for g in myGenes:
                     if className.split(":")[0] in ["EXON","FILTER","KJXN","NJXN"]:
                         self.geneData[g][idx+2]+=1.0/len(myGenes)
-          #              for j in myGenes:
-           #                 self.geneData[g][5].add(j)
                 tmpMultiGene = "/".join(sorted([g for g in myGenes]))
                 self.multiData[tmpMultiGene][0]+=1
+                
         self.name = self.nextName
 
 
 
     #self.writeTable = {self.readLen: open(self.prefix+'_full.fastq',"w"), 0: open(self.prefix+'_reject.fastq',"w") }
     def printResults(self):
-        geneOut = open(self.prefix+'.genes.cnts','w')
+        geneOut = open(self.prefix+'.gene.cnts','w')
+        multiGeneOut = open(self.prefix+'.overlapGene.cnts','w')
         for g in self.geneData:
             tmpData=self.geneData[g]
             #if len(tmpData[4]) ==0: multiAnnos = "None"
@@ -173,22 +182,23 @@ class SamFile:
             #if len(tmpData[5]) ==0: multiLocs = "None"
             #else:                   multiLocs = "/".join([s for s in tmpData[5]])
 
-            geneOut.write('%s %s %s %s %s\n' % (g,tmpData[0],tmpData[1],tmpData[2],tmpData[3]))
+            if len(g.split("/"))==1:
+                if tmpData[0]+tmpData[1]>0:
+                    geneOut.write('%s %s %s\n' % (g,tmpData[0],tmpData[1]))
+            else:
+                if tmpData[0]+tmpData[1]>0:
+                    multiGeneOut.write('%s %s %s\n' % (g,tmpData[0],tmpData[1]))
+
         geneOut.close()
-        intOut = open(self.prefix+'.introns.cnts','w')
-        for i in self.intronData:
-            tmpData=self.intronData[i]
-            intOut.write('%s %s %s %s %s\n' % (i,tmpData[0],tmpData[1],tmpData[2],tmpData[3]))
-        intOut.close()
+        multiGeneOut.close()
 
-
-
-        featOut = open(self.prefix+'.features.cnts','w')
+        featOut = open(self.prefix+'.feature.cnts','w')
         for c in self.featureData:
-            featOut.write('%s %s\n' % (c," ".join([str(s) for s in self.featureData[c]])))
+            featOut.write('%s %s %s\n' % (c,self.featureData[c][0],self.featureData[c][1])) 
+            #" ".join([str(s) for s in self.featureData[c]])))
         featOut.close()
         
-        multiOut = open(self.prefix+'.multiGenes.cnts','w')
+        multiOut = open(self.prefix+'.ambiguousGenes.cnts','w')
         
         for c in self.multiData:
             multiOut.write('%s %s\n' % (c," ".join([str(s) for s in self.multiData[c]])))

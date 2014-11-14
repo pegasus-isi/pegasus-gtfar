@@ -67,6 +67,7 @@ parseargs $@
 #--------------------------------------------------------------------------------------------------------------------------------------#
 
 
+
 function option_filter { 
     if [ $READS == "NONE" ]; then 
         printf "READS NEEDED FOR OPTION FILTER\n"; 
@@ -79,28 +80,15 @@ function option_filter {
 }
 
 function option_spliceMap  {
-    if [ $OUTDIR == "NONE" ]; then gtfar_fail "ERROR: A output dir  is required for splicemap"; else mkdir -p $OUTDIR; fi 
-    if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping - create one using gtfar annotate"; else source $CONFIG; fi
-    if [ $PREFIX == "NONE" ]; then gtfar_fail "ERROR: An output prefix is required for splicemap"; fi
-    source $DIR/gtfar_filter_scripts.sh
-	source $DIR/gtfar_map_scripts.sh
-    if [ $READS != "NONE" ]; then 
-        echo "WARNING: A read file was supplied on the command line - this
-        overrides the option to use unmapped reads in the supplied directory
-        (if they exist)"
-       # just_split_reads $OUTDIR $READS $PREFIX  
-        READS=filterDir/reads*.fastq
-    else 
-        echo "WARNING: No read file was supplied on the command line - program
-        will attempt to use unmapped reads found in supplied directory"
-        READS=mapDir_full/reads*unmapped.fastq
-    fi
-    cd $OUTDIR 
-    clip_and_parse_reads clipDir
-    cat clipDir/*.info > $PREFIX.splice_candidates.gtf 
-    cd ..
-}
 
+	source $DIR/gtfar_map_scripts.sh
+    if [ $CONFIG == "NONE" ]; then gtfar_fail "ERROR: A config file is required for mapping - create one using gtfar annotate"; else source $CONFIG; fi
+    READS=mapDir_full/reads*unmapped.fastq
+    cd $OUTDIR 
+    clip_and_parse_reads clipDir "$READS"
+    cd ..
+
+}
 
 
 function option_iterativeMap {
@@ -140,7 +128,7 @@ function option_annotate {
 
     start_command_section "Genome Annotation"
   
-    gtfar_command "annotate_gtf.py $myGTF -c $myGENOME -p refs/$PREFIX -l $LENGTH" foo.txt  
+    gtfar_command "annotate_gtf.py $myGTF -c $myGENOME -p refs/$PREFIX -l $LENGTH"  
    
     end_command_section "Genome Annotation" $?
 
@@ -268,7 +256,6 @@ elif [ $ARGUMENT == "map" ] || [ $ARGUMENT == "MAP" ]; then
     option_iterativeMap
     
 elif [ $ARGUMENT == "splicesearch" ]; then 
-    if [ $OUTDIR == "NONE" ]; then gtfar_fail "ERROR: A output dir  is required for splicemap"; else mkdir -p $OUTDIR; fi 
     option_spliceMap 
 
 elif [ $ARGUMENT == "annotate" ]; then

@@ -1,14 +1,11 @@
 #!/bin/bash
 
-set -e
-set -o pipefail
-
 if [ $# -lt 2 ]; then
     echo "Usage: `basename $0` <REGEX> <OUTPUT>"
     exit 1
 fi
 
-REGEX=${@:1:$#}
+REGEX=${@:0:$#}
 OUTPUT=${!#}
 
 if [ -z "${REGEX}" ]; then

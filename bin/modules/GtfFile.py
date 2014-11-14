@@ -12,15 +12,12 @@ from collections import defaultdict as dd
 ##################################################  GTF FILE - CLASS START  ##############################################################
 ##########################################################################################################################################
 
-
 class GtfFile:
     def __init__(self, fileHandle, prefix=None, readlen=None, filterType=None, findCands=True):
-        try:
-            self.fName = open(fileHandle)
-        except TypeError:
-            errorQuit("A GTF FILE IS NOT SUPPLIED")
+        try:    self.fName = open(fileHandle)
+        except TypeError:   errorQuit("A GTF FILE IS NOT SUPPLIED")
 
-        self.prefix, self.readLen, self.findCands = prefix, readlen, findCands
+        self.prefix, self.readLen,self.findCands = prefix, readlen, findCands
 
         self.genes, self.seq = [], []
         self.open = True
