@@ -37,7 +37,7 @@ from pegasus.gtfar.dax.dax import GTFAR
 from pegasus.gtfar.models import Run, Status, isValidFile
 
 from pegasus.workflow import wrapper
-from pegasus.workflow.wrapper import PegasusWorkflow, StopException
+from pegasus.workflow.wrapper import PegasusWorkflow
 
 #
 # Application Initialization
@@ -57,6 +57,7 @@ def before_first_request():
         #
         # Register GTF file with JDBCRC
         #
+
         for path, dir_name, files in os.walk(app.config['GTFAR_REF_GTF_DIR']):
 
             for file_name in files:
@@ -76,6 +77,7 @@ def before_first_request():
         #
         # Register Genome files with JDBCRC
         #
+
         for path, dir_name, files in os.walk(app.config['GTFAR_REF_GENOME_DIR']):
 
             for file_name in files:
