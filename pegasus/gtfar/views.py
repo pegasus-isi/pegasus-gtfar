@@ -264,7 +264,7 @@ def create_run_directories(result):
         os.mkdir(os.path.join(path, 'output'))
         os.mkdir(os.path.join(path, 'submit'))
         os.mkdir(os.path.join(path, 'scratch'))
-        shutil.move(os.path.join(app.config['UPLOAD_FOLDER'], str(result['uploadFolder']), str(result['filename'])),
+        shutil.move(os.path.join(app.config['UPLOAD_FOLDER'], str(result['uploadFolder']), str(secure_filename(result['filename']))),
                     os.path.join(path, 'input', str(result['filename']))) # There should always be one slash for the upload file name
 
     except OSError as exception:
