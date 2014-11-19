@@ -39,7 +39,7 @@ def find_package_data(dirname):
 
 setup(
     name='pegasus-gtfar',
-    version='1.0.1',
+    version='2.0',
     author='Pegasus Team',
     author_email='pegasus@isi.edu',
     description='ISI & Keck School collaboration to implement a Pegasus workflow with a GUI for the GTFAR workflow.',
