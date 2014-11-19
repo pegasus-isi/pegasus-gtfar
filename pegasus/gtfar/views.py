@@ -264,8 +264,8 @@ def create_run_directories(result):
         os.mkdir(os.path.join(path, 'output'))
         os.mkdir(os.path.join(path, 'submit'))
         os.mkdir(os.path.join(path, 'scratch'))
-        shutil.move(os.path.join(app.config['UPLOAD_FOLDER'], str(result['uploadFolder']), str(result['filename'])),
-                    os.path.join(path, 'input', str(result['filename']))) # There should always be one slash for the upload file name
+        shutil.move(os.path.join(app.config['UPLOAD_FOLDER'], str(result['uploadFolder']), str(secure_filename(result['filename']))),
+                    os.path.join(path, 'input', str(secure_filename(result['filename'])))) # There should always be one slash for the upload file name
 
     except OSError as exception:
         if exception.errno != errno.EEXIST:
@@ -300,14 +300,14 @@ def create_config(result):
 
 def generate_dax(result):
     path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['name']))
-    filesize = os.path.getsize(os.path.join(path, 'input', result['filename']))
+    filesize = os.path.getsize(os.path.join(path, 'input', secure_filename(result['filename'])))
 
     splits = max(1, int(math.floor(filesize / app.config['SPLIT_DIVISOR'])))
 
     gtfar = GTFAR(result['gtf'],
                   result['genome'],
                   result['name'],
-                  result['filename'],
+                  secure_filename(result['filename']),
                   base_dir=path,
                   bin_dir=app.config['GTFAR_BIN_DIR'],
                   read_length=result['readLength'],
@@ -468,7 +468,7 @@ def analyze(_id):
 @app.route('/api/runs/<string:name>/input/<string:file_name>')
 def download_input(name, file_name):
     path = os.path.join(app.config['GTFAR_STORAGE_DIR'], name, 'input')
-    return send_from_directory(path, file_name)
+    return send_from_directory(path, secure_filename(file_name))
 
 
 @app.route('/api/runs/<string:name>/output/<string:file_name>')
