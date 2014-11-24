@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
-import os
 import sys
 
 import argparse
+
+import matplotlib
+matplotlib.use('Agg')
 
 import pylab as pl
 
