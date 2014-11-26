@@ -33,7 +33,6 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from pegasus.gtfar import app, db, s3, api_manager, IS_S3_USED, __VERSION__
 
-from pegasus.gtfar.dax.dax import GTFAR
 from pegasus.gtfar.models import Run, Status, isValidFile
 
 from pegasus.workflow import wrapper
@@ -301,6 +300,8 @@ def create_config(result):
 
 
 def generate_dax(result):
+    from pegasus.gtfar.dax.dax import GTFAR
+
     path = os.path.join(app.config['GTFAR_STORAGE_DIR'], str(result['name']))
     filesize = os.path.getsize(os.path.join(path, 'input', secure_filename(result['filename'])))
 
