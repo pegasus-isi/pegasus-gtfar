@@ -536,6 +536,8 @@ class AnalyzeMixin(object):
     def analyze(self):
         self._analyze()
 
+        self._farish_compact()
+
         self._bar_plot()
 
     def _analyze(self):
@@ -562,6 +564,25 @@ class AnalyzeMixin(object):
         analyze.uses(summary_out, link=Link.OUTPUT, transfer=True, register=False)
 
         self.adag.addJob(analyze)
+
+    def _farish_compact(self):
+        farish_compact = Job(name='farish_compact')
+        farish_compact.invoke('all', self._state_update % 'Farish Compact')
+
+        # Input files
+        unmapped = File('%s.unmapped.fastq' % self._prefix)
+
+        # Output files
+        compact = File('%s.compact' % self._prefix)
+
+        # Arguments
+        farish_compact.addArguments(unmapped, '-o', compact)
+
+        # Uses
+        farish_compact.uses(unmapped, link=Link.INPUT)
+        farish_compact.uses(compact, link=Link.OUTPUT, transfer=True, register=False)
+
+        self.adag.addJob(farish_compact)
 
     def _bar_plot(self):
         bar_plot = Job(name='bar_plot')

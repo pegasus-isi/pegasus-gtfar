@@ -158,6 +158,22 @@ tr analyze_samfile {
     }
 }
 
+tr farish_compact {
+    site local {
+        pfn "{{ bin_dir }}/farish_compact"
+        arch "x86_64"
+        os "{{ os | lower }}"
+        type "INSTALLED"
+    }
+
+    site condorpool {
+        pfn "{{ bin_dir }}/farish_compact"
+        arch "x86_64"
+        os "{{ os | lower }}"
+        type "INSTALLED"
+    }
+}
+
 tr bar_plot {
     site local {
         pfn "{{ bin_dir }}/gtfar_bar_plot.py"
