@@ -553,7 +553,8 @@ class AnalyzeMixin(object):
         # Output files
         genes_counts = File('%s.genes.cnts' % self._prefix)
         features_counts = File('%s.features.cnts' % self._prefix)
-        multi_genes_counts = File('%s.multiGenes.cnts' % self._prefix)
+        ambiguous_genes_counts = File('%s.ambiguousGenes.cnts' % self._prefix)
+        overlap_genes_counts = File('%s.overlapGene.cnts' % self._prefix)
         summary_out = File('%s.summary.out' % self._prefix)
 
         # Arguments
@@ -563,7 +564,8 @@ class AnalyzeMixin(object):
         analyze.uses(sam_file, link=Link.INPUT)
         analyze.uses(genes_counts, link=Link.OUTPUT, transfer=True, register=False)
         analyze.uses(features_counts, link=Link.OUTPUT, transfer=True, register=False)
-        analyze.uses(multi_genes_counts, link=Link.OUTPUT, transfer=True, register=False)
+        analyze.uses(ambiguous_genes_counts, link=Link.OUTPUT, transfer=True, register=False)
+        analyze.uses(overlap_genes_counts, link=Link.OUTPUT, transfer=True, register=False)
         analyze.uses(summary_out, link=Link.OUTPUT, transfer=True, register=False)
 
         self.adag.addJob(analyze)
