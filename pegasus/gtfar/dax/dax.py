@@ -538,6 +538,9 @@ class AnalyzeMixin(object):
 
         self._farish_compact()
 
+        if self._clip_reads:
+            self._transcript_prediction()
+
         self._bar_plot()
 
     def _analyze(self):
@@ -583,6 +586,28 @@ class AnalyzeMixin(object):
         farish_compact.uses(compact, link=Link.OUTPUT, transfer=True, register=False)
 
         self.adag.addJob(farish_compact)
+
+    def _transcript_prediction(self):
+        transcript_prediction = Job(name='transcript_prediction')
+        transcript_prediction.invoke('all', self._state_update % 'Transcript Prediction')
+
+        # Input files
+        features_counts = File('%s.features.cnts' % self._prefix)
+        gtf = File('%s.splice_candidates.gtf' % self._prefix)
+
+        # Output files
+        transcript_counts = File('%s.transcripts.cnts' % self._prefix)
+
+        # Arguments
+        transcript_prediction.addArguments(features_counts, '-g', gtf)
+
+        # Uses
+        transcript_prediction.setStdout(transcript_counts)
+        transcript_prediction.uses(features_counts, link=Link.INPUT)
+        transcript_prediction.uses(gtf, link=Link.INPUT)
+        transcript_prediction.uses(transcript_counts, link=Link.OUTPUT, transfer=True, register=False)
+
+        self.adag.addJob(transcript_prediction)
 
     def _bar_plot(self):
         bar_plot = Job(name='bar_plot')
