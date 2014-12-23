@@ -317,8 +317,7 @@ def generate_dax(result):
 
     splits = max(1, int(math.floor(filesize / app.config['SPLIT_DIVISOR'])))
 
-    gtfar = GTFAR(result['gtf'],
-                  result['genome'],
+    gtfar = GTFAR(result['species'],
                   result['name'],
                   secure_filename(result['filename']),
                   base_dir=path,
