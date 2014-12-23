@@ -30,7 +30,7 @@ OS_TYPE = 'MACOSX' if sys.platform.startswith('darwin') else 'LINUX'
 #
 
 
-GTFAR_HOME = '/lfs1/dcbriggs/repos/pegasus-gtfar'
+GTFAR_HOME = '/data/workspace/gtfar'
 
 GTFAR_BIN_DIR = os.path.join(GTFAR_HOME, 'bin')
 GTFAR_DATA_DIR = os.path.join(GTFAR_HOME, 'data')
@@ -51,6 +51,10 @@ GTFAR_STORAGE_SITE = GTFAR_STAGING_SITE
 # A Temporary directory to upload files into.
 UPLOAD_FOLDER = '/tmp'
 
+# Limit max file upload size to 5GB
+
+MAX_UPLOAD_SIZE = 5000000000
+
 # Split input files in splits of .75GB
 
 SPLIT_DIVISOR = 400000000
@@ -61,7 +65,7 @@ SPLIT_DIVISOR = 400000000
 #
 
 
-PEGASUS_HOME = '/usr'
+PEGASUS_HOME = '/data/software/pegasus/default'
 
 
 #
