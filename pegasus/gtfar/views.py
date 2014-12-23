@@ -29,6 +29,7 @@ from werkzeug import secure_filename
 
 from flask import render_template, request, redirect, url_for, json, jsonify, send_from_directory, make_response
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 from pegasus.gtfar import app, db, s3, api_manager, IS_S3_USED, __VERSION__
@@ -48,98 +49,107 @@ from pegasus.workflow.wrapper import PegasusWorkflow
 
 @app.before_first_request
 def before_first_request():
-    loaded = os.path.join(app.config['GTFAR_DATA_DIR'], '.loaded')
+    from pegasus.gtfar.models import ReplicaEntry, ReplicaAttribute
 
-    if not os.path.isfile(loaded):
-        from pegasus.gtfar import db
-        from pegasus.gtfar.models import ReplicaEntry, ReplicaAttribute
+    session = db.session
 
-        session = db.session
+    def session_commit():
+        try:
+            session.commit()
+        except IntegrityError, e:
+            if 'Duplicate' not in e.message:
+                raise e
+            else:
+                session.rollback()
 
-        #
-        # Register GTF file with JDBCRC
-        #
+    #
+    # Register reference files for each species with JDBCRC
+    #
 
-        for path, dir_name, files in os.walk(app.config['GTFAR_REF_GTF_DIR']):
+    for name, specie in species.iteritems():
+        species_dir = os.path.join(app.config['GTFAR_SPECIES_DIR'], name)
 
-            for file_name in files:
+        if not os.path.isdir(species_dir):
+            raise RuntimeError('Could not locate reference files for species %s at %s' % (name, species_dir))
 
-                if file_name.startswith('.'):
+        for path, dir_name, files in os.walk(species_dir):
+            files = {f: True for f in files}
+
+            # Check all chromosome files for the species are present
+            for chromosome in specie.chromosomes:
+                chromosome_file = 'chr%s.fa' % chromosome
+                if chromosome_file not in files:
+                    raise RuntimeError('Could not locate reference file for %s chromosome %s at %s' % (name,
+                                                                                                       chromosome,
+                                                                                                       species_dir))
+
+                replica = ReplicaEntry('%s_chr%s.fa' % (name, chromosome),
+                                       'file://%s' % os.path.abspath(os.path.join(species_dir, chromosome_file)),
+                                       'local',
+                                       attributes=[ReplicaAttribute('genome', 'true')])
+
+                session.add(replica)
+                session_commit()
+                del files[chromosome_file]
+
+            gtf_found = False
+
+            for gtf in files.iterkeys():
+                if not gtf.endswith('.gtf'):
                     continue
 
-                replica = ReplicaEntry(file_name,
-                                       'file://%s' % os.path.abspath(os.path.join(path, file_name)),
+                replica = ReplicaEntry('%s.gtf' % name,
+                                       'file://%s' % os.path.abspath(os.path.join(species_dir, gtf)),
                                        'local',
                                        attributes=[ReplicaAttribute('gtf', 'true')])
 
                 session.add(replica)
+                session_commit()
 
-            session.commit()
+                gtf_found = True
 
-        #
-        # Register Genome files with JDBCRC
-        #
+            if not gtf_found:
+                raise RuntimeError('Could not locate reference GTF file for %s at %s' % (name, species_dir))
 
-        for path, dir_name, files in os.walk(app.config['GTFAR_REF_GENOME_DIR']):
+            # Ignore subdirectories within the species directory
+            break
 
-            for file_name in files:
+    #
+    # Register Index Files available locally with JDBCRC
+    #
 
-                if file_name.startswith('.'):
-                    continue
+    for path, dir_name, files in os.walk(app.config['GTFAR_DATA_DIR'] + '/index'):
 
-                replica = ReplicaEntry(file_name,
-                                       'file://%s' % os.path.abspath(os.path.join(path, file_name)),
-                                       'local',
-                                       attributes=[ReplicaAttribute('genome', 'true')])
+        for file_name in files:
 
-                session.add(replica)
+            if file_name.startswith('.'):
+                continue
 
-            session.commit()
+            replica = ReplicaEntry(file_name,
+                                   'file://%s' % os.path.abspath(os.path.join(path, file_name)),
+                                   'local',
+                                   attributes=[ReplicaAttribute('index', 'true')])
 
-        #
-        # Register Index Files available locally with JDBCRC
-        #
+            session.add(replica)
+            session_commit()
 
-        for path, dir_name, files in os.walk(app.config['GTFAR_DATA_DIR'] + '/index'):
+    #
+    # Register Index Files from S3 with JDBCRC
+    #
 
-            for file_name in files:
+    if IS_S3_USED:
+        index_files = s3.get_index_files()
 
-                if file_name.startswith('.'):
-                    continue
+        for index_file in index_files:
+            file_name = os.path.basename(index_file[0])
 
-                replica = ReplicaEntry(file_name,
-                                       'file://%s' % os.path.abspath(os.path.join(path, file_name)),
-                                       'local',
-                                       attributes=[ReplicaAttribute('genome', 'true')])
+            replica = ReplicaEntry(file_name,
+                                   's3://pegasus@amazon/%s/%s' % (app.config['GTFAR_S3_BUCKET'], index_file[0]),
+                                   's3',
+                                   attributes=[ReplicaAttribute('index', 'true')])
 
-                session.add(replica)
-
-            session.commit()
-
-        #
-        # Register Index Files from S3 with JDBCRC
-        #
-
-        if IS_S3_USED:
-            index_files = s3.get_index_files()
-
-            for index_file in index_files:
-                file_name = os.path.basename(index_file[0])
-
-                replica = ReplicaEntry(file_name,
-                                       's3://pegasus@amazon/%s/%s' % (app.config['GTFAR_S3_BUCKET'], index_file[0]),
-                                       's3',
-                                       attributes=[ReplicaAttribute('index', 'true')])
-
-                session.add(replica)
-
-            session.commit()
-
-        #
-        # Create a marker file to indicate that
-        # the reference GTF and GENOME files have been registered with the JDBCRC
-        #
-        open(loaded, 'a').close()
+            session.add(replica)
+            session_commit()
 
 
 #
