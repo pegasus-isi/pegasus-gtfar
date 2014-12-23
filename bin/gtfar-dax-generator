@@ -19,6 +19,8 @@ __author__ = 'Rajiv Mayani'
 import sys
 import argparse
 
+from pegasus.gtfar.species import species
+
 from pegasus.gtfar.dax.dax import GTFAR
 
 
@@ -26,8 +28,8 @@ def main():
     parser = argparse.ArgumentParser(description='GTFAR')
 
     # Reference
-    parser.add_argument('-g', '--genome', default=None, required=True, help='Path to genomic chromosomes')
-    parser.add_argument('-x', '--gtf', default=None, required=True, help='GTF file')
+    parser.add_argument('-a', '--species', default=None, required=True,
+                        choices=[s.capitalize() for s in species.iterkeys()], help='Species')
 
     # Input
     parser.add_argument('-p', '--prefix', default=None, required=True, help='Prefix')
