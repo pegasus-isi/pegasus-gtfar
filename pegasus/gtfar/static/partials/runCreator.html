@@ -32,29 +32,12 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="inputGTF" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Annotation
-                        File</label>
+                    <label for="inputGTF" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">Species</label>
 
                     <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
-                        <input type="text" class="form-control" id="inputGTF" placeholder="" ng-model="run.gtf"
-                               name="gtf" readonly>
-                        <span class="help-block">
-                            Annotation File in GTF format.
-                            <a href="http://www.gencodegenes.org/releases/19.html" target="_blank">
-                                <i class="fa fa-info-circle"> </i> More Information.
-                            </a>
-                        </span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputGenome" class="col-xs-12  col-sm-5 col-md-4 col-lg-3 control-label">
-                        Genome Version
-                    </label>
-
-                    <div class="col-xs-12  col-sm-7 col-md-8 col-lg-9">
-                        <input type="text" class="form-control" id="inputGenome" placeholder="" ng-model="run.genome"
-                               name="genome" readonly>
-                        <span class="help-block">Must match the species and annotation file.</span>
+                        <select class="form-control text-capitalize" id="species" ng-model="species"
+                                ng-options="option for option in speciesOptions" tabindex="2"></select>
+                        <span class="help-block">Species of input sample</span>
                     </div>
                 </div>
                 <div class="form-group">
