@@ -40,20 +40,24 @@ class Species(object):
 
 
 #
-# Chromosome Helper
+# Species Helper
 #
 
-human_chrs = [str(i) for i in range(1, 23)]
-human_chrs.extend(['X', 'Y', 'R', 'M'])
+def init_species_registry():
+    human_chrs = [str(i) for i in range(1, 23)]
+    human_chrs.extend(['X', 'Y', 'R', 'M'])
+
+    species = OrderedDict([
+        ('human', Species('human', human_chrs)),
+        ('mouse', Species('mouse', human_chrs)),
+        ('rhesus', Species('rhesus', human_chrs))
+    ])
+
+    return species
 
 
 #
 # Species Registry
 #
 
-
-species = OrderedDict([
-    ('human', Species('human', human_chrs)),
-    ('mouse', Species('mouse', human_chrs)),
-    ('rhesus', Species('rhesus', human_chrs))
-])
+species = init_species_registry()
