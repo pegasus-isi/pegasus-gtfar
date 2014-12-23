@@ -235,6 +235,13 @@ def validate_fields(data):
         validation_error_messages.append(
             {'field': 'Strand Rule', 'message': 'The Strand Rule field is required and must be either "Unstranded", "Sense", or "Anti-Sense".'})
 
+    if not 'species' in data:
+        validation_error_messages.append(
+            {'field': 'Species', 'message': 'The Species field is required.'})
+    elif not data['species'] in species:
+        validation_error_messages.append(
+            {'field': 'Species', 'message': 'Invali value for Species field.'})
+
     if not 'genSplice' in data:
         validation_error_messages.append({'field': 'Generate New Splice Candidates',
                                           'message': 'The Generate New Splice Candidates field is required and must be a boolean value.'})
@@ -269,7 +276,7 @@ def create_run_directories(result):
         os.mkdir(os.path.join(path, 'submit'))
         os.mkdir(os.path.join(path, 'scratch'))
         shutil.move(os.path.join(app.config['UPLOAD_FOLDER'], str(result['uploadFolder']), str(secure_filename(result['filename']))),
-                    os.path.join(path, 'input', str(secure_filename(result['filename'])))) # There should always be one slash for the upload file name
+                    os.path.join(path, 'input', str(secure_filename(result['filename']))))
 
     except OSError as exception:
         if exception.errno != errno.EEXIST:
