@@ -1,17 +1,18 @@
 /*
- * Copyright 2007-2014 University Of Southern California
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * #  Copyright 2007-2012 University Of Southern California
+ * #
+ * #  Licensed under the Apache License, Version 2.0 (the "License");
+ * #  you may not use this file except in compliance with the License.
+ * #  You may obtain a copy of the License at
+ * #
+ * #  http://www.apache.org/licenses/LICENSE-2.0
+ * #
+ * #  Unless required by applicable law or agreed to in writing,
+ * #  software distributed under the License is distributed on an "AS IS" BASIS,
+ * #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * #  See the License for the specific language governing permissions and
+ * #  limitations under the License.
+ * # Revision : $Revision: 2012 $
  */
 
 /**
@@ -24,7 +25,7 @@ define(["angular"],
         var runsCreationController = function ($scope, $window, $http, $state) {
 
             var file;
-            var FIVE_GIGABYTES = 5000000000;
+            var FIVE_GIGABYTES = {{ config['MAX_UPLOAD_SIZE'] }};
             $scope.alerts = [];
             $scope.getAlertIcon = function (status) {
                 return (status == 'success') ? "text-success fa fa-check-circle" : "text-danger fa fa-exclamation-triangle";
@@ -34,6 +35,14 @@ define(["angular"],
             };
             $scope.uploadProgress = null;
             $scope.addingRun = null;
+            $scope.speciesOptions = [
+                {% for s, o in species.iteritems() %}
+                    "{{ s }}"
+                    {% if not loop.last %}
+                        ,
+                    {% endif %}
+                {% endfor %}
+            ];
             $scope.strandRuleOptions = [
                 {rule: "unstranded"},
                 {rule: "sense"},
@@ -42,11 +51,10 @@ define(["angular"],
             // Defaults
 
             // We have to define this out of the run object because we need to link it to .rule in the end
+            $scope.species = $scope.speciesOptions[0];
             $scope.strandRule = $scope.strandRuleOptions[0];
 
             $scope.run = {
-                genome: "Genome", // TODO: add this in a bit $scope.genome,
-                gtf: "gencode.v19.annotation.gtf", // TODO: Add this in a bit $scope.gtf,
                 status: -1, // default status to running
                 userName: "genericUser",
                 readLength: 100,

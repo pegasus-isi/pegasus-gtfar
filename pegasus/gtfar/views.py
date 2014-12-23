@@ -35,8 +35,11 @@ from pegasus.gtfar import app, db, s3, api_manager, IS_S3_USED, __VERSION__
 
 from pegasus.gtfar.models import Run, Status, isValidFile
 
+from pegasus.gtfar.species import species
+
 from pegasus.workflow import wrapper
 from pegasus.workflow.wrapper import PegasusWorkflow
+
 
 #
 # Application Initialization
@@ -579,6 +582,10 @@ def index():
 def home():
     return render_template('home.html')
 
+
+@app.route('/js/controllers/runCreationController.js')
+def gtfar_run_creation_controller():
+    return render_template('js/controllers/runCreationController.js', species=species)
 
 @app.route('/help')
 def help_page():
