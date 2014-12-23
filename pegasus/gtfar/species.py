@@ -14,6 +14,16 @@
 
 __author__ = 'Rajiv Mayani'
 
+"""
+Each species supported by GT-FAR must be registered with the species registry.
+
+Species registry is a basic dictionary, mapping a unique specie name to a Species object. The Species object contains
+a list of valid chromosome for that specie.
+
+GT-FAR web application goes through the Species registry to locate reference (GTF, Genome chromosome) files.
+The code looks for the reference file in the GTFAR_SPECIES_DIR directory defined in the configuration.
+"""
+
 from collections import OrderedDict
 
 
