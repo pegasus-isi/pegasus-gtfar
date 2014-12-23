@@ -34,7 +34,6 @@ class Run(db.Model):
     userName = Column(db.String(64))
     filename = Column(db.String(255))
     uploadFolder = Column(db.String(64))
-    # Should this be text or a foreign key to a list of jobs? jobName = Column(Text, )
     status = Column(Integer)
     readLength = Column(Integer)
     mismatches = Column(Integer)
@@ -43,8 +42,7 @@ class Run(db.Model):
     genSplice = Column(Boolean)
     strandRule = Column(db.String(15))
     email = Column(db.String(255))
-    gtf = Column(db.String(64))
-    genome = Column(db.String(64))
+    species = Column(db.String(64))
     created = Column(DateTime, default=datetime.utcnow)
 
 
