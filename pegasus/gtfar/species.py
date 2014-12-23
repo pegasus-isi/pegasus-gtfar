@@ -47,13 +47,13 @@ def init_species_registry():
     human_chrs = [str(i) for i in range(1, 23)]
     human_chrs.extend(['X', 'Y', 'R', 'M'])
 
-    species = OrderedDict([
+    species_list = OrderedDict([
         ('human', Species('human', human_chrs)),
         ('mouse', Species('mouse', human_chrs)),
         ('rhesus', Species('rhesus', human_chrs))
     ])
 
-    return species
+    return species_list
 
 
 #
