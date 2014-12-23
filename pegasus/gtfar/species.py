@@ -18,10 +18,8 @@ from collections import OrderedDict
 
 
 class Species(object):
-    def __init__(self, name, gtf, genome, chromosomes):
+    def __init__(self, name, chromosomes):
         self._name = name
-        self._gtf = gtf
-        self._genome = genome
         self._chromosomes = chromosomes
 
     @property
@@ -33,22 +31,6 @@ class Species(object):
         self._name = name
 
     @property
-    def gtf(self):
-        return self._gtf
-
-    @gtf.setter
-    def gtf(self, gtf):
-        self._gtf = gtf
-
-    @property
-    def genome(self):
-        return self._genome
-
-    @genome.setter
-    def genome(self, genome):
-        self._genome = genome
-
-    @property
     def chromosomes(self):
         return self._chromosomes
 
@@ -58,11 +40,20 @@ class Species(object):
 
 
 #
+# Chromosome Helper
+#
+
+human_chrs = [str(i) for i in range(1, 23)]
+human_chrs.extend(['X', 'Y', 'R', 'M'])
+
+
+#
 # Species Registry
 #
 
+
 species = OrderedDict([
-    ('human', Species('human', 'gtf', 'genome', [str(i) for i in range(1, 23)].extend(['X', 'Y', 'R', 'M']))),
-    ('mouse', Species('mouse', 'gtf', 'genome', [str(i) for i in range(1, 23)].extend(['X', 'Y', 'R', 'M']))),
-    ('rhesus', Species('rhesus', 'gtf', 'genome', [str(i) for i in range(1, 23)].extend(['X', 'Y', 'R', 'M'])))
+    ('human', Species('human', human_chrs)),
+    ('mouse', Species('mouse', human_chrs)),
+    ('rhesus', Species('rhesus', human_chrs))
 ])
