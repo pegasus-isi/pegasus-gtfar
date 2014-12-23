@@ -18,6 +18,8 @@ import os
 import sys
 import mmh3
 
+from pegasus.gtfar.species import species as species_list
+
 from pegasus.gtfar.dax.AutoADAG import AutoADAG
 
 from Pegasus.DAX3 import ADAG, Dependency, Job, File, Link, Executable, PFN, Transformation
@@ -68,16 +70,15 @@ class AnnotateMixin(object):
         annotate_gtf = Job(name='annotate_gtf')
         annotate_gtf.invoke('all', self._state_update % 'Generating annotation FASTA files')
 
-        prefix = self._get_index_hash(read_length, exclude_genome=True)
+        prefix = self._get_index_hash(read_length)
 
         # Inputs
-        gtf = File(self._gtf)
+        gtf = File('%s.gtf' % self._species.name)
 
-        chromosomes = [str(i) for i in range(1, 23)]
-        chromosomes.extend(['X', 'Y', 'R', 'M'])
+        chromosomes = self._species.chromosomes
 
         for i in chromosomes:
-            chr_i = File('chr%s.fa' % i)
+            chr_i = File('%s_chr%s.fa' % (self._species.name, i))
 
             # Uses
             annotate_gtf.uses(chr_i, link=Link.INPUT)
@@ -116,7 +117,7 @@ class AnnotateMixin(object):
         perm_index = Job(name='perm')
         perm_index.invoke('all', self._state_update % 'Pre-computing %s index file' % index_type.capitalize())
 
-        prefix = self._get_index_hash(read_length, exclude_genome=True)
+        prefix = self._get_index_hash(read_length)
 
         # Input files
         fa_input = File('h%s/%s.fa' % (prefix, index_type))
@@ -449,7 +450,7 @@ class ClipParseMixin(object):
         mismatches = self._clip_mismatches
 
         # Input files
-        prefix = self._get_index_hash(self._read_length, exclude_genome=True)
+        prefix = self._get_index_hash(self._read_length)
         fa = File('h%s/%s.fa' % (prefix, clip_to.upper()))
         reads_txt = File('%s_%s_reads.txt' % (tag, clip_to.lower()))
 
@@ -632,13 +633,12 @@ class AnalyzeMixin(object):
 
 
 class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, ClipParseMixin, AnalyzeMixin):
-    def __init__(self, gtf, genome, prefix, reads, base_dir, bin_dir, read_length=100, mismatches=3,
+    def __init__(self, species, prefix, reads, base_dir, bin_dir, read_length=100, mismatches=3,
                  is_trim_unmapped=False, is_map_filtered=False, splice=True, clip_reads=False, strand_rule='Unstranded',
                  dax=None, url=None, email=None, splits=1, adag=None):
 
         # Reference
-        self._gtf = gtf
-        self._genome = genome
+        self._species = species
 
         # Input
         self._prefix = prefix
@@ -720,6 +720,14 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, ClipParseMixin, Analy
 
         self._prefix = str(self._prefix)
 
+        if not self._species:
+            errors['species'] = 'Species is required'
+
+        if self._species.lower() not in species_list:
+            errors['species'] = 'Invalid species'
+
+        self._species = species_list[self._species.lower()]
+
         if self._reads is None:
             errors['reads'] = 'Reads needed for options filter'
 
@@ -765,13 +773,9 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, ClipParseMixin, Analy
             # Invalid extension
             pass
 
-    def _get_index_hash(self, read_length, seed=None, exclude_genome=False):
-        hash_k = '%s-%s-%d-%s'
-        t = (self._gtf, self._genome, read_length, seed)
-
-        if exclude_genome:
-            hash_k = '%s-%d'
-            t = (self._gtf, read_length)
+    def _get_index_hash(self, read_length, seed=None):
+        hash_k = '%s-%d-%s'
+        t = (self._species, read_length, seed)
 
         hash_k = hash_k % t
         return mmh3.hash(hash_k, read_length)
