@@ -178,6 +178,7 @@ define(["angular"],
                 }
 
                 $scope.run["strandRule"] = $scope.strandRule.rule;
+                $scope.run["species"] = $scope.species;
                 $scope.run["uploadFolder"] = $window.tempFolder;
                 $scope.run.email = $scope.form.email.$viewValue;
                 try {
