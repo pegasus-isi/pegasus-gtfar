@@ -39,9 +39,7 @@ GTFAR_DATA_DIR = os.path.join(GTFAR_HOME, 'data')
 GTFAR_STORAGE_DIR = os.path.join(GTFAR_DATA_DIR, 'runs')
 
 # Directory where GTFAR reference input files will be placed
-GTFAR_REF_DIR = os.path.join(GTFAR_DATA_DIR, 'reference')
-GTFAR_REF_GTF_DIR = os.path.join(GTFAR_REF_DIR, 'gtf')
-GTFAR_REF_GENOME_DIR = os.path.join(GTFAR_REF_DIR, 'genome')
+GTFAR_SPECIES_DIR = os.path.join(GTFAR_DATA_DIR, 'species')
 
 GTFAR_EXECUTION_SITE = 'condorpool'
 GTFAR_STAGING_SITE = 'local'
