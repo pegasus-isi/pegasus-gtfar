@@ -585,7 +585,9 @@ def home():
 
 @app.route('/js/controllers/runCreationController.js')
 def gtfar_run_creation_controller():
-    return render_template('js/controllers/runCreationController.js', species=species)
+    response = make_response(render_template('js/controllers/runCreationController.js', species=species), 200)
+    response.headers['Content-Type'] = 'application/javascript'
+    return response
 
 @app.route('/help')
 def help_page():
