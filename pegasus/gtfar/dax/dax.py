@@ -775,7 +775,7 @@ class GTFAR(AnnotateMixin, FilterMixin, IterativeMapMixin, ClipParseMixin, Analy
 
     def _get_index_hash(self, read_length, seed=None):
         hash_k = '%s-%d-%s'
-        t = (self._species, read_length, seed)
+        t = (self._species.name, read_length, seed)
 
         hash_k = hash_k % t
         return mmh3.hash(hash_k, read_length)
