@@ -73,7 +73,7 @@ def before_first_request():
             raise RuntimeError('Could not locate reference files for species %s at %s' % (name, species_dir))
 
         for path, dir_name, files in os.walk(species_dir):
-            files = {f: True for f in files}
+            files = dict((f, True) for f in files)
 
             # Check all chromosome files for the species are present
             for chromosome in specie.chromosomes:
