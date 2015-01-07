@@ -552,8 +552,8 @@ class AnalyzeMixin(object):
         sam_file = File('%s.sam' % self._prefix)
 
         # Output files
-        genes_counts = File('%s.genes.cnts' % self._prefix)
-        features_counts = File('%s.features.cnts' % self._prefix)
+        genes_counts = File('%s.gene.cnts' % self._prefix)
+        features_counts = File('%s.feature.cnts' % self._prefix)
         ambiguous_genes_counts = File('%s.ambiguousGenes.cnts' % self._prefix)
         overlap_genes_counts = File('%s.overlapGene.cnts' % self._prefix)
         summary_out = File('%s.summary.out' % self._prefix)
@@ -595,7 +595,7 @@ class AnalyzeMixin(object):
         transcript_prediction.invoke('all', self._state_update % 'Transcript Prediction')
 
         # Input files
-        features_counts = File('%s.features.cnts' % self._prefix)
+        features_counts = File('%s.feature.cnts' % self._prefix)
         gtf = File('%s.splice_candidates.gtf' % self._prefix)
 
         # Output files
