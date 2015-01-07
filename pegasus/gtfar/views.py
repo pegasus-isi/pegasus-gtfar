@@ -83,7 +83,7 @@ def before_first_request():
                                                                                                        chromosome,
                                                                                                        species_dir))
 
-                replica = ReplicaEntry('%s_chr%s.fa' % (name, chromosome),
+                replica = ReplicaEntry('%s/chr%s.fa' % (name, chromosome),
                                        'file://%s' % os.path.abspath(os.path.join(species_dir, chromosome_file)),
                                        'local',
                                        attributes=[ReplicaAttribute('genome', 'true')])

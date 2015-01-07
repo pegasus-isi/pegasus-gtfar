@@ -78,7 +78,7 @@ class AnnotateMixin(object):
         chromosomes = self._species.chromosomes
 
         for i in chromosomes:
-            chr_i = File('%s_chr%s.fa' % (self._species.name, i))
+            chr_i = File('%s/chr%s.fa' % (self._species.name, i))
 
             # Uses
             annotate_gtf.uses(chr_i, link=Link.INPUT)
@@ -90,7 +90,7 @@ class AnnotateMixin(object):
         genes = File('h%s/GENE.fa' % prefix)
 
         # Arguments
-        annotate_gtf.addArguments(gtf, '-c .', '-p h%s/' % prefix, '-l %d' % read_length)
+        annotate_gtf.addArguments(gtf, '-c', self._species.name, '-p h%s/' % prefix, '-l %d' % read_length)
 
         # Uses
         annotate_gtf.uses(gtf, link=Link.INPUT)
