@@ -129,6 +129,14 @@ style="{{ ['display: inline-block',
                                                     </tr>
                                                     <tr {{ row_coloring(row_class.next(), run[4]) }}>
                                                         <th class="table-header" {{ header_style() }}>
+                                                            Species
+                                                        </th>
+                                                        <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
+                                                            {{ run[12] | capitalize }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr {{ row_coloring(row_class.next(), run[4]) }}>
+                                                        <th class="table-header" {{ header_style() }}>
                                                             Read Length
                                                         </th>
                                                         <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
@@ -172,7 +180,7 @@ style="{{ ['display: inline-block',
                                                             Started On
                                                         </th>
                                                         <td style="font-family: Arial;padding: .4em .8em;font-size: .9em;">
-                                                            {{ run[14] }}
+                                                            {{ run[13] }}
                                                         </td>
                                                     </tr>
                                                     <tr {{ row_coloring(row_class.next(), run[4]) }}>
