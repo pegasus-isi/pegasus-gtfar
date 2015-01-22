@@ -24,7 +24,10 @@ GT-FAR web application goes through the Species registry to locate reference (GT
 The code looks for the reference file in the GTFAR_SPECIES_DIR directory defined in the configuration.
 """
 
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 
 class Species(object):
@@ -58,9 +61,9 @@ def init_species_registry():
     human_chrs.extend(['X', 'Y', 'R', 'M'])
 
     species_list = OrderedDict([
-        ('human', Species('human', human_chrs)),
-        ('mouse', Species('mouse', human_chrs)),
-        ('rhesus', Species('rhesus', human_chrs))
+        ('human', Species('human', human_chrs))
+#        ('mouse', Species('mouse', human_chrs)),
+#        ('rhesus', Species('rhesus', human_chrs))
     ])
 
     return species_list
